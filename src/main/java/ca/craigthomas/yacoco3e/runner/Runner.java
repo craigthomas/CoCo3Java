@@ -4,5 +4,19 @@
  */
 package ca.craigthomas.yacoco3e.runner;
 
-public class Runner {
+import ca.craigthomas.yacoco3e.components.Emulator;
+import com.beust.jcommander.JCommander;
+
+public class Runner
+{
+    public static void main(String [] argv) {
+        Arguments arguments = new Arguments();
+        JCommander jCommander = JCommander.newBuilder()
+                .addObject(arguments)
+                .build();
+        jCommander.setProgramName("yacoco3e");
+
+        Emulator emulator = new Emulator(arguments.scale.intValue());
+        emulator.start();
+    }
 }
