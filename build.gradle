@@ -3,6 +3,10 @@ version '1.0'
 
 apply plugin: 'java'
 apply plugin: 'jacoco'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+mainClassName = 'ca.craigthomas.yacoco3e.runner.Runner'
 
 sourceCompatibility = 1.8
 
@@ -11,8 +15,20 @@ repositories {
 }
 
 dependencies {
+    compile 'com.beust:jcommander:1.72'
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-all:1.10.19'
+}
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+    }
 }
 
 jacocoTestReport {
@@ -20,6 +36,10 @@ jacocoTestReport {
         xml.enabled = true
         html.enabled = true
     }
+}
+
+task stage {
+    dependsOn shadowJar
 }
 
 check.dependsOn jacocoTestReport

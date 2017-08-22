@@ -6,6 +6,8 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
+import java.util.Arrays;
+
 /**
  * The Memory class controls access to and from memory locations in the memory
  * array. Additionally, the memory class controls access to and from memory

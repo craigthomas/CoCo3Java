@@ -18,6 +18,11 @@ public class CPU
     public final static UnsignedWord SWI2 = new UnsignedWord(0xFFF4);
     public final static UnsignedWord SWI = new UnsignedWord(0xFFFA);
 
+    public CPU(Memory memory) {
+        this.regs = new RegisterSet();
+        this.memory = memory;
+    }
+
     public CPU(RegisterSet registerSet, Memory memory) {
         this.regs = registerSet;
         this.memory = memory;
@@ -2921,7 +2926,7 @@ public class CPU
     /**
      * Clears the specified byte.
      *
-     * @param value the value to clear
+     * @param value the value to sg4ClearScreen
      * @return the cleared byte
      */
     public UnsignedByte clear(UnsignedByte value) {
