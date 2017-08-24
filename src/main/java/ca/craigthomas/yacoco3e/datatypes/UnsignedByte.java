@@ -55,6 +55,14 @@ public class UnsignedByte
     }
 
     /**
+     * Returns the inverse bit value of the byte.
+     *
+     * @return the inverse bit value of the byte
+     */
+    public UnsignedByte inverse() {
+        return new UnsignedByte(~value);
+    }
+    /**
      * Returns true if the specified mask results in a non-zero value when
      * ANDed to the current value of the byte.
      *

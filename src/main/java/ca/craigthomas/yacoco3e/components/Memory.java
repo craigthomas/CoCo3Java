@@ -6,7 +6,12 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
-import java.util.Arrays;
+import org.apache.commons.io.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.nio.ByteOrder;
+import java.util.logging.Logger;
 
 /**
  * The Memory class controls access to and from memory locations in the memory
@@ -20,6 +25,9 @@ public class Memory
 
     /* The main memory array */
     protected short [] memory;
+
+    // The logger for the class
+    private final static Logger LOGGER = Logger.getLogger(Memory.class.getName());
 
     public Memory() {
         this(MEM_512K);
@@ -62,7 +70,7 @@ public class Memory
      * @throws IllegalIndexedPostbyteException
      */
     public MemoryResult getIndexed(RegisterSet regs) {
-        UnsignedWord address = regs.getPC().next();
+        UnsignedWord address = regs.getPC().next().copy();
         UnsignedByte postByte = readByte(address).copy();
         UnsignedWord register = new UnsignedWord(0);
         UnsignedWord result;
@@ -267,7 +275,7 @@ public class Memory
     public MemoryResult getExtended(RegisterSet regs) {
         return new MemoryResult(
                 2,
-                readWord(readWord(regs.getPC()))
+                readWord(regs.getPC())
         );
     }
 
@@ -366,5 +374,47 @@ public class Memory
             regs.getU().add(1);
         }
         return result;
+    }
+
+    /**
+     * Load a file full of bytes into emulator memory.
+     *
+     * @param stream The open stream to read from
+     * @param offset The memory location to start loading the file into
+     */
+    boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
+        try {
+            UnsignedWord currentOffset = offset.copy();
+            byte[] data;
+
+            /* Determine appropriate endianess */
+            if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+                LOGGER.info("little endian system detected");
+                ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
+                byte[] bytes = new byte[2];
+                int bytesRead = stream.read(bytes);
+                while (bytesRead != -1) {
+                    tempStream.write(bytes);
+                    bytesRead = stream.read(bytes);
+                }
+                data = tempStream.toByteArray();
+                tempStream.close();
+            } else {
+                LOGGER.info("big endian system detected");
+                data = IOUtils.toByteArray(stream);
+            }
+
+            /* Read data from the buffer */
+            for (byte theByte : data) {
+                writeByte(currentOffset, new UnsignedByte(theByte));
+                currentOffset.add(1);
+            }
+
+            return true;
+        } catch (Exception e) {
+            LOGGER.severe("error reading from stream");
+            LOGGER.severe(e.getMessage());
+            return false;
+        }
     }
 }

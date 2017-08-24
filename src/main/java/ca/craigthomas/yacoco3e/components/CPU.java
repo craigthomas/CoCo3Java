@@ -8,26 +8,46 @@ import ca.craigthomas.yacoco3e.datatypes.*;
 
 import java.util.function.Function;
 
-public class CPU
+/**
+ * Implements an MC6809E microprocessor.
+ */
+public class CPU extends Thread
 {
+    /* CPU Internal Variables */
     RegisterSet regs;
     Memory memory;
     String opShortDesc;
-    String opLongDescription;
+
+    /* Whether the CPU should be in a running state */
+    boolean alive;
+
+    /* Whether the program counter should be updated */
+    boolean updatePC;
+
+    /* Software Interrupt Vectors */
     public final static UnsignedWord SWI3 = new UnsignedWord(0xFFF2);
     public final static UnsignedWord SWI2 = new UnsignedWord(0xFFF4);
     public final static UnsignedWord SWI = new UnsignedWord(0xFFFA);
 
+    public final static UnsignedWord PC_START = new UnsignedWord(0x0);
+
     public CPU(Memory memory) {
-        this.regs = new RegisterSet();
-        this.memory = memory;
+        this(new RegisterSet(), memory);
     }
 
     public CPU(RegisterSet registerSet, Memory memory) {
         this.regs = registerSet;
         this.memory = memory;
+        alive = true;
     }
 
+    /**
+     * Sets the short description (for information purposes only) of the
+     * currently executing instruction.
+     *
+     * @param string the message to print
+     * @param value any memory value to print
+     */
     public void setShortDesc(String string, MemoryResult value) {
         if (value != null) {
             opShortDesc = String.format(string, value.getResult().getInt());
@@ -44,11 +64,12 @@ public class CPU
      */
     int executeInstruction() {
         int operationTicks = 0;
-        MemoryResult memoryResult;
-        UnsignedByte operand = memory.getPCByte(regs);
+        MemoryResult memoryResult = new MemoryResult();
+        UnsignedByte operand = memory.readByte(regs.getPC());
         regs.incrementPC();
         int bytes = 0;
         UnsignedWord tempWord = new UnsignedWord();
+        updatePC = true;
 
         switch (operand.getShort()) {
 
@@ -138,6 +159,7 @@ public class CPU
                 operationTicks = 3;
                 jump(memoryResult.getResult());
                 setShortDesc("JMP, DIR [%04X]", memoryResult);
+                updatePC = false;
                 break;
 
             /* CLR - Clear - Direct */
@@ -169,6 +191,7 @@ public class CPU
                         if (!regs.ccCarrySet() && !regs.ccZeroSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -181,6 +204,7 @@ public class CPU
                         if (regs.ccCarrySet() || regs.ccZeroSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -193,6 +217,7 @@ public class CPU
                         if (!regs.ccCarrySet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -205,6 +230,7 @@ public class CPU
                         if (regs.ccCarrySet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -217,6 +243,7 @@ public class CPU
                         if (!regs.ccZeroSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -229,6 +256,7 @@ public class CPU
                         if (regs.ccZeroSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -241,6 +269,7 @@ public class CPU
                         if (!regs.ccOverflowSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -253,6 +282,7 @@ public class CPU
                         if (regs.ccOverflowSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -265,6 +295,7 @@ public class CPU
                         if (!regs.ccNegativeSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -277,6 +308,7 @@ public class CPU
                         if (regs.ccNegativeSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -289,6 +321,7 @@ public class CPU
                         if (!regs.ccNegativeSet() ^ !regs.ccOverflowSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -301,6 +334,7 @@ public class CPU
                         if (regs.ccNegativeSet() ^ regs.ccOverflowSet()) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -313,6 +347,7 @@ public class CPU
                         if (regs.ccZeroSet() && (regs.ccNegativeSet() ^ regs.ccOverflowSet())) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -325,6 +360,7 @@ public class CPU
                         if (regs.ccZeroSet() || (regs.ccNegativeSet() ^ regs.ccOverflowSet())) {
                             branchLong(memoryResult.getResult());
                             operationTicks = 6;
+                            updatePC = false;
                         } else {
                             operationTicks = 5;
                         }
@@ -613,6 +649,7 @@ public class CPU
                 memoryResult = memory.getImmediateWord(regs);
                 branchLong(memoryResult.getResult());
                 operationTicks = 5;
+                updatePC = false;
                 setShortDesc("LBRA, IMM", null);
                 break;
 
@@ -694,6 +731,7 @@ public class CPU
                         temp.set(regs.getPC());
                         regs.setPC(regs.getD());
                         regs.setD(temp);
+                        updatePC = false;
                         break;
 
                     /* X <-> Y */
@@ -726,6 +764,7 @@ public class CPU
                         temp.set(regs.getX());
                         regs.setX(regs.getPC());
                         regs.setPC(temp);
+                        updatePC = false;
                         break;
 
                     /* Y <-> U */
@@ -750,6 +789,7 @@ public class CPU
                         temp.set(regs.getY());
                         regs.setY(regs.getPC());
                         regs.setPC(temp);
+                        updatePC = false;
                         break;
 
                     /* U <-> S */
@@ -766,6 +806,7 @@ public class CPU
                         temp.set(regs.getU());
                         regs.setU(regs.getPC());
                         regs.setPC(temp);
+                        updatePC = false;
                         break;
 
                     /* S <-> PC */
@@ -774,6 +815,7 @@ public class CPU
                         temp.set(regs.getS());
                         regs.setS(regs.getPC());
                         regs.setPC(temp);
+                        updatePC = false;
                         break;
 
                     /* A <-> B */
@@ -874,6 +916,7 @@ public class CPU
                     /* A:B -> PC */
                     case 0x05:
                         regs.setPC(regs.getD());
+                        updatePC = false;
                         break;
 
                     /* X -> A:B */
@@ -899,6 +942,7 @@ public class CPU
                     /* X -> PC */
                     case 0x15:
                         regs.setPC(regs.getX());
+                        updatePC = false;
                         break;
 
                     /* Y -> A:B */
@@ -924,6 +968,7 @@ public class CPU
                     /* Y -> PC */
                     case 0x25:
                         regs.setPC(regs.getY());
+                        updatePC = false;
                         break;
 
                     /* U -> A:B */
@@ -949,6 +994,7 @@ public class CPU
                     /* U -> PC */
                     case 0x35:
                         regs.setPC(regs.getU());
+                        updatePC = false;
                         break;
 
                     /* S -> A:B */
@@ -974,6 +1020,7 @@ public class CPU
                     /* S -> PC */
                     case 0x45:
                         regs.setPC(regs.getS());
+                        updatePC = false;
                         break;
 
                     /* PC -> A:B */
@@ -1085,6 +1132,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 branchShort(memoryResult.getResult().getHigh());
                 operationTicks = 3;
+                updatePC = false;
                 setShortDesc("BRA, IMM", null);
                 break;
 
@@ -1099,6 +1147,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccCarrySet() && !regs.ccZeroSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BHI, REL [%04X]", memoryResult);
@@ -1109,6 +1158,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccCarrySet() || regs.ccZeroSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 5;
                 setShortDesc("BLE, REL [%04X]", memoryResult);
@@ -1119,6 +1169,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccCarrySet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BCC, REL [%04X]", memoryResult);
@@ -1129,6 +1180,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccCarrySet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BCS, REL [%04X]", memoryResult);
@@ -1139,6 +1191,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccZeroSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("LBNE, REL [%04X]", memoryResult);
@@ -1149,6 +1202,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccZeroSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BEQ, REL [%04X]", memoryResult);
@@ -1159,6 +1213,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccOverflowSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BVC, REL [%04X]", memoryResult);
@@ -1169,6 +1224,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccOverflowSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BVS, REL [%04X]", memoryResult);
@@ -1179,6 +1235,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccNegativeSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BPL, REL [%04X]", memoryResult);
@@ -1189,6 +1246,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccNegativeSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BMI, REL [%04X]", memoryResult);
@@ -1199,6 +1257,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (!regs.ccNegativeSet() ^ !regs.ccOverflowSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BGE, REL [%04X]", memoryResult);
@@ -1209,6 +1268,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccNegativeSet() ^ regs.ccOverflowSet()) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 5;
                 setShortDesc("BLT, REL [%04X]", memoryResult);
@@ -1219,6 +1279,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccZeroSet() && (regs.ccNegativeSet() ^ regs.ccOverflowSet())) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BGT, REL [%04X]", memoryResult);
@@ -1229,6 +1290,7 @@ public class CPU
                 memoryResult = memory.getImmediateByte(regs);
                 if (regs.ccZeroSet() || (regs.ccNegativeSet() ^ regs.ccOverflowSet())) {
                     branchShort(memoryResult.getResult().getHigh());
+                    updatePC = false;
                 }
                 operationTicks = 3;
                 setShortDesc("BLE, REL [%04X]", memoryResult);
@@ -1306,6 +1368,7 @@ public class CPU
                                 memory.popStack(regs, Register.S)
                         )
                 );
+                updatePC = false;
                 operationTicks = 5;
                 setShortDesc("RTS, IMM", null);
                 break;
@@ -1356,6 +1419,7 @@ public class CPU
                                 memory.popStack(regs, Register.S)
                         )
                 );
+                updatePC = false;
                 operationTicks += 6;
                 setShortDesc("RTI, IMM", null);
                 break;
@@ -1734,7 +1798,8 @@ public class CPU
             case 0x7E:
                 memoryResult = memory.getExtended(regs);
                 operationTicks = 4;
-                jump(memoryResult.getResult());
+                updatePC = false;
+                jump(memory.readWord(memoryResult.getResult()));
                 setShortDesc("JMP, EXT [%04X]", memoryResult);
                 break;
 
@@ -1958,6 +2023,7 @@ public class CPU
             case 0x9D:
                 memoryResult = memory.getDirect(regs);
                 jumpToSubroutine(memoryResult.getResult());
+                updatePC = false;
                 operationTicks = 7;
                 setShortDesc("JSR, DIR", null);
                 break;
@@ -2087,6 +2153,7 @@ public class CPU
                 memoryResult = memory.getIndexed(regs);
                 jumpToSubroutine(memoryResult.getResult());
                 operationTicks = 5 + memoryResult.getBytesConsumed();
+                updatePC = false;
                 setShortDesc("JSR, IND", null);
                 break;
 
@@ -2124,7 +2191,7 @@ public class CPU
 
             /* SBCA - Subtract M and C from A - Extended */
             case 0xB2:
-                memoryResult = memory.getDirect(regs);
+                memoryResult = memory.getExtended(regs);
                 subtractMC(Register.A, memory.readByte(memoryResult.getResult()));
                 operationTicks = 5;
                 setShortDesc("SBCA, EXT", null);
@@ -2159,7 +2226,7 @@ public class CPU
                 memoryResult = memory.getExtended(regs);
                 loadByteRegister(Register.A, memory.readByte(memoryResult.getResult()));
                 operationTicks = 5;
-                setShortDesc("LDA, EXT", null);
+                setShortDesc("LDA, EXT [%04X]", memoryResult);
                 break;
 
             /* STA - Store A - Extended */
@@ -2167,7 +2234,7 @@ public class CPU
                 memoryResult = memory.getExtended(regs);
                 storeByteRegister(Register.A, memoryResult.getResult());
                 operationTicks = 5;
-                setShortDesc("STA, EXT", null);
+                setShortDesc("STA, EXT [%04X]", memoryResult);
                 break;
 
             /* EORA - Exclusive A - Extended */
@@ -2213,7 +2280,8 @@ public class CPU
             /* JSR - Jump to Subroutine - Extended */
             case 0xBD:
                 memoryResult = memory.getExtended(regs);
-                jumpToSubroutine(memoryResult.getResult());
+                jumpToSubroutine(memory.readWord(memoryResult.getResult()));
+                updatePC = false;
                 operationTicks = 8;
                 setShortDesc("JSR, EXT", null);
                 break;
@@ -2221,7 +2289,7 @@ public class CPU
             /* LDX - Load X - Extended */
             case 0xBE:
                 memoryResult = memory.getExtended(regs);
-                loadRegister(Register.X, memoryResult.getResult());
+                loadRegister(Register.X, memory.readWord(memoryResult.getResult()));
                 operationTicks = 6;
                 setShortDesc("LDX, EXT", memoryResult);
                 break;
@@ -2229,7 +2297,7 @@ public class CPU
             /* STX - Store X - Extended */
             case 0xBF:
                 memoryResult = memory.getExtended(regs);
-                storeWordRegister(Register.X, memoryResult.getResult());
+                storeWordRegister(Register.X, memory.readWord(memoryResult.getResult()));
                 operationTicks = 6;
                 setShortDesc("STX, EXT", memoryResult);
                 break;
@@ -2701,7 +2769,7 @@ public class CPU
             /* STD - Store D - Extended */
             case 0xFD:
                 memoryResult = memory.getExtended(regs);
-                storeWordRegister(Register.D, memoryResult.getResult());
+                storeWordRegister(Register.D, memory.readWord(memoryResult.getResult()));
                 operationTicks = 6;
                 setShortDesc("STD, EXT", memoryResult);
                 break;
@@ -2717,10 +2785,14 @@ public class CPU
             /* STD - Store U - Extended */
             case 0xFF:
                 memoryResult = memory.getExtended(regs);
-                storeWordRegister(Register.U, memoryResult.getResult());
+                storeWordRegister(Register.U, memory.readWord(memoryResult.getResult()));
                 operationTicks = 6;
                 setShortDesc("STU, EXT", memoryResult);
                 break;
+        }
+
+        if (updatePC) {
+            regs.getPC().add(memoryResult.getBytesConsumed());
         }
 
         return operationTicks;
@@ -3368,5 +3440,21 @@ public class CPU
         regs.setD(regs.binaryAdd(regs.getD(), value, false, true, true));
         regs.cc.or(regs.getD().isZero() ? RegisterSet.CC_Z : 0);
         regs.cc.or(regs.getD().isNegative() ? RegisterSet.CC_N : 0);
+    }
+
+    /**
+     * Starts the CPU running.
+     */
+    public void run() {
+        while (alive) {
+            executeInstruction();
+        }
+    }
+
+    /**
+     * Sends a kill signal to the CPU thread.
+     */
+    public void kill() {
+        alive = false;
     }
 }

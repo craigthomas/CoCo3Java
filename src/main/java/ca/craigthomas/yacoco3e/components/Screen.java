@@ -954,10 +954,10 @@ public class Screen
             }
     };
 
-    public Screen(Memory memory) {
+    public Screen(Memory memory, int scale) {
         this.width = SG4_WIDTH;
         this.height = SG4_HEIGHT;
-        this.scale = 2;
+        this.scale = scale;
         this.screenMode = ScreenMode.SEMIGRAPHICS4;
         this.foreColor = 0;
         this.backColor = 8;
@@ -1056,6 +1056,9 @@ public class Screen
         int x = 32 + (col * 8);
         int y = 25 + (row * 12);
         int intValue = value.getShort();
+        if (intValue > 128) {
+            intValue = 0;
+        }
         int character = intValue > SG4_CHARACTERS.length ?
                 intValue - SG4_CHARACTERS.length : intValue;
         boolean inverse = value.getShort() < SG4_CHARACTERS.length;

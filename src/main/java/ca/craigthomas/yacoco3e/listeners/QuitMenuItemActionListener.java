@@ -1,5 +1,7 @@
 package ca.craigthomas.yacoco3e.listeners;
 
+import ca.craigthomas.yacoco3e.components.CPU;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -10,8 +12,11 @@ import java.awt.event.ActionListener;
  */
 public class QuitMenuItemActionListener implements ActionListener
 {
-    public QuitMenuItemActionListener() {
+    private CPU cpu;
+
+    public QuitMenuItemActionListener(CPU cpu) {
         super();
+        this.cpu = cpu;
     }
 
     @Override
@@ -23,6 +28,7 @@ public class QuitMenuItemActionListener implements ActionListener
                 JOptionPane.OK_CANCEL_OPTION
         );
         if (result == JOptionPane.OK_OPTION) {
+            cpu.kill();
             System.exit(0);
         }
     }

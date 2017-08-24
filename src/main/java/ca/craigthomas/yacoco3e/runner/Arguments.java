@@ -6,9 +6,12 @@ package ca.craigthomas.yacoco3e.runner;
 
 import com.beust.jcommander.Parameter;
 
+/**
+ * A data class that stores the arguments that may be passed to the emulator.
+ */
 public class Arguments
 {
-    @Parameter(names="--rom", description="ROM file")
+    @Parameter(description="ROM file")
     public String romFile;
 
     @Parameter(names="--scale", description="scale factor")

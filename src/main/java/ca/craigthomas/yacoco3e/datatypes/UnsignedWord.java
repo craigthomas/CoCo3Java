@@ -95,6 +95,15 @@ public class UnsignedWord
     }
 
     /**
+     * Returns the inverse bit value of the UnsignedWord.
+     *
+     * @return the inverse bit value of the word
+     */
+    public UnsignedWord inverse() {
+        return new UnsignedWord(~value);
+    }
+
+    /**
      * Applies the specified mask using an AND operation.
      *
      * @param mask the mask to apply

@@ -62,11 +62,11 @@ public class RegisterSet
     }
 
     public void setPC(UnsignedWord pc) {
-        this.pc = pc;
+        this.pc = pc.copy();
     }
 
     public void setDP(UnsignedByte dp) {
-        this.dp = dp;
+        this.dp = dp.copy();
     }
 
     public UnsignedByte getDP() {
@@ -90,31 +90,31 @@ public class RegisterSet
     }
 
     public void setA(UnsignedByte a) {
-        this.a = a;
+        this.a = a.copy();
     }
 
     public void setB(UnsignedByte b) {
-        this.b = b;
+        this.b = b.copy();
     }
 
     public void setCC(UnsignedByte cc) {
-        this.cc = cc;
+        this.cc = cc.copy();
     }
 
     public void setX(UnsignedWord x) {
-        this.x = x;
+        this.x = x.copy();
     }
 
     public void setY(UnsignedWord y) {
-        this.y = y;
+        this.y = y.copy();
     }
 
     public void setU(UnsignedWord u) {
-        this.u = u;
+        this.u = u.copy();
     }
 
     public void setS(UnsignedWord s) {
-        this.s = s;
+        this.s = s.copy();
     }
 
     /**
