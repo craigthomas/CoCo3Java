@@ -16,6 +16,10 @@ public class MemoryResult
     /* The result of the memory operation */
     UnsignedWord result;
 
+    public MemoryResult() {
+        this(0, new UnsignedWord());
+    }
+
     public MemoryResult(int bytesConsumed, UnsignedWord result) {
         this.bytesConsumed = bytesConsumed;
         this.result = result;

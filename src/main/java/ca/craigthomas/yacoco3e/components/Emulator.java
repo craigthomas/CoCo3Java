@@ -11,13 +11,17 @@ import ca.craigthomas.yacoco3e.listeners.QuitMenuItemActionListener;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.*;
 import java.util.TimerTask;
 import java.util.Timer;
+import java.util.logging.Logger;
 
 public class Emulator
 {
+    /* The main emulator components */
     private Screen screen;
     private Memory memory;
+    private Keyboard keyboard;
     private CPU cpu;
 
     // The Canvas on which all the drawing will take place
@@ -27,13 +31,30 @@ public class Emulator
     private JFrame container;
     private JMenuBar menuBar;
 
-    public Emulator(int scaleFactor) {
+    /* A logger for the emulator */
+    private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
+
+
+    public Emulator(int scaleFactor, String romFile) {
         memory = new Memory();
-        screen = new Screen(memory);
+        keyboard = new Keyboard(memory);
+        screen = new Screen(memory, scaleFactor);
         cpu = new CPU(memory);
         screen.sg4ClearScreen();
 
         initEmulatorJFrame();
+
+        // Attempt to load specified ROM file
+        if (romFile != null) {
+            InputStream romFileStream = openStream(romFile);
+            if (!memory.loadStreamIntoMemory(romFileStream, CPU.PC_START)) {
+                LOGGER.severe("Could not load ROM file [" + romFile + "]");
+            }
+            closeStream(romFileStream);
+        } else {
+            LOGGER.severe("no ROM file specified");
+            System.exit(1);
+        }
     }
 
     /**
@@ -50,7 +71,7 @@ public class Emulator
         fileMenu.setMnemonic(KeyEvent.VK_F);
 
         JMenuItem quitFile = new JMenuItem("Quit", KeyEvent.VK_Q);
-        quitFile.addActionListener(new QuitMenuItemActionListener());
+        quitFile.addActionListener(new QuitMenuItemActionListener(cpu));
         fileMenu.add(quitFile);
         menuBar.add(fileMenu);
 
@@ -86,7 +107,7 @@ public class Emulator
         canvas.setFocusable(true);
         canvas.requestFocus();
 
-//        canvas.addKeyListener(keyboard);
+        canvas.addKeyListener(keyboard);
     }
 
     /**
@@ -106,6 +127,7 @@ public class Emulator
      * will repaint the screen and listen for any debug key presses.
      */
     public void start() {
+        cpu.start();
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
             public void run() {
@@ -115,5 +137,38 @@ public class Emulator
             }
         };
         timer.scheduleAtFixedRate(task, 0L, 33L);
+    }
+
+    /**
+     * Attempts to open the specified filename as an InputStream. Will return null if there is
+     * an error.
+     *
+     * @param filename The String containing the full path to the filename to open
+     * @return An opened InputStream, or null if there is an error
+     */
+    private InputStream openStream(String filename) {
+        InputStream inputStream;
+        try {
+            inputStream = new FileInputStream(new File(filename));
+            return inputStream;
+        } catch (FileNotFoundException e) {
+            LOGGER.severe("Error opening file");
+            LOGGER.severe(e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Closes an open InputStream.
+     *
+     * @param stream the Input Stream to close
+     */
+    private void closeStream(InputStream stream) {
+        try {
+            stream.close();
+        } catch (IOException e) {
+            LOGGER.severe("Error closing stream");
+            LOGGER.severe(e.getMessage());
+        }
     }
 }
