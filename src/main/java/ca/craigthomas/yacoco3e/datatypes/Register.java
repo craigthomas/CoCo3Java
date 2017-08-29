@@ -6,5 +6,5 @@ package ca.craigthomas.yacoco3e.datatypes;
 
 public enum Register
 {
-    S, U, Y, X, A, B, D, UNKNOWN
+    S, U, Y, X, A, B, D, PC, CC, DP, UNKNOWN
 }

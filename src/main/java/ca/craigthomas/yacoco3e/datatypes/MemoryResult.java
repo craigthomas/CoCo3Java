@@ -39,7 +39,7 @@ public class MemoryResult
      *
      * @return the result of the memory operation
      */
-    public UnsignedWord getResult() {
+    public UnsignedWord get() {
         return result;
     }
 

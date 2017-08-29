@@ -25,8 +25,8 @@ public class Screen
     public static final int SG4_BLACK = 8;
 
     /* Screen size for semi-graphics 4 mode */
-    public static final int SG4_WIDTH = 320;
-    public static final int SG4_HEIGHT = 240;
+    private static final int SG4_WIDTH = 320;
+    private static final int SG4_HEIGHT = 240;
 
     /* Screen related variables */
     private BufferedImage backBuffer;
@@ -36,9 +36,9 @@ public class Screen
     private ScreenMode screenMode;
     private int foreColor;
     private int backColor;
-    private Memory memory;
+    private IOController io;
 
-    /* Where the video buffer is in memory */
+    /* Where the video buffer is in io */
     private final UnsignedWord SCREEN_MEMORY = new UnsignedWord(0x0200);
 
     /* Color definitions for semi-graphics 4 mode */
@@ -954,14 +954,14 @@ public class Screen
             }
     };
 
-    public Screen(Memory memory, int scale) {
+    public Screen(IOController io, int scale) {
         this.width = SG4_WIDTH;
         this.height = SG4_HEIGHT;
         this.scale = scale;
         this.screenMode = ScreenMode.SEMIGRAPHICS4;
         this.foreColor = 0;
         this.backColor = 8;
-        this.memory = memory;
+        this.io = io;
         createBackBuffer();
     }
 
@@ -1014,7 +1014,7 @@ public class Screen
         UnsignedWord memoryPointer = SCREEN_MEMORY.copy();
         for (int y = 0; y < 16; y++) {
             for (int x = 0; x < 32; x++) {
-                UnsignedByte value = memory.readByte(memoryPointer);
+                UnsignedByte value = io.readByte(memoryPointer);
                 drawSG4Character(value, x, y);
                 memoryPointer.add(1);
             }
@@ -1112,7 +1112,7 @@ public class Screen
     public void sg4ClearScreen() {
         UnsignedWord videoMemory = SCREEN_MEMORY.copy();
         for (int x = 0; x < 512; x += 2) {
-            memory.writeWord(videoMemory, new UnsignedWord(0x2020));
+            io.writeWord(videoMemory, new UnsignedWord(0x2020));
             videoMemory.add(2);
         }
     }

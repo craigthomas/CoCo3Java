@@ -165,4 +165,25 @@ public class UnsignedByteTest
         UnsignedByte result = new UnsignedByte(0xBE);
         assertEquals(0xBE, result.hashCode());
     }
+
+    @Test
+    public void testGetSignedShortWorksCorrectly() {
+        UnsignedByte result = new UnsignedByte(0x40);
+        assertEquals(0x40, result.getSignedShort());
+
+        result = new UnsignedByte(0x81);
+        assertEquals(-1, result.getSignedShort());
+    }
+
+    @Test
+    public void testInverseWorksCorrectly() {
+        UnsignedByte result = new UnsignedByte(0xFF);
+        assertEquals(0x0, result.inverse().getShort());
+    }
+
+    @Test
+    public void testToStringWorksCorrectly() {
+        UnsignedByte result = new UnsignedByte(0xBE);
+        assertEquals("BE", result.toString());
+    }
 }

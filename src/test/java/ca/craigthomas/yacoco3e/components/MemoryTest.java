@@ -26,7 +26,7 @@ public class MemoryTest
 
     @Test
     public void testReadByteReadsCorrectByte() {
-        memory.memory[0xBEEF] = 0xAB;
+        memory.memory[0x7BEEF] = 0xAB;
         UnsignedByte result = memory.readByte(new UnsignedWord(0xBEEF));
         assertEquals(new UnsignedByte(0xAB), result);
     }
@@ -34,79 +34,65 @@ public class MemoryTest
     @Test
     public void testWriteByteWritesCorrectByte() {
         memory.writeByte(new UnsignedWord(0xBEEF), new UnsignedByte(0xAB));
-        assertEquals(memory.memory[0xBEEF], 0xAB);
+        assertEquals(memory.memory[0x7BEEF], 0xAB);
     }
 
     @Test
-    public void testReadWordReadsCorrectWord() {
-        memory.memory[0xBEEE] = 0xAB;
-        memory.memory[0xBEEF] = 0xCD;
-        UnsignedWord result = memory.readWord(new UnsignedWord(0xBEEE));
-        assertEquals(new UnsignedWord(0xABCD), result);
+    public void testGetPhysicalAddressWorksCorrectly() {
+        assertEquals(0x70412, memory.getPhysicalAddress(new UnsignedWord(0x0412)));
+    }
+    
+    @Test
+    public void testSetExecutivePARWorksCorrectly() {
+        memory.setExecutivePAR(0, new UnsignedByte(0xB1));
+        assertEquals(0xB1, memory.executivePAR[0]);
+
+        memory.setExecutivePAR(1, new UnsignedByte(0xB2));
+        assertEquals(0xB2, memory.executivePAR[1]);
+
+        memory.setExecutivePAR(2, new UnsignedByte(0xB3));
+        assertEquals(0xB3, memory.executivePAR[2]);
+
+        memory.setExecutivePAR(3, new UnsignedByte(0xB4));
+        assertEquals(0xB4, memory.executivePAR[3]);
+
+        memory.setExecutivePAR(4, new UnsignedByte(0xB5));
+        assertEquals(0xB5, memory.executivePAR[4]);
+
+        memory.setExecutivePAR(5, new UnsignedByte(0xB6));
+        assertEquals(0xB6, memory.executivePAR[5]);
+
+        memory.setExecutivePAR(6, new UnsignedByte(0xB7));
+        assertEquals(0xB7, memory.executivePAR[6]);
+        
+        memory.setExecutivePAR(7, new UnsignedByte(0xB8));
+        assertEquals(0xB8, memory.executivePAR[7]);
     }
 
     @Test
-    public void testGetImmediateReadsAddressFromPC() {
-        memory.memory[0xBEEE] = 0xAB;
-        memory.memory[0xBEEF] = 0xCD;
-        RegisterSet regs = new RegisterSet();
-        regs.setPC(new UnsignedWord(0xBEEE));
-        MemoryResult result = memory.getImmediateWord(regs);
-        assertEquals(2, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xABCD), result.getResult());
-    }
+    public void testSetTaskPARWorksCorrectly() {
+        memory.setTaskPAR(0, new UnsignedByte(0xB1));
+        assertEquals(0xB1, memory.taskPAR[0]);
 
-    @Test
-    public void testGetDirectReadsAddressFromDPAndPC() {
-        memory.memory[0xBEEE] = 0xCD;
-        RegisterSet regs = new RegisterSet();
-        regs.setPC(new UnsignedWord(0xBEEE));
-        regs.setDP(new UnsignedByte(0xAB));
-        MemoryResult result = memory.getDirect(regs);
-        assertEquals(1, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xABCD), result.getResult());
-    }
+        memory.setTaskPAR(1, new UnsignedByte(0xB2));
+        assertEquals(0xB2, memory.taskPAR[1]);
 
-    @Test
-    public void testPushStackWritesToMemoryLocation() {
-        RegisterSet regs = new RegisterSet();
-        regs.setS(new UnsignedWord(0xA000));
-        memory.pushStack(regs, Register.S, new UnsignedByte(0x98));
-        assertEquals(memory.memory[0x9FFF], new UnsignedByte(0x98).getShort());
-    }
+        memory.setTaskPAR(2, new UnsignedByte(0xB3));
+        assertEquals(0xB3, memory.taskPAR[2]);
 
-    @Test
-    public void testPushStackWritesToMemoryLocationUsingUStack() {
-        RegisterSet regs = new RegisterSet();
-        regs.setU(new UnsignedWord(0xA000));
-        memory.pushStack(regs, Register.U, new UnsignedByte(0x98));
-        assertEquals(memory.memory[0x9FFF], new UnsignedByte(0x98).getShort());
-    }
+        memory.setTaskPAR(3, new UnsignedByte(0xB4));
+        assertEquals(0xB4, memory.taskPAR[3]);
 
-    @Test
-    public void testPopStackReadsMemoryLocation() {
-        RegisterSet regs = new RegisterSet();
-        regs.setS(new UnsignedWord(0xA000));
-        memory.memory[0xA000] = 0x98;
-        UnsignedByte result = memory.popStack(regs, Register.S);
-        assertEquals(new UnsignedByte(0x98), result);
-        assertEquals(new UnsignedWord(0xA001), regs.getS());
-    }
+        memory.setTaskPAR(4, new UnsignedByte(0xB5));
+        assertEquals(0xB5, memory.taskPAR[4]);
 
-    @Test
-    public void testPopStackReadsMemoryLocationFromU() {
-        RegisterSet regs = new RegisterSet();
-        regs.setU(new UnsignedWord(0xA000));
-        memory.memory[0xA000] = 0x98;
-        UnsignedByte result = memory.popStack(regs, Register.U);
-        assertEquals(new UnsignedByte(0x98), result);
-        assertEquals(new UnsignedWord(0xA001), regs.getU());
-    }
+        memory.setTaskPAR(5, new UnsignedByte(0xB6));
+        assertEquals(0xB6, memory.taskPAR[5]);
 
-    @Test
-    public void testWriteWordWorksCorrectly() {
-        memory.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xBEEF));
-        assertEquals(memory.memory[0xA000], new UnsignedByte(0xBE).getShort());
-        assertEquals(memory.memory[0xA001], new UnsignedByte(0xEF).getShort());
+        memory.setTaskPAR(6, new UnsignedByte(0xB7));
+        assertEquals(0xB7, memory.taskPAR[6]);
+
+        memory.setTaskPAR(7, new UnsignedByte(0xB8));
+        assertEquals(0xB8, memory.taskPAR[7]);
     }
 }

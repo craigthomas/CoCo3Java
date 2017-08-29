@@ -14,7 +14,7 @@ public class MemoryResultTest
     public void testMemoryResultSetsValuesCorrect() {
         MemoryResult result = new MemoryResult(3, new UnsignedWord(0xBEEF));
         assertEquals(3, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xBEEF), result.getResult());
+        assertEquals(new UnsignedWord(0xBEEF), result.get());
     }
 
     @Test

@@ -4,6 +4,7 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import ca.craigthomas.yacoco3e.listeners.QuitMenuItemActionListener;
@@ -23,6 +24,7 @@ public class Emulator
     private Memory memory;
     private Keyboard keyboard;
     private CPU cpu;
+    private IOController ioController;
 
     // The Canvas on which all the drawing will take place
     private Canvas canvas;
@@ -37,9 +39,10 @@ public class Emulator
 
     public Emulator(int scaleFactor, String romFile) {
         memory = new Memory();
+        ioController = new IOController(memory, new RegisterSet());
         keyboard = new Keyboard(memory);
-        screen = new Screen(memory, scaleFactor);
-        cpu = new CPU(memory);
+        screen = new Screen(ioController, scaleFactor);
+        cpu = new CPU(ioController);
         screen.sg4ClearScreen();
 
         initEmulatorJFrame();
