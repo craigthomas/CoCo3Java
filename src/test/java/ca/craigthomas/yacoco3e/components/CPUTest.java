@@ -17,13 +17,15 @@ public class CPUTest
 {
     private CPU cpu;
     private Memory memory;
+    private IOController io;
     private RegisterSet registerSet;
 
     @Before
     public void setUp() {
         memory = new Memory();
         registerSet = new RegisterSet();
-        cpu = new CPU(registerSet, memory);
+        io = new IOController(memory, registerSet);
+        cpu = new CPU(io);
     }
 
     @Test
@@ -41,13 +43,13 @@ public class CPUTest
     @Test
     public void testNegateSetsOverflowFlag() {
         cpu.negate(new UnsignedByte(0x01));
-        assertTrue(registerSet.ccOverflowSet());
+        assertTrue(io.ccOverflowSet());
     }
 
     @Test
     public void testNegateSetsNegativeFlag() {
         cpu.negate(new UnsignedByte(0x01));
-        assertTrue(registerSet.ccNegativeSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -65,233 +67,233 @@ public class CPUTest
     @Test
     public void testComplementSetsCarryFlag() {
         cpu.compliment(new UnsignedByte(0x01));
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testComplementSetsNegativeFlagCorrect() {
         cpu.compliment(new UnsignedByte(0x01));
-        assertTrue(registerSet.ccNegativeSet());
+        assertTrue(io.ccNegativeSet());
 
         cpu.compliment(new UnsignedByte(0xFE));
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testComplementSetsZeroFlagCorrect() {
         UnsignedByte result = cpu.compliment(new UnsignedByte(0xFF));
         assertEquals(0, result.getShort());
-        assertTrue(registerSet.ccZeroSet());
+        assertTrue(io.ccZeroSet());
     }
 
     @Test
     public void testLogicalShiftRightMovesOneBitCorrect() {
         UnsignedByte result = cpu.logicalShiftRight(new UnsignedByte(0x2));
         assertEquals(new UnsignedByte(1), result);
-        assertFalse(registerSet.ccCarrySet());
+        assertFalse(io.ccCarrySet());
     }
 
     @Test
     public void testLogicalShiftRightMovesOneBitToZero() {
         UnsignedByte result = cpu.logicalShiftRight(new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0), result);
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testLogicalShiftRightSetsZeroBit() {
         UnsignedByte result = cpu.logicalShiftRight(new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0), result);
-        assertTrue(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccZeroSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testRotateRightMovesOneBitCorrect() {
         UnsignedByte result = cpu.rotateRight(new UnsignedByte(0x2));
         assertEquals(new UnsignedByte(1), result);
-        assertFalse(registerSet.ccCarrySet());
+        assertFalse(io.ccCarrySet());
     }
 
     @Test
     public void testRotateRightMovesOneBitCorrectWithCarry() {
-        registerSet.setCCCarry();
+        io.setCCCarry();
         UnsignedByte result = cpu.rotateRight(new UnsignedByte(0x2));
         assertEquals(new UnsignedByte(0x81), result);
-        assertFalse(registerSet.ccCarrySet());
+        assertFalse(io.ccCarrySet());
     }
 
     @Test
     public void testRotateRightMovesOneBitToZero() {
         UnsignedByte result = cpu.rotateRight(new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0), result);
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testRotateRightSetsZeroBit() {
         UnsignedByte result = cpu.rotateRight(new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0), result);
-        assertTrue(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccZeroSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testRotateRightSetsNegativeBit() {
-        registerSet.setCCCarry();
+        io.setCCCarry();
         UnsignedByte result = cpu.rotateRight(new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x80), result);
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccCarrySet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccCarrySet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testArithmeticShiftRightOneCorrect() {
         UnsignedByte result = cpu.arithmeticShiftRight(new UnsignedByte(0x1));
         assertEquals(0, result.getShort());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testArithmeticShiftRightHighBitRetained() {
         UnsignedByte result = cpu.arithmeticShiftRight(new UnsignedByte(0x81));
         assertEquals(0xC0, result.getShort());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testArithmeticShiftLeftOneCorrect() {
         UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x1));
         assertEquals(0x2, result.getShort());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccNegativeSet());
-        assertFalse(registerSet.ccCarrySet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccCarrySet());
     }
 
     @Test
     public void testArithmeticShiftLeftHighBitShiftedToCarry() {
         UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x81));
         assertEquals(0x2, result.getShort());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccNegativeSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testArithmeticShiftLeftOverflowSet() {
         UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0xC0));
         assertEquals(0x80, result.getShort());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccOverflowSet());
-        assertTrue(registerSet.ccNegativeSet());
-        assertTrue(registerSet.ccCarrySet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccOverflowSet());
+        assertTrue(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
     public void testRotateLeftOneCorrect() {
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0x1));
         assertEquals(0x2, result.getShort());
-        assertFalse(registerSet.ccCarrySet());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccNegativeSet());
-        assertFalse(registerSet.ccZeroSet());
+        assertFalse(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
     }
 
     @Test
     public void testRotateLeftSetsCarry() {
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0x80));
         assertEquals(0x0, result.getShort());
-        assertTrue(registerSet.ccCarrySet());
-        assertFalse(registerSet.ccOverflowSet());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testRotateLeftRotatesCarryToLowestBit() {
-        registerSet.setCCCarry();
+        io.setCCCarry();
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0x1));
         assertEquals(0x3, result.getShort());
-        assertFalse(registerSet.ccCarrySet());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testRotateLeftSetsOverflow() {
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0xC0));
         assertEquals(0x80, result.getShort());
-        assertTrue(registerSet.ccCarrySet());
-        assertTrue(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
+        assertTrue(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testDecrementOneCorrect() {
         UnsignedByte result = cpu.decrement(new UnsignedByte(0x1));
         assertEquals(0x0, result.getShort());
-        assertFalse(registerSet.ccOverflowSet());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testDecrementZeroCorrect() {
         UnsignedByte result = cpu.decrement(new UnsignedByte(0x0));
         assertEquals(0xFF, result.getShort());
-        assertTrue(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertTrue(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testDecrementHighValueCorrect() {
         UnsignedByte result = cpu.decrement(new UnsignedByte(0xFF));
         assertEquals(0xFE, result.getShort());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testIncrementOneCorrect() {
         UnsignedByte result = cpu.increment(new UnsignedByte(0x1));
         assertEquals(0x2, result.getShort());
-        assertFalse(registerSet.ccOverflowSet());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testIncrementSetsOverflow() {
         UnsignedByte result = cpu.increment(new UnsignedByte(0x7F));
         assertEquals(0x80, result.getShort());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccOverflowSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccOverflowSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testTestZeroCorrect() {
         cpu.test(new UnsignedByte(0x0));
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testTestNegativeCorrect() {
         cpu.test(new UnsignedByte(0x81));
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -305,7 +307,7 @@ public class CPUTest
     public void testClearWorksCorrect() {
         UnsignedByte result = cpu.clear(new UnsignedByte(0x4));
         assertEquals(0, result.getShort());
-        assertTrue(registerSet.ccZeroSet());
+        assertTrue(io.ccZeroSet());
     }
 
     @Test
@@ -313,8 +315,8 @@ public class CPUTest
         UnsignedWord word1 = new UnsignedWord();
         UnsignedWord word2 = new UnsignedWord();
         cpu.compareWord(word1, word2);
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -322,8 +324,8 @@ public class CPUTest
         UnsignedWord word1 = new UnsignedWord(0x1);
         UnsignedWord word2 = new UnsignedWord(0x7F);
         cpu.compareWord(word1, word2);
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -346,16 +348,16 @@ public class CPUTest
     public void testLoadRegisterSetsZero() {
         UnsignedWord word1 = new UnsignedWord();
         cpu.loadRegister(Register.S, word1);
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
     public void testLoadRegisterSetsNegative() {
         UnsignedWord word1 = new UnsignedWord(0x8100);
         cpu.loadRegister(Register.S, word1);
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -363,22 +365,22 @@ public class CPUTest
         UnsignedWord address = new UnsignedWord(0xA000);
         registerSet.getS().set(new UnsignedWord(0xBEEF));
         cpu.storeWordRegister(Register.S, address);
-        assertEquals(new UnsignedWord(0xBEEF), memory.readWord(address));
+        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
 
-        memory.writeWord(address, new UnsignedWord());
+        io.writeWord(address, new UnsignedWord());
         registerSet.getU().set(new UnsignedWord(0xBEEF));
         cpu.storeWordRegister(Register.U, address);
-        assertEquals(new UnsignedWord(0xBEEF), memory.readWord(address));
+        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
 
-        memory.writeWord(address, new UnsignedWord());
+        io.writeWord(address, new UnsignedWord());
         registerSet.getY().set(new UnsignedWord(0xBEEF));
         cpu.storeWordRegister(Register.Y, address);
-        assertEquals(new UnsignedWord(0xBEEF), memory.readWord(address));
+        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
 
-        memory.writeWord(address, new UnsignedWord());
+        io.writeWord(address, new UnsignedWord());
         registerSet.getX().set(new UnsignedWord(0xBEEF));
         cpu.storeWordRegister(Register.X, address);
-        assertEquals(new UnsignedWord(0xBEEF), memory.readWord(address));
+        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
     }
 
     @Test
@@ -386,8 +388,8 @@ public class CPUTest
         UnsignedWord address = new UnsignedWord(0xA000);
         registerSet.getS().set(new UnsignedWord(0x0));
         cpu.storeWordRegister(Register.S, address);
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -395,8 +397,8 @@ public class CPUTest
         UnsignedWord address = new UnsignedWord(0xA000);
         registerSet.getS().set(new UnsignedWord(0x8100));
         cpu.storeWordRegister(Register.S, address);
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -404,7 +406,7 @@ public class CPUTest
         UnsignedWord value = new UnsignedWord(0xBEEF);
         cpu.loadEffectiveAddress(Register.X, value);
         assertEquals(value, registerSet.getX());
-        assertFalse(registerSet.ccZeroSet());
+        assertFalse(io.ccZeroSet());
     }
 
     @Test
@@ -412,7 +414,7 @@ public class CPUTest
         UnsignedWord value = new UnsignedWord(0x0);
         cpu.loadEffectiveAddress(Register.X, value);
         assertEquals(value, registerSet.getX());
-        assertTrue(registerSet.ccZeroSet());
+        assertTrue(io.ccZeroSet());
     }
 
     @Test
@@ -474,8 +476,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x80));
         cpu.subtractM(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x7F), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -484,15 +486,15 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0x1));
         cpu.subtractM(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.subtractM(Register.B, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -500,8 +502,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x81));
         cpu.subtractM(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x80), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -509,8 +511,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x80));
         cpu.subtractMC(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x7F), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -519,15 +521,15 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0x1));
         cpu.subtractMC(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.subtractMC(Register.B, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -535,8 +537,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x81));
         cpu.subtractMC(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x80), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -545,8 +547,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x20));
         cpu.logicalAnd(Register.A, byte1);
         assertEquals(new UnsignedByte(0x20), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -556,15 +558,15 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0x20));
         cpu.logicalAnd(Register.A, byte1);
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x20));
         registerSet.setB(new UnsignedByte(0x20));
         cpu.logicalAnd(Register.B, byte1);
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -573,8 +575,8 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x81));
         cpu.logicalAnd(Register.A, byte1);
         assertEquals(new UnsignedByte(0x81), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -582,8 +584,8 @@ public class CPUTest
         registerSet.setD(new UnsignedWord(0x8000));
         cpu.subtractD(new UnsignedWord(0x1));
         assertEquals(new UnsignedWord(0x7FFF), registerSet.getD());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -591,8 +593,8 @@ public class CPUTest
         registerSet.setD(new UnsignedWord(0x1));
         cpu.subtractD(new UnsignedWord(0x1));
         assertEquals(new UnsignedWord(0x0), registerSet.getD());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -600,21 +602,21 @@ public class CPUTest
         registerSet.setD(new UnsignedWord(0x8100));
         cpu.subtractD(new UnsignedWord(0x100));
         assertEquals(new UnsignedWord(0x8000), registerSet.getD());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
     public void testLoadByteRegisterWorksCorrectly() {
         cpu.loadByteRegister(Register.A, new UnsignedByte(0xAA));
         assertEquals(new UnsignedByte(0xAA), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
 
         cpu.loadByteRegister(Register.B, new UnsignedByte(0xBB));
         assertEquals(new UnsignedByte(0xBB), registerSet.getB());
-        assertFalse(registerSet.ccZeroSet());
-        assertTrue(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
     }
 
     @Test
@@ -623,15 +625,15 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0xBB));
         cpu.loadByteRegister(Register.A, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0xAA));
         registerSet.setB(new UnsignedByte(0xBB));
         cpu.loadByteRegister(Register.B, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -640,29 +642,29 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0x1));
         cpu.exclusiveOr(Register.A, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x1), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.exclusiveOr(Register.A, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.exclusiveOr(Register.B, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x1), registerSet.getB());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.exclusiveOr(Register.B, new UnsignedByte(0x1));
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -671,29 +673,29 @@ public class CPUTest
         registerSet.setB(new UnsignedByte(0x1));
         cpu.logicalOr(Register.A, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x1), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x0));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.logicalOr(Register.A, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x0), registerSet.getA());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.logicalOr(Register.B, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x1), registerSet.getB());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
 
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x0));
         cpu.logicalOr(Register.B, new UnsignedByte(0x0));
         assertEquals(new UnsignedByte(0x0), registerSet.getB());
-        assertTrue(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -717,8 +719,8 @@ public class CPUTest
         registerSet.setD(new UnsignedWord(0x0101));
         cpu.addD(new UnsignedWord(0x0101));
         assertEquals(new UnsignedWord(0x0202), registerSet.getD());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -726,7 +728,7 @@ public class CPUTest
         registerSet.setA(new UnsignedByte(0x11));
         cpu.addByteRegister(Register.A, new UnsignedByte(0x11));
         assertEquals(new UnsignedByte(0x22), registerSet.getA());
-        assertFalse(registerSet.ccZeroSet());
-        assertFalse(registerSet.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
     }
 }

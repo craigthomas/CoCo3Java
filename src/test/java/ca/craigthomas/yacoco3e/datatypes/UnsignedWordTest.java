@@ -97,4 +97,31 @@ public class UnsignedWordTest
         UnsignedWord result = new UnsignedWord(0xABCD);
         assertEquals(new UnsignedByte(0xCD), result.getLow());
     }
+
+    @Test
+    public void testGTEWorksCorrectly() {
+        UnsignedWord word1 = new UnsignedWord(0xBEEF);
+        UnsignedWord word2 = new UnsignedWord(0xABEE);
+        assertTrue(word1.gte(word2));
+    }
+
+    @Test
+    public void testLTEWorksCorrectly() {
+        UnsignedWord word1 = new UnsignedWord(0xBEEF);
+        UnsignedWord word2 = new UnsignedWord(0xABEE);
+        assertTrue(word2.lte(word1));
+    }
+
+    @Test
+    public void testORMaskWorksCorrectly() {
+        UnsignedWord word1 = new UnsignedWord(0x2);
+        word1.or(0x1);
+        assertEquals(0x3, word1.getInt());
+    }
+
+    @Test
+    public void testInverseWorksCorrectly() {
+        UnsignedWord word1 = new UnsignedWord(0xFFFF);
+        assertEquals(0x0, word1.inverse().getInt());
+    }
 }

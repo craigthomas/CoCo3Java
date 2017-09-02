@@ -169,6 +169,28 @@ public class UnsignedWord
     }
 
     /**
+     * Returns true if this word is greater than or equal to the specified
+     * word.
+     *
+     * @param word1 the word to check against
+     * @return true if this word is greater than word1
+     */
+    public boolean gte(UnsignedWord word1) {
+        return this.value >= word1.getInt();
+    }
+
+    /**
+     * Returns true if this word is less than or equal to the specified
+     * word.
+     *
+     * @param word1 the word to check against
+     * @return true if this word is less than word1
+     */
+    public boolean lte(UnsignedWord word1) {
+        return this.value <= word1.getInt();
+    }
+
+    /**
      * Returns the integer representation of the word.
      *
      * @return the integer representation of the word
