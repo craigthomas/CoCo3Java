@@ -56,7 +56,7 @@ public class CPU extends Thread
      *
      * @return the number of ticks taken up by the instruction
      */
-    int executeInstruction() {
+    int executeInstruction() throws IllegalIndexedPostbyteException {
         int operationTicks = 0;
         MemoryResult memoryResult = new MemoryResult();
         UnsignedByte operand = io.readByte(io.getWordRegister(Register.PC));
@@ -3479,7 +3479,11 @@ public class CPU extends Thread
      */
     public void run() {
         while (alive) {
-            executeInstruction();
+            try {
+                executeInstruction();
+            } catch (IllegalIndexedPostbyteException e) {
+                System.out.println(e.getMessage());
+            }
         }
     }
 
