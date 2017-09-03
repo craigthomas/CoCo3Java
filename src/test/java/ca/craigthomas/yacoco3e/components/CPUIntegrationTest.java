@@ -59,6 +59,8 @@ public class CPUIntegrationTest
         expectedExtendedByte = new UnsignedByte(0xCF);
         expectedExtendedWord = new UnsignedWord(0xCFDA);
         ioSpy.writeWord(extendedAddress, expectedExtendedWord);
+
+        ioSpy.setX(new UnsignedWord(0xB000));
     }
 
     @Test
@@ -71,7 +73,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testNegateIndexedCalled() {
-        ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x60));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x6080));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
         verify(cpuSpy).negate(new UnsignedByte(0));
@@ -321,10 +323,10 @@ public class CPUIntegrationTest
 
     @Test
     public void testJumpIndexedCalled() {
-        ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x6E));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x6E80));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).jump(new UnsignedWord(0x2));
+        verify(cpuSpy).jump(new UnsignedWord(0xB000));
     }
 
     @Test
@@ -1062,7 +1064,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xAE00));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).loadRegister(Register.X, new UnsignedWord(0x0002));
+        verify(cpuSpy).loadRegister(Register.X, new UnsignedWord(0xB000));
     }
 
     @Test
@@ -1112,7 +1114,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xAF00));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).storeWordRegister(Register.X, new UnsignedWord(0x0002));
+        verify(cpuSpy).storeWordRegister(Register.X, new UnsignedWord(0xB000));
     }
 
     @Test
@@ -2784,7 +2786,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testTestBIndexedCalled() {
-        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xE500));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xE580));
         cpuSpy.executeInstruction();
         verify(cpuSpy).test(new UnsignedByte(0x0));
         verify(ioSpy).getIndexed();
@@ -3133,7 +3135,7 @@ public class CPUIntegrationTest
     public void testSTAIndexedCalled() {
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xA700));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeByteRegister(Register.A, new UnsignedWord(0x0002));
+        verify(cpuSpy).storeByteRegister(Register.A, new UnsignedWord(0xB000));
         verify(ioSpy).getIndexed();
     }
 
@@ -3158,7 +3160,7 @@ public class CPUIntegrationTest
     public void testSTBIndexedCalled() {
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xE700));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeByteRegister(Register.B, new UnsignedWord(0x0002));
+        verify(cpuSpy).storeByteRegister(Register.B, new UnsignedWord(0xB000));
         verify(ioSpy).getIndexed();
     }
 
@@ -3181,9 +3183,9 @@ public class CPUIntegrationTest
 
     @Test
     public void testJSRIndexedCalled() {
-        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xAD00));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xAD80));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).jumpToSubroutine(new UnsignedWord(0x0002));
+        verify(cpuSpy).jumpToSubroutine(new UnsignedWord(0xB000));
         verify(ioSpy).getIndexed();
     }
 
@@ -3208,7 +3210,7 @@ public class CPUIntegrationTest
     public void testSTDIndexedCalled() {
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xED00));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeWordRegister(Register.D, new UnsignedWord(0x0002));
+        verify(cpuSpy).storeWordRegister(Register.D, new UnsignedWord(0xB000));
         verify(ioSpy).getIndexed();
     }
 
@@ -3231,9 +3233,9 @@ public class CPUIntegrationTest
 
     @Test
     public void testSTUIndexedCalled() {
-        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xEF00));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xEF80));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeWordRegister(Register.U, new UnsignedWord(0x0002));
+        verify(cpuSpy).storeWordRegister(Register.U, new UnsignedWord(0xB000));
         verify(ioSpy).getIndexed();
     }
 
@@ -3256,7 +3258,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testADDDIndexedCalled() {
-        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xE300));
+        ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xE380));
         cpuSpy.executeInstruction();
         verify(cpuSpy).addD(new UnsignedWord(0x0000));
         verify(ioSpy).getIndexed();
