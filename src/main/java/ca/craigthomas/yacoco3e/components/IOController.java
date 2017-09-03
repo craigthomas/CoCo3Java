@@ -341,11 +341,13 @@ public class IOController
     }
 
     /**
-     * TODO: Corrected version of getIndexed. In progress.
+     * The getIndexed function reads the byte following the current PC word, and
+     * interprets the byte. Depending on the value of the byte, a new value is
+     * returned. May throw an IllegalIndexedPostbyteException.
      *
-     * @return
+     * @return a new MemoryResult with the indexed value
      */
-    public MemoryResult getIndexed() {
+    public MemoryResult getIndexed() throws IllegalIndexedPostbyteException {
         UnsignedByte postByte = readByte(regs.getPC());
         UnsignedWord r;
         UnsignedByte a;
@@ -353,12 +355,13 @@ public class IOController
         UnsignedWord d;
         UnsignedByte nByte;
         UnsignedWord nWord;
-        UnsignedWord nextPCWord = readWord(regs.getPC().next());
         UnsignedWord result;
 
         /* 5-bit offset - check for signed values */
         if (!postByte.isMasked(0x80)) {
             r = getWordRegister(getIndexedRegister(postByte));
+            System.out.println(r);
+
             UnsignedByte offset = new UnsignedByte(postByte.getShort() & 0x1F);
             if (offset.isMasked(0x10)) {
                 offset.and(0xF);
@@ -420,14 +423,14 @@ public class IOController
             /* n,R -> 8-bit offset from R */
             case 0x08:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nByte = readByte(nextPCWord);
+                nByte = readByte(regs.getPC().next());
                 result = new UnsignedWord(r.getInt() + nByte.getSignedShort());
                 return new MemoryResult(0, result);
 
             /* n,R -> 16-bit offset from R */
             case 0x09:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nWord = readWord(nextPCWord);
+                nWord = readWord(regs.getPC().next());
                 result = new UnsignedWord(r.getInt() + nWord.getSignedInt());
                 return new MemoryResult(0, result);
 
@@ -441,86 +444,93 @@ public class IOController
             /* n,PC -> 8-bit offset from PC */
             case 0x0C:
                 r = getWordRegister(Register.PC);
-                nByte = readByte(nextPCWord);
+                nByte = readByte(regs.getPC().next());
                 result = new UnsignedWord(r.getInt() + nByte.getSignedShort());
                 return new MemoryResult(0, result);
 
             /* n,PC -> 16-bit offset from PC */
             case 0x0D:
                 r = getWordRegister(Register.PC);
-                nWord = readWord(nextPCWord);
+                nWord = readWord(regs.getPC().next());
                 result = new UnsignedWord(r.getInt() + nWord.getSignedInt());
                 return new MemoryResult(0, result);
 
-            /* ,R++ -> R, then increment R by two - indirect*/
+            /* [,R++] -> R, then increment R by two - indirect*/
             case 0x11:
                 r = getWordRegister(getIndexedRegister(postByte));
                 result = readWord(new UnsignedWord(r.getInt()));
                 r.add(2);
                 return new MemoryResult(0, result);
 
-            /* ,R-- -> R, then decrement by two - indirect*/
+            /* [,R--] -> R, then decrement by two - indirect*/
             case 0x13:
                 r = getWordRegister(getIndexedRegister(postByte));
                 result = readWord(new UnsignedWord(r.getInt()));
                 r.add(-2);
                 return new MemoryResult(0, result);
 
-            /* ,R -> No offset, just R - indirect */
+            /* [,R] -> No offset, just R - indirect */
             case 0x14:
                 r = readWord(getWordRegister(getIndexedRegister(postByte)));
                 return new MemoryResult(0, r);
 
-            /* B,R -> B offset from R - indirect */
+            /* [B,R] -> B offset from R - indirect */
             case 0x15:
                 r = getWordRegister(getIndexedRegister(postByte));
                 b = getByteRegister(Register.B);
                 result = readWord(new UnsignedWord(r.getInt() + b.getSignedShort()));
                 return new MemoryResult(0, result);
 
-            /* A,R -> A offset from R - indirect */
+            /* [A,R] -> A offset from R - indirect */
             case 0x16:
                 r = getWordRegister(getIndexedRegister(postByte));
                 a = getByteRegister(Register.A);
                 result = readWord(new UnsignedWord(r.getInt() + a.getSignedShort()));
                 return new MemoryResult(0, result);
 
-            /* n,R -> 8-bit offset from R - indirect */
+            /* [n,R] -> 8-bit offset from R - indirect */
             case 0x18:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nByte = readByte(nextPCWord);
+                nByte = readByte(regs.getPC().next());
                 result = readWord(new UnsignedWord(r.getInt() + nByte.getSignedShort()));
                 return new MemoryResult(0, result);
 
-            /* n,R -> 16-bit offset from R - indirect */
+            /* [n,R] -> 16-bit offset from R - indirect */
             case 0x19:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nWord = readWord(nextPCWord);
+                nWord = readWord(regs.getPC().next());
                 result = readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
                 return new MemoryResult(0, result);
 
-            /* D,R -> D offset from R - indirect*/
+            /* [D,R] -> D offset from R - indirect*/
             case 0x1B:
                 r = getWordRegister(getIndexedRegister(postByte));
                 d = getWordRegister(Register.D);
                 result = readWord(new UnsignedWord(r.getInt() + d.getSignedInt()));
                 return new MemoryResult(0, result);
 
-            /* n,PC -> 8-bit offset from PC - indirect */
+            /* [n,PC] -> 8-bit offset from PC - indirect */
             case 0x1C:
                 r = getWordRegister(Register.PC);
-                nByte = readByte(nextPCWord);
+                nByte = readByte(regs.getPC().next());
                 result = readWord(new UnsignedWord(r.getInt() + nByte.getSignedShort()));
                 return new MemoryResult(0, result);
 
-            /* n,PC -> 16-bit offset from PC - indirect */
+            /* [n,PC] -> 16-bit offset from PC - indirect */
             case 0x1D:
                 r = getWordRegister(Register.PC);
-                nWord = readWord(nextPCWord);
+                nWord = readWord(regs.getPC().next());
                 result = readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
                 return new MemoryResult(0, result);
+
+            /* [n] -> extended indirect */
+            case 0x1F:
+                nWord = readWord(regs.getPC().next());
+                result = readWord(nWord);
+                return new MemoryResult(0, result);
         }
-        return null;
+
+        throw new IllegalIndexedPostbyteException(postByte);
     }
 
     /**
