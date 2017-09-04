@@ -16,6 +16,7 @@ public class IOController
 
     protected Memory memory;
     protected RegisterSet regs;
+    protected Keyboard keyboard;
 
     /* Condition Code - Carry */
     public static final short CC_C = 0x01;
@@ -41,10 +42,11 @@ public class IOController
     /* Condition Code - Everything */
     public static final short CC_E = 0x80;
 
-    public IOController(Memory memory, RegisterSet registerSet) {
+    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard) {
         ioMemory = new short[IO_ADDRESS_SIZE];
         this.memory = memory;
         this.regs = registerSet;
+        this.keyboard = keyboard;
     }
 
     /**
@@ -68,6 +70,16 @@ public class IOController
      * @return the IO byte read
      */
     public UnsignedByte readIOByte(int address) {
+        switch (address) {
+            /* Keyboard High Byte */
+            case 0xFF00:
+                return keyboard.getHighByte();
+
+            /* Keyboard Low Byte */
+            case 0xFF02:
+                return keyboard.getLowByte();
+        }
+
         return new UnsignedByte(ioMemory[address - 0xFF00]);
     }
 
