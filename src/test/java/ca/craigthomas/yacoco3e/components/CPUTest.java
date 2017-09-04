@@ -24,7 +24,7 @@ public class CPUTest
     public void setUp() {
         memory = new Memory();
         registerSet = new RegisterSet();
-        io = new IOController(memory, registerSet);
+        io = new IOController(memory, registerSet, new Keyboard());
         cpu = new CPU(io);
     }
 

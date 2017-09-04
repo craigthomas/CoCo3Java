@@ -7,7 +7,7 @@
 
 ## What Is It?
 
-This project is a Color Computer 3 emulator written in C. Note that I cannot 
+This project is a Color Computer 3 emulator written in Java. Note that I cannot 
 distribute ROM files with the emulator, as they are copyright their 
 respective owners.
 

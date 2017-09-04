@@ -45,7 +45,7 @@ public class CPUIntegrationTest
         registerSet = new RegisterSet();
         registerSetSpy = spy(registerSet);
 
-        io = new IOController(memorySpy, registerSetSpy);
+        io = new IOController(memorySpy, registerSetSpy, new Keyboard());
         ioSpy = spy(io);
 
         cpu = new CPU(ioSpy);

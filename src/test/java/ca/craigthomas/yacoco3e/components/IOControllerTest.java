@@ -7,6 +7,9 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.awt.event.KeyEvent;
 
 import static org.junit.Assert.*;
 
@@ -15,12 +18,14 @@ public class IOControllerTest
     private Memory memory;
     private RegisterSet regs;
     private IOController io;
+    private Keyboard keyboard;
 
     @Before
     public void setUp() throws IllegalIndexedPostbyteException{
         memory = new Memory();
         regs = new RegisterSet();
-        io = new IOController(memory, regs);
+        keyboard = new Keyboard();
+        io = new IOController(memory, regs, keyboard);
     }
 
     @Test
@@ -32,8 +37,8 @@ public class IOControllerTest
 
     @Test
     public void testReadIOByteReadsCorrectByte() throws IllegalIndexedPostbyteException{
-        io.ioMemory[0x0] = 0xAB;
-        UnsignedByte result = io.readByte(new UnsignedWord(0xFF00));
+        io.ioMemory[0x1] = 0xAB;
+        UnsignedByte result = io.readByte(new UnsignedWord(0xFF01));
         assertEquals(new UnsignedByte(0xAB), result);
     }
 
@@ -59,9 +64,9 @@ public class IOControllerTest
 
     @Test
     public void testReadIOWordReadsCorrectWord() throws IllegalIndexedPostbyteException{
-        io.ioMemory[0x0] = 0xAB;
-        io.ioMemory[0x1] = 0xCD;
-        UnsignedWord result = io.readWord(new UnsignedWord(0xFF00));
+        io.ioMemory[0x3] = 0xAB;
+        io.ioMemory[0x4] = 0xCD;
+        UnsignedWord result = io.readWord(new UnsignedWord(0xFF03));
         assertEquals(new UnsignedWord(0xABCD), result);
     }
 
@@ -590,5 +595,22 @@ public class IOControllerTest
     public void testGetIndexedIllegalPostByteExceptionOnRPostDecrement() throws IllegalIndexedPostbyteException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x92));
         io.getIndexed();
+    }
+
+    @Test
+    public void testKeyboardIOWorksCorrectly() {
+        KeyEvent event = Mockito.mock(KeyEvent.class);
+        Mockito.when(event.getKeyCode()).thenReturn(KeyEvent.VK_D);
+        keyboard.keyPressed(event);
+        UnsignedByte highByte = io.readByte(new UnsignedWord(0xFF00));
+        UnsignedByte lowByte = io.readByte(new UnsignedWord(0xFF02));
+        assertEquals(new UnsignedByte(0xFE), highByte);
+        assertEquals(new UnsignedByte(0xEF), lowByte);
+
+        keyboard.keyReleased(event);
+        highByte = io.readByte(new UnsignedWord(0xFF00));
+        lowByte = io.readByte(new UnsignedWord(0xFF02));
+        assertEquals(new UnsignedByte(0xFF), highByte);
+        assertEquals(new UnsignedByte(0xFF), lowByte);
     }
 }

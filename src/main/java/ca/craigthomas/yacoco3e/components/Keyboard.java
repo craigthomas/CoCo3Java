@@ -41,21 +41,19 @@ import java.awt.event.KeyEvent;
  *
  *         7     6     5     4      3     2     1      0
  *                          LOW
+ *
+ *  The keypresses on the CoCo are recorded as active low values, therefore
+ *  the byte values are inversed.
  */
 public class Keyboard extends KeyAdapter
 {
-    public final static UnsignedWord HIGH_BYTE = new UnsignedWord(0xFF00);
-    public final static UnsignedWord LOW_BYTE = new UnsignedWord(0xFF02);
-
     private UnsignedByte highByte;
     private UnsignedByte lowByte;
-    private Memory memory;
 
-    public Keyboard(Memory memory) {
+    public Keyboard() {
         super();
-        this.highByte = new UnsignedByte(0xFF);
-        this.lowByte = new UnsignedByte(0xFF);
-        this.memory = memory;
+        this.highByte = new UnsignedByte(0x0);
+        this.lowByte = new UnsignedByte(0x0);
     }
 
     @Override
@@ -395,28 +393,34 @@ public class Keyboard extends KeyAdapter
                 break;
 
             /* @ */
-            case KeyEvent.VK_ASTERISK:
+            case KeyEvent.VK_AT:
                 highByte.or(0x01);
                 lowByte.or(0x01);
                 break;
         }
-        writeToMemory();
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         highByte.and(0x0);
         lowByte.and(0x0);
-        writeToMemory();
     }
 
     /**
-     * Writes the current value of the high and low bytes into the
-     * proper memory locations. The values written to memory require
-     * an active low value, so the inverse bit patterns are written.
+     * Return the high byte from the keyboard.
+     *
+     * @return the high byte of the keyboard
      */
-    public void writeToMemory() {
-        memory.writeByte(HIGH_BYTE, highByte.inverse());
-        memory.writeByte(LOW_BYTE, lowByte.inverse());
+    public UnsignedByte getHighByte() {
+        return highByte.inverse();
+    }
+
+    /**
+     * Return the low byte of the keyboard.
+     *
+     * @return the low byte of the keyboard
+     */
+    public UnsignedByte getLowByte() {
+        return lowByte.inverse();
     }
 }

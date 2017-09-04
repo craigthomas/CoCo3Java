@@ -39,8 +39,8 @@ public class Emulator
 
     public Emulator(int scaleFactor, String romFile) {
         memory = new Memory();
-        ioController = new IOController(memory, new RegisterSet());
-        keyboard = new Keyboard(memory);
+        keyboard = new Keyboard();
+        ioController = new IOController(memory, new RegisterSet(), keyboard);
         screen = new Screen(ioController, scaleFactor);
         cpu = new CPU(ioController);
         screen.sg4ClearScreen();
