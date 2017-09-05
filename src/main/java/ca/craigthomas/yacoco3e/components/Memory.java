@@ -22,9 +22,12 @@ public class Memory
 {
     /* 512K memory definition */
     public static final int MEM_512K = 0x80000;
+    public static final int MEM_32K = 0x8000;
 
-    /* The main memory array */
+    /* The main memory arrays */
     protected short [] memory;
+    protected short [] rom;
+    protected short [] cartROM;
 
     /* Page address registers - controls mapping between virtual and physical memory */
     public static final int PAR_COUNT = 8;
@@ -33,6 +36,8 @@ public class Memory
     protected short [] defaultPAR;
     boolean executiveParEnabled;
     boolean mmuEnabled;
+    boolean allRAMMode;
+    UnsignedByte romMode;
 
     protected static final int TOTAL_PAGES = 0x3F;
 
@@ -56,6 +61,14 @@ public class Memory
         defaultPAR = new short[PAR_COUNT];
         mmuEnabled = true;
 
+        /* ROM memory sizes */
+        cartROM = new short[MEM_32K];
+        rom = new short[MEM_32K];
+
+        /* Setup RAM/ROM mode variables */
+        allRAMMode = true;
+        romMode = new UnsignedByte(0x2);
+
         /* Initial PAR values */
         executivePAR[0] = taskPAR[0] = defaultPAR[0] = 0x38;
         executivePAR[1] = taskPAR[1] = defaultPAR[1] = 0x39;
@@ -78,12 +91,136 @@ public class Memory
      * defaultPAR set is used, which maps virtual memory to the top 64K
      * of physical memory.
      *
+     * In addition to the MMU translation, cartridge ROM and machine ROM
+     * are mapped. The mapping depends on the RAM mode that is set. In ROM/RAM
+     * mode, machine and cartridge ROMs are mapped to various physical pages.
+     *
      * @param address the address to translate
      * @return the physical address in memory based on the pars
      */
-    public int getPhysicalAddress(UnsignedWord address) {
+
+    public int getPAR(UnsignedWord address) {
+        return address.getInt() >> 13;
+    }
+
+    /**
+     * Reads a byte from either the computer's RAM, ROM or the cartridge ROM.
+     *
+     * @param address the address to read from
+     * @return the short value of the byte read
+     */
+    public short readPhysicalByte(UnsignedWord address) {
         int intAddress = address.getInt();
-        int par = intAddress >> 13;
+        int par = getPAR(address);
+
+        /* Grab the PAR to read from (if MMU enabled) */
+        int parValue = defaultPAR[par];
+        if (mmuEnabled) {
+            parValue = (executiveParEnabled) ? executivePAR[par] : taskPAR[par];
+        }
+
+        /* RAM only */
+        if (allRAMMode) {
+            return memory[getPhysicalAddress(par, intAddress)];
+        }
+
+        /* RAM + ROM */
+        if (romMode.equals(new UnsignedByte(0x2))) {
+            switch (parValue) {
+                case 0x3C:
+                    return rom[intAddress & 0x1FFF];
+
+                case 0x3D:
+                    return rom[0x2000 + (intAddress & 0x1FFF)];
+
+                case 0x3E:
+                    return rom[0x4000 + (intAddress & 0x1FFF)];
+
+                case 0x3F:
+                    return rom[0x6000 + (intAddress & 0x1FFF)];
+
+                default:
+                    return memory[getPhysicalAddress(par, intAddress)];
+            }
+        }
+
+        /* RAM + CART ROM */
+        if (romMode.equals(new UnsignedByte(0x3))) {
+            switch (parValue) {
+                case 0x3C:
+                    return cartROM[intAddress & 0x1FFF];
+
+                case 0x3D:
+                    return cartROM[0x2000 + (intAddress & 0x1FFF)];
+
+                case 0x3E:
+                    return cartROM[0x4000 + (intAddress & 0x1FFF)];
+
+                case 0x3F:
+                    return cartROM[0x6000 + (intAddress & 0x1FFF)];
+
+                default:
+                    return memory[getPhysicalAddress(par, intAddress)];
+            }
+        }
+
+        /* RAM, ROM, and CART ROM - lower 16K = ROM, upper 16K = CART ROM */
+        switch (parValue) {
+            case 0x3C:
+                return rom[intAddress & 0x1FFF];
+
+            case 0x3D:
+                return rom[0x2000 + (intAddress & 0x1FFF)];
+
+            case 0x3E:
+                return cartROM[intAddress & 0x1FFF];
+
+            case 0x3F:
+                return cartROM[0x2000 + (intAddress & 0x1FFF)];
+
+            default:
+                return memory[getPhysicalAddress(par, intAddress)];
+        }
+    }
+
+    /**
+     * Writes an UnsignedByte to the specified memory address. If the system
+     * is in a ROM mode, will not write bytes to a ROM location.
+     *
+     * @param address the UnsignedWord location to write to
+     * @param value the UnsignedByte to write
+     */
+    public void writeByte(UnsignedWord address, UnsignedByte value) {
+        int intAddress = address.getInt();
+        int par = getPAR(address);
+
+        /* RAM only */
+        if (allRAMMode) {
+            memory[getPhysicalAddress(par, intAddress)] = value.getShort();
+        }
+
+        /* RAM + ROM modes - don't write anything to 3C, 3D, 3E, 3F*/
+        switch (par) {
+            case 0x3C:
+            case 0x3D:
+            case 0x3E:
+            case 0x3F:
+                return;
+
+            default:
+                memory[getPhysicalAddress(par, intAddress)] = value.getShort();
+        }
+    }
+
+    /**
+     * Given a PAR and an address, translates the address into a 19-bit
+     * address into physical RAM.
+     *
+     * @param par the page to read from
+     * @param address the actual address to read
+     * @return the address in physical memory to read from
+     */
+    public int getPhysicalAddress(int par, int address) {
         int parAddress;
         if (mmuEnabled) {
             parAddress = (executiveParEnabled ? executivePAR[par] : taskPAR[par]) & TOTAL_PAGES;
@@ -91,7 +228,7 @@ public class Memory
             parAddress = defaultPAR[par] & TOTAL_PAGES;
         }
         parAddress = parAddress << 13;
-        return parAddress | (intAddress & 0x1FFF);
+        return parAddress | (address & 0x1FFF);
     }
 
     /**
@@ -123,6 +260,34 @@ public class Memory
     }
 
     /**
+     * Enables all RAM mode operation.
+     */
+    public void enableAllRAMMode() {
+        allRAMMode = true;
+    }
+
+    /**
+     * Disables all RAM mode operation.
+     */
+    public void disableAllRAMMode() {
+        allRAMMode = false;
+    }
+
+    /**
+     * Sets the operating mode of ROM. Values are as follows:
+     *
+     *   bit1 bit0
+     *    0    x     - 3C = Ext Basic, 3D = Basic, 3E & 3F = Cart ROM
+     *    1    0     - 3C = Ext Basic, 3D = Basic, 3E = Reset, 3F = Sup Ext Basic
+     *    1    1     - 3C & 3D & 3E & 3F = Cart ROM
+     *
+     * @param mode the mode to operate in
+     */
+    public void setROMMode(UnsignedByte mode) {
+        romMode = mode;
+    }
+
+    /**
      * Sets the EXECUTIVE page address register to the specified value.
      *
      * @param par the PAR number to set
@@ -149,28 +314,41 @@ public class Memory
      * @return an UnsignedByte from the specified location
      */
     public UnsignedByte readByte(UnsignedWord address) {
-        return new UnsignedByte(memory[getPhysicalAddress(address)]);
+        return new UnsignedByte(readPhysicalByte(address));
+    }
+
+    boolean loadROM(byte[] streamData) {
+        int byteCounter = 0;
+        if (streamData != null) {
+            for (byte data : streamData) {
+                rom[byteCounter] = (short) data;
+                byteCounter++;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    boolean loadCartROM(byte[] streamData) {
+        int byteCounter = 0;
+        if (streamData != null) {
+            for (byte data : streamData) {
+                cartROM[byteCounter] = (short) data;
+                byteCounter++;
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
-     * Writes an UnsignedByte to the specified memory address.
+     * Loads a stream into an array of bytes.
      *
-     * @param address the UnsignedWord location to write to
-     * @param value the UnsignedByte to write
+     * @param stream the stream to read from
+     * @return an array of bytes, null on error
      */
-    public void writeByte(UnsignedWord address, UnsignedByte value) {
-        memory[getPhysicalAddress(address)] = value.getShort();
-    }
-
-    /**
-     * Load a file full of bytes into emulator memory.
-     *
-     * @param stream The open stream to read from
-     * @param offset The memory location to start loading the file into
-     */
-    boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
+    byte[] loadStream(InputStream stream) {
         try {
-            UnsignedWord currentOffset = offset.copy();
             byte[] data;
 
             /* Determine appropriate endianess */
@@ -189,18 +367,34 @@ public class Memory
                 LOGGER.info("big endian system detected");
                 data = IOUtils.toByteArray(stream);
             }
-
-            /* Read data from the buffer */
-            for (byte theByte : data) {
-                writeByte(currentOffset, new UnsignedByte(theByte));
-                currentOffset.add(1);
-            }
-
-            return true;
+            return data;
         } catch (Exception e) {
             LOGGER.severe("error reading from stream");
             LOGGER.severe(e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Load a file full of bytes into emulator memory.
+     *
+     * @param stream The open stream to read from
+     * @param offset The memory location to start loading the file into
+     */
+    boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
+        byte[] data = loadStream(stream);
+        UnsignedWord currentOffset = offset.copy();
+
+        if (data == null) {
             return false;
         }
+
+        /* Read data from the buffer */
+        for (byte theByte : data) {
+            writeByte(currentOffset, new UnsignedByte(theByte));
+            currentOffset.add(1);
+        }
+
+        return true;
     }
 }

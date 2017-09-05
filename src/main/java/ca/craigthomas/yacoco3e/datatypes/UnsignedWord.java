@@ -206,7 +206,7 @@ public class UnsignedWord
      * @return the signed integer representation of the word
      */
     public int getSignedInt() {
-        return (isMasked(0x8000)) ? -(value & 0x7FFF) : value;
+        return (isMasked(0x8000)) ? -(twosCompliment().getInt()) : value;
     }
 
     /**

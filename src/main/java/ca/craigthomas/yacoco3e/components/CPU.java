@@ -60,6 +60,7 @@ public class CPU extends Thread
         int operationTicks = 0;
         MemoryResult memoryResult = new MemoryResult();
         UnsignedByte operand = io.readByte(io.getWordRegister(Register.PC));
+        System.out.print("PC " + io.getWordRegister(Register.PC) + ", ");
         io.incrementPC();
         int bytes = 0;
         UnsignedWord tempWord = new UnsignedWord();
@@ -246,7 +247,7 @@ public class CPU extends Thread
                         setShortDesc("LBNE, REL [%04X]", memoryResult);
                         break;
 
-                    /* LBNE - Long Branch on Equal */
+                    /* LBEQ - Long Branch on Equal */
                     case 0x27:
                         memoryResult = io.getImmediateWord();
                         if (io.ccZeroSet()) {
@@ -375,7 +376,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         compareWord(io.getWordRegister(Register.D), memoryResult.get());
                         operationTicks = 5;
-                        setShortDesc("CMPD, IMM", null);
+                        setShortDesc("CMPD, IMM [%04X]", memoryResult);
                         break;
 
                     /* CMPY - Compare Y - Immediate */
@@ -383,7 +384,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         compareWord(io.getWordRegister(Register.Y), memoryResult.get());
                         operationTicks = 5;
-                        setShortDesc("CMPY, IMM", null);
+                        setShortDesc("CMPY, IMM [%04X]", memoryResult);
                         break;
 
                     /* LDY - Load Y - Immediate */
@@ -391,7 +392,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         loadRegister(Register.Y, memoryResult.get());
                         operationTicks = 4;
-                        setShortDesc("LDY, IMM", memoryResult);
+                        setShortDesc("LDY, IMM [%04X]", memoryResult);
                         break;
 
                     /* CMPD - Compare D - Direct */
@@ -399,7 +400,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         compareWord(io.getWordRegister(Register.D), io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("CMPD, DIR", null);
+                        setShortDesc("CMPD, DIR [%04X]", memoryResult);
                         break;
 
                     /* CMPY - Compare Y - Direct */
@@ -407,7 +408,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         compareWord(io.getWordRegister(Register.Y), io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("CMPY, DIR", null);
+                        setShortDesc("CMPY, DIR [%04X]", memoryResult);
                         break;
 
                     /* LDY - Load Y - Direct */
@@ -415,7 +416,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         loadRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 6;
-                        setShortDesc("LDY, DIR", memoryResult);
+                        setShortDesc("LDY, DIR [%04X]", memoryResult);
                         break;
 
                     /* STY - Store Y - Direct */
@@ -423,7 +424,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 6;
-                        setShortDesc("STY, DIR", memoryResult);
+                        setShortDesc("STY, DIR [%04X]", memoryResult);
                         break;
 
                     /* CMPD - Compare D - Direct */
@@ -431,7 +432,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         compareWord(io.getWordRegister(Register.D), io.readWord(memoryResult.get()));
                         operationTicks = 5 + memoryResult.getBytesConsumed();
-                        setShortDesc("CMPD, IND", null);
+                        setShortDesc("CMPD, IND [%04X]", memoryResult);
                         break;
 
                     /* CMPY - Compare Y - Direct */
@@ -439,7 +440,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         compareWord(io.getWordRegister(Register.Y), io.readWord(memoryResult.get()));
                         operationTicks = 5 + memoryResult.getBytesConsumed();
-                        setShortDesc("CMPY, IND", null);
+                        setShortDesc("CMPY, IND [%04X]", memoryResult);
                         break;
 
                     /* LDY - Load Y - Direct */
@@ -447,7 +448,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         loadRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 4 + memoryResult.getBytesConsumed();
-                        setShortDesc("LDY, IND", memoryResult);
+                        setShortDesc("LDY, IND [%04X]", memoryResult);
                         break;
 
                     /* STY - Store Y - Indexed */
@@ -455,7 +456,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 4 + memoryResult.getBytesConsumed();
-                        setShortDesc("STY, IND", memoryResult);
+                        setShortDesc("STY, IND [%04X]", memoryResult);
                         break;
 
                     /* CMPD - Compare D - Extended */
@@ -463,7 +464,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         compareWord(io.getWordRegister(Register.D), io.readWord(memoryResult.get()));
                         operationTicks = 8;
-                        setShortDesc("CMPD, EXT", null);
+                        setShortDesc("CMPD, EXT [%04X]", memoryResult);
                         break;
 
                     /* CMPY - Compare Y - Extended */
@@ -471,7 +472,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         compareWord(io.getWordRegister(Register.Y), io.readWord(memoryResult.get()));
                         operationTicks = 8;
-                        setShortDesc("CMPY, EXT", null);
+                        setShortDesc("CMPY, EXT [%04X]", memoryResult);
                         break;
 
                     /* LDY - Load Y - Extended */
@@ -479,7 +480,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         loadRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("LDY, EXT", memoryResult);
+                        setShortDesc("LDY, EXT [%04X]", memoryResult);
                         break;
 
                     /* STY - Store Y - Extended */
@@ -487,7 +488,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("STY, EXT", memoryResult);
+                        setShortDesc("STY, EXT [%04X]", memoryResult);
                         break;
 
                     /* LDS - Load S - Immediate */
@@ -495,7 +496,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         loadRegister(Register.S, memoryResult.get());
                         operationTicks = 4;
-                        setShortDesc("LDS, IMM", memoryResult);
+                        setShortDesc("LDS, IMM [%04X]", memoryResult);
                         break;
 
                     /* LDS - Load S - Direct */
@@ -503,7 +504,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         loadRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 6;
-                        setShortDesc("LDS, DIR", memoryResult);
+                        setShortDesc("LDS, DIR [%04X]", memoryResult);
                         break;
 
                     /* STS - Store S - Direct */
@@ -511,7 +512,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         storeWordRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 6;
-                        setShortDesc("STS, DIR", memoryResult);
+                        setShortDesc("STS, DIR [%04X]", memoryResult);
                         break;
 
                     /* LDS - Load S - Indexed */
@@ -519,7 +520,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         loadRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 4 + memoryResult.getBytesConsumed();
-                        setShortDesc("LDS, IND", memoryResult);
+                        setShortDesc("LDS, IND [%04X]", memoryResult);
                         break;
 
                     /* STS - Store S - Indexed */
@@ -527,7 +528,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         storeWordRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 4 + memoryResult.getBytesConsumed();
-                        setShortDesc("STS, IND", memoryResult);
+                        setShortDesc("STS, IND [%04X]", memoryResult);
                         break;
 
                     /* LDS - Load S - Extended */
@@ -535,7 +536,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         loadRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("LDS, EXT", memoryResult);
+                        setShortDesc("LDS, EXT [%04X]", memoryResult);
                         break;
 
                     /* STS - Store S - Extended */
@@ -543,7 +544,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         storeWordRegister(Register.S, io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("STS, EXT", memoryResult);
+                        setShortDesc("STS, EXT [%04X]", memoryResult);
                         break;
                 }
                 break;
@@ -567,7 +568,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         compareWord(io.getWordRegister(Register.U), memoryResult.get());
                         operationTicks = 5;
-                        setShortDesc("CMPU, IMM", null);
+                        setShortDesc("CMPU, IMM [%04X]", memoryResult);
                         break;
 
                     /* CMPS - Compare S - Immediate */
@@ -575,7 +576,7 @@ public class CPU extends Thread
                         memoryResult = io.getImmediateWord();
                         compareWord(io.getWordRegister(Register.S), memoryResult.get());
                         operationTicks = 5;
-                        setShortDesc("CMPS, IMM", null);
+                        setShortDesc("CMPS, IMM [%04X]", memoryResult);
                         break;
 
                     /* CMPU - Compare U - Direct */
@@ -583,7 +584,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         compareWord(io.getWordRegister(Register.U), io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("CMPU, DIR", null);
+                        setShortDesc("CMPU, DIR [%04X]", memoryResult);
                         break;
 
                     /* CMPS - Compare S - Direct */
@@ -591,7 +592,7 @@ public class CPU extends Thread
                         memoryResult = io.getDirect();
                         compareWord(io.getWordRegister(Register.S), io.readWord(memoryResult.get()));
                         operationTicks = 7;
-                        setShortDesc("CMPS, DIR", null);
+                        setShortDesc("CMPS, DIR [%04X]", memoryResult);
                         break;
 
                     /* CMPU - Compare U - Direct */
@@ -599,7 +600,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         compareWord(io.getWordRegister(Register.U), io.readWord(memoryResult.get()));
                         operationTicks = 5 + memoryResult.getBytesConsumed();
-                        setShortDesc("CMPU, IND", null);
+                        setShortDesc("CMPU, IND [%04X]", memoryResult);
                         break;
 
                     /* CMPS - Compare S - Direct */
@@ -607,7 +608,7 @@ public class CPU extends Thread
                         memoryResult = io.getIndexed();
                         compareWord(io.getWordRegister(Register.S), io.readWord(memoryResult.get()));
                         operationTicks = 5 + memoryResult.getBytesConsumed();
-                        setShortDesc("CMPS, IND", null);
+                        setShortDesc("CMPS, IND [%04X]", memoryResult);
                         break;
 
                     /* CMPU - Compare U - Extended */
@@ -615,7 +616,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         compareWord(io.getWordRegister(Register.U), io.readWord(memoryResult.get()));
                         operationTicks = 8;
-                        setShortDesc("CMPU, EXT", null);
+                        setShortDesc("CMPU, EXT [%04X]", memoryResult);
                         break;
 
                     /* CMPS - Compare S - Extended */
@@ -623,7 +624,7 @@ public class CPU extends Thread
                         memoryResult = io.getExtended();
                         compareWord(io.getWordRegister(Register.S), io.readWord(memoryResult.get()));
                         operationTicks = 8;
-                        setShortDesc("CMPS, EXT", null);
+                        setShortDesc("CMPS, EXT [%04X]", memoryResult);
                         break;
                 }
                 break;
@@ -646,14 +647,14 @@ public class CPU extends Thread
                 branchLong(memoryResult.get());
                 operationTicks = 5;
                 updatePC = false;
-                setShortDesc("LBRA, IMM", null);
+                setShortDesc("LBRA, IMM [%04X]", memoryResult);
                 break;
 
             /* DAA - Decimal Addition Adjust */
             case 0x19:
                 decimalAdditionAdjust();
                 operationTicks = 2;
-                setShortDesc("DAA, IMM", null);
+                setShortDesc("DAA, IMM [%04X]", memoryResult);
                 break;
 
             /* ORCC - Logical OR on Condition Code Register */
@@ -661,7 +662,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 io.getByteRegister(Register.CC).or(memoryResult.get().getHigh().getShort());
                 operationTicks = 3;
-                setShortDesc("ORCC, IMM", null);
+                setShortDesc("ORCC, IMM [%04X]", memoryResult);
                 break;
 
             /* ANDCC - Logical AND on Condition Code Register */
@@ -669,14 +670,14 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 io.getByteRegister(Register.CC).and(memoryResult.get().getHigh().getShort());
                 operationTicks = 3;
-                setShortDesc("ANDCC, IMM", null);
+                setShortDesc("ANDCC, IMM [%04X]", memoryResult);
                 break;
 
             /* SEX - Sign Extend */
             case 0x1D:
                 io.setA(io.getByteRegister(Register.B).isMasked(0x80) ? new UnsignedByte(0xFF) : new UnsignedByte());
                 operationTicks = 2;
-                setShortDesc("SEX, IMM", null);
+                setShortDesc("SEX, IMM [%04X]", memoryResult);
                 break;
 
             /* EXG - Exchange Register */
@@ -685,7 +686,7 @@ public class CPU extends Thread
                 UnsignedByte extendedOp = memoryResult.get().getHigh();
                 UnsignedWord temp = new UnsignedWord();
                 UnsignedByte tempByte = new UnsignedByte();
-                setShortDesc("EXG, IMM", null);
+                setShortDesc("EXG, IMM [%04X]", memoryResult);
                 operationTicks = 8;
                 switch (extendedOp.getShort()) {
 
@@ -885,7 +886,7 @@ public class CPU extends Thread
             case 0x1F: {
                 memoryResult = io.getImmediateByte();
                 UnsignedByte extendedOp = memoryResult.get().getHigh();
-                setShortDesc("TFR, IMM", null);
+                setShortDesc("TFR, IMM [%04X]", memoryResult);
                 operationTicks = 6;
                 switch (extendedOp.getShort()) {
 
@@ -1129,13 +1130,13 @@ public class CPU extends Thread
                 branchShort(memoryResult.get().getHigh());
                 operationTicks = 3;
                 updatePC = false;
-                setShortDesc("BRA, IMM", null);
+                setShortDesc("BRA, IMM [%04X]", memoryResult);
                 break;
 
             /* BRN - Branch Never */
             case 0x21:
                 operationTicks = 3;
-                setShortDesc("BRN, IMM", null);
+                setShortDesc("BRN, IMM [%04X]", memoryResult);
                 break;
 
             /* BHI - Branch on Higher */
@@ -1190,7 +1191,7 @@ public class CPU extends Thread
                     updatePC = false;
                 }
                 operationTicks = 3;
-                setShortDesc("LBNE, REL [%04X]", memoryResult);
+                setShortDesc("BNE, REL [%04X]", memoryResult);
                 break;
 
             /* BEQ - Branch on Equal */
@@ -1294,7 +1295,7 @@ public class CPU extends Thread
 
             /* LEAX - Load Effective Address into X register */
             case 0x30:
-                memoryResult = io.getImmediateByte();
+                memoryResult = io.getIndexed();
                 loadEffectiveAddress(Register.X, io.readWord(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
                 setShortDesc("LEAX, IMM [%04X]", memoryResult);
@@ -1302,7 +1303,7 @@ public class CPU extends Thread
 
             /* LEAY - Load Effective Address into Y register */
             case 0x31:
-                memoryResult = io.getImmediateByte();
+                memoryResult = io.getIndexed();
                 loadEffectiveAddress(Register.Y, io.readWord(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
                 setShortDesc("LEAY, IMM [%04X]", memoryResult);
@@ -1310,7 +1311,7 @@ public class CPU extends Thread
 
             /* LEAS - Load Effective Address into S register */
             case 0x32:
-                memoryResult = io.getImmediateByte();
+                memoryResult = io.getIndexed();
                 loadEffectiveAddress(Register.S, io.readWord(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
                 setShortDesc("LEAS, IMM [%04X]", memoryResult);
@@ -1318,7 +1319,7 @@ public class CPU extends Thread
 
             /* LEAU - Load Effective Address into U register */
             case 0x33:
-                memoryResult = io.getImmediateByte();
+                memoryResult = io.getIndexed();
                 loadEffectiveAddress(Register.U, io.readWord(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
                 setShortDesc("LEAU, IMM [%04X]", memoryResult);
@@ -1329,7 +1330,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 bytes = pushStack(Register.S, memoryResult.get().getHigh());
                 operationTicks = 5 + bytes;
-                setShortDesc("PSHS, IMM", null);
+                setShortDesc("PSHS, IMM [%04X]", memoryResult);
                 break;
 
             /* PULS - Pull Registers from S Stack */
@@ -1337,7 +1338,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 bytes = popStack(Register.S, memoryResult.get().getHigh());
                 operationTicks = 5 + bytes;
-                setShortDesc("PULS, IMM", null);
+                setShortDesc("PULS, IMM [%04X]", memoryResult);
                 break;
 
             /* PSHU - Push Registers onto U Stack */
@@ -1345,7 +1346,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 bytes = pushStack(Register.U, memoryResult.get().getHigh());
                 operationTicks = 5 + bytes;
-                setShortDesc("PSHU, IMM", null);
+                setShortDesc("PSHU, IMM [%04X]", memoryResult);
                 break;
 
             /* PULU - Pull Registers from U Stack */
@@ -1353,7 +1354,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 bytes = popStack(Register.U, memoryResult.get().getHigh());
                 operationTicks = 5 + bytes;
-                setShortDesc("PULU, IMM", null);
+                setShortDesc("PULU, IMM [%04X]", memoryResult);
                 break;
 
             /* RTS - Return from Subroutine */
@@ -1435,7 +1436,7 @@ public class CPU extends Thread
                 io.pushStack(Register.S, io.getByteRegister(Register.A));
                 io.pushStack(Register.S, io.getByteRegister(Register.CC));
                 operationTicks = 20;
-                setShortDesc("CWAI, IMM", null);
+                setShortDesc("CWAI, IMM [%04X]", memoryResult);
                 break;
 
             /* MUL - Multiply Unsigned */
@@ -1812,7 +1813,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 subtractM(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("SUBA, IMM", null);
+                setShortDesc("SUBA, IMM [%04X]", memoryResult);
                 break;
 
             /* CMPA - Compare A - Immediate */
@@ -1820,7 +1821,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 compareByte(io.getByteRegister(Register.A), memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("CMPA, IMM", null);
+                setShortDesc("CMPA, IMM [%04X]", memoryResult);
                 break;
 
             /* SBCA - Subtract M and C from A - Immediate */
@@ -1828,7 +1829,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 subtractMC(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("SBCA, IMM", null);
+                setShortDesc("SBCA, IMM [%04X]", memoryResult);
                 break;
 
             /* SUBD - Subtract M from D - Immediate */
@@ -1836,7 +1837,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateWord();
                 subtractD(memoryResult.get());
                 operationTicks = 4;
-                setShortDesc("SUBD, IMM", null);
+                setShortDesc("SUBD, IMM [%04X]", memoryResult);
                 break;
 
             /* ANDA - Logical AND A - Immediate */
@@ -1852,7 +1853,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 test(new UnsignedByte(io.getByteRegister(Register.A).getShort() & memoryResult.get().getHigh().getShort()));
                 operationTicks = 2;
-                setShortDesc("BITA, IMM", null);
+                setShortDesc("BITA, IMM [%04X]", memoryResult);
                 break;
 
             /* LDA - Load A - Immediate */
@@ -1860,7 +1861,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 loadByteRegister(Register.A, memoryResult.get().getHigh());
                 operationTicks = 4;
-                setShortDesc("LDA, IMM", null);
+                setShortDesc("LDA, IMM [%04X]", memoryResult);
                 break;
 
             /* EORA - Exclusive OR A - Immediate */
@@ -1868,7 +1869,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 exclusiveOr(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("EORA, IMM", null);
+                setShortDesc("EORA, IMM [%04X]", memoryResult);
                 break;
 
             /* ADCA - Add with Carry A - Immediate */
@@ -1876,7 +1877,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 addWithCarry(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ADCA, IMM", null);
+                setShortDesc("ADCA, IMM [%04X]", memoryResult);
                 break;
 
             /* ORA - Logical OR A - Immediate */
@@ -1884,7 +1885,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 logicalOr(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ORA, IMM", null);
+                setShortDesc("ORA, IMM [%04X]", memoryResult);
                 break;
 
             /* ADDA - Add A - Immediate */
@@ -1892,7 +1893,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 addByteRegister(Register.A, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ADDA, IMM", null);
+                setShortDesc("ADDA, IMM [%04X]", memoryResult);
                 break;
 
             /* CMPX - Compare X - Immediate */
@@ -1916,7 +1917,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractM(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SUBA, DIR", null);
+                setShortDesc("SUBA, DIR [%04X]", memoryResult);
                 break;
 
             /* CMPA - Compare A - Direct */
@@ -1924,7 +1925,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 compareByte(io.getByteRegister(Register.A), io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("CMPA, DIR", null);
+                setShortDesc("CMPA, DIR [%04X]", memoryResult);
                 break;
 
             /* SBCA - Subtract M and C from A - Direct */
@@ -1932,7 +1933,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractMC(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SBCA, IMM", null);
+                setShortDesc("SBCA, IMM [%04X]", memoryResult);
                 break;
 
             /* SUBD - Subtract M from D - Direct */
@@ -1940,7 +1941,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractD(io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("SUBD, DIR", null);
+                setShortDesc("SUBD, DIR [%04X]", memoryResult);
                 break;
 
             /* ANDA - Logical AND A - Direct */
@@ -1948,7 +1949,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 logicalAnd(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ANDA, DIR", null);
+                setShortDesc("ANDA, DIR [%04X]", memoryResult);
                 break;
 
             /* BITA - Test A - Direct */
@@ -1956,7 +1957,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 test(new UnsignedByte(io.getByteRegister(Register.A).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 4;
-                setShortDesc("BITA, DIR", null);
+                setShortDesc("BITA, DIR [%04X]", memoryResult);
                 break;
 
             /* LDA - Load A - Direct */
@@ -1964,7 +1965,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 loadByteRegister(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2;
-                setShortDesc("LDA, DIR", null);
+                setShortDesc("LDA, DIR [%04X]", memoryResult);
                 break;
 
             /* STA - Store A - Direct */
@@ -1972,7 +1973,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeByteRegister(Register.A, memoryResult.get());
                 operationTicks = 4;
-                setShortDesc("STA, DIR", null);
+                setShortDesc("STA, DIR [%04X]", memoryResult);
                 break;
 
             /* EORA - Exclusive OR A - Direct */
@@ -1980,7 +1981,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 exclusiveOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("EORA, DIR", null);
+                setShortDesc("EORA, DIR [%04X]", memoryResult);
                 break;
 
             /* ADCA - Add with Carry A - Direct */
@@ -1988,7 +1989,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 addWithCarry(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ADCA, DIR", null);
+                setShortDesc("ADCA, DIR [%04X]", memoryResult);
                 break;
 
             /* ORA - Logical OR A - Direct */
@@ -1996,7 +1997,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 logicalOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ORA, DIR", null);
+                setShortDesc("ORA, DIR [%04X]", memoryResult);
                 break;
 
             /* ADDA - Add A - Direct */
@@ -2004,7 +2005,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 addByteRegister(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ADDA, DIR", null);
+                setShortDesc("ADDA, DIR [%04X]", memoryResult);
                 break;
 
             /* CMPX - Compare X - Direct */
@@ -2012,7 +2013,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 compareWord(io.getWordRegister(Register.X), io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("CMPX, DIR", null);
+                setShortDesc("CMPX, DIR [%04X]", memoryResult);
                 break;
 
             /* JSR - Jump to Subroutine - Direct */
@@ -2021,7 +2022,7 @@ public class CPU extends Thread
                 jumpToSubroutine(memoryResult.get());
                 updatePC = false;
                 operationTicks = 7;
-                setShortDesc("JSR, DIR", null);
+                setShortDesc("JSR, DIR [%04X]", memoryResult);
                 break;
 
             /* LDX - Load X - Direct */
@@ -2029,7 +2030,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 loadRegister(Register.X, io.readWord(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("LDX, DIR", null);
+                setShortDesc("LDX, DIR [%04X]", memoryResult);
                 break;
 
             /* STX - Store X - Direct */
@@ -2037,7 +2038,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeWordRegister(Register.X, memoryResult.get());
                 operationTicks = 5;
-                setShortDesc("STX, EXT", memoryResult);
+                setShortDesc("STX, EXT [%04X]", memoryResult);
                 break;
 
             /* SUBA - Subtract M from A - Indexed */
@@ -2045,7 +2046,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 subtractM(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SUBA, IND", null);
+                setShortDesc("SUBA, IND [%04X]", memoryResult);
                 break;
 
             /* CMPA - Compare A - Indexed */
@@ -2053,7 +2054,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 compareByte(io.getByteRegister(Register.A), io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("CMPA, IND", null);
+                setShortDesc("CMPA, IND [%04X]", memoryResult);
                 break;
 
             /* SBCA - Subtract M and C from A - Indexed */
@@ -2061,7 +2062,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 subtractMC(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SBCA, IND", null);
+                setShortDesc("SBCA, IND [%04X]", memoryResult);
                 break;
 
             /* SUBD - Subtract M from D - Indexed */
@@ -2069,7 +2070,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 subtractD(io.readWord(memoryResult.get()));
                 operationTicks = 4 + memoryResult.getBytesConsumed();
-                setShortDesc("SUBD, IND", null);
+                setShortDesc("SUBD, IND [%04X]", memoryResult);
                 break;
 
             /* ANDA - Logical AND A - Indexed */
@@ -2077,7 +2078,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 logicalAnd(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ANDA, IND", null);
+                setShortDesc("ANDA, IND [%04X]", memoryResult);
                 break;
 
             /* BITA - Test A - Indexed */
@@ -2085,7 +2086,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 test(new UnsignedByte(io.getByteRegister(Register.A).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("BITA, IND", null);
+                setShortDesc("BITA, IND [%04X]", memoryResult);
                 break;
 
             /* LDA - Load A - Indexed */
@@ -2093,7 +2094,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 loadByteRegister(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LDA, IND", null);
+                setShortDesc("LDA, IND [%04X]", memoryResult);
                 break;
 
             /* STA - Store A - Indexed */
@@ -2101,7 +2102,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 storeByteRegister(Register.A, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LDA, IND", null);
+                setShortDesc("STA, IND [%04X]", memoryResult);
                 break;
 
             /* EORA - Exclusive OR A - Indexed */
@@ -2109,7 +2110,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 exclusiveOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("EORA, IND", null);
+                setShortDesc("EORA, IND [%04X]", memoryResult);
                 break;
 
             /* ADCA - Add with Carry A - Indexed */
@@ -2117,7 +2118,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 addWithCarry(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ADCA, IND", null);
+                setShortDesc("ADCA, IND [%04X]", memoryResult);
                 break;
 
             /* ORA - Logical OR A - Indexed */
@@ -2125,7 +2126,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 logicalOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ORA, IND", null);
+                setShortDesc("ORA, IND [%04X]", memoryResult);
                 break;
 
             /* ADDA - Add A - Indexed */
@@ -2133,7 +2134,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 addByteRegister(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ADDA, IND", null);
+                setShortDesc("ADDA, IND [%04X]", memoryResult);
                 break;
 
             /* CMPX - Compare X - Indexed */
@@ -2141,7 +2142,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 compareWord(io.getWordRegister(Register.X), io.readWord(memoryResult.get()));
                 operationTicks = 4 + memoryResult.getBytesConsumed();
-                setShortDesc("CMPX, IND", null);
+                setShortDesc("CMPX, IND [%04X]", memoryResult);
                 break;
 
             /* JSR - Jump to Subroutine - Indexed */
@@ -2150,7 +2151,7 @@ public class CPU extends Thread
                 jumpToSubroutine(memoryResult.get());
                 operationTicks = 5 + memoryResult.getBytesConsumed();
                 updatePC = false;
-                setShortDesc("JSR, IND", null);
+                setShortDesc("JSR, IND [%04X]", memoryResult);
                 break;
 
             /* LDX - Load X - Indexed */
@@ -2158,7 +2159,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 loadRegister(Register.X, memoryResult.get());
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("LDX, IND", memoryResult);
+                setShortDesc("LDX, IND [%04X]", memoryResult);
                 break;
 
             /* STX - Store X - Indexed */
@@ -2166,7 +2167,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 storeWordRegister(Register.X, memoryResult.get());
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("STX, IND", memoryResult);
+                setShortDesc("STX, IND [%04X]", memoryResult);
                 break;
 
             /* SUBA - Subtract M from A - Extended */
@@ -2174,7 +2175,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 subtractM(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SUBA, EXT", null);
+                setShortDesc("SUBA, EXT [%04X]", memoryResult);
                 break;
 
             /* CMPA - Compare A - Extended */
@@ -2182,7 +2183,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 compareByte(io.getByteRegister(Register.A), io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("CMPA, EXT", null);
+                setShortDesc("CMPA, EXT [%04X]", memoryResult);
                 break;
 
             /* SBCA - Subtract M and C from A - Extended */
@@ -2190,7 +2191,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 subtractMC(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("SBCA, EXT", null);
+                setShortDesc("SBCA, EXT [%04X]", memoryResult);
                 break;
 
             /* SUBD - Subtract M from D - Extended */
@@ -2206,7 +2207,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 logicalAnd(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ANDA, EXT", null);
+                setShortDesc("ANDA, EXT [%04X]", memoryResult);
                 break;
 
             /* BITA - Test A - Extended */
@@ -2214,7 +2215,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 test(new UnsignedByte(io.getByteRegister(Register.A).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 5;
-                setShortDesc("BITA, EXT", null);
+                setShortDesc("BITA, EXT [%04X]", memoryResult);
                 break;
 
             /* LDA - Load A - Extended */
@@ -2238,7 +2239,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 exclusiveOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("EORA, EXT", null);
+                setShortDesc("EORA, EXT [%04X]", memoryResult);
                 break;
 
             /* ADCA - Add with Carry A - Extended */
@@ -2246,7 +2247,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 addWithCarry(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ADCA, EXT", null);
+                setShortDesc("ADCA, EXT [%04X]", memoryResult);
                 break;
 
             /* ORA - Logical OR A - Extended */
@@ -2254,7 +2255,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 logicalOr(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ORA, EXT", null);
+                setShortDesc("ORA, EXT [%04X]", memoryResult);
                 break;
 
             /* ADDA - Add A - Extended */
@@ -2262,7 +2263,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 addByteRegister(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ADDA, EXT", null);
+                setShortDesc("ADDA, EXT [%04X]", memoryResult);
                 break;
 
             /* CMPX - Compare X - Extended */
@@ -2270,7 +2271,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 compareWord(io.getWordRegister(Register.X), io.readWord(memoryResult.get()));
                 operationTicks = 7;
-                setShortDesc("CMPX, EXT", null);
+                setShortDesc("CMPX, EXT [%04X]", memoryResult);
                 break;
 
             /* JSR - Jump to Subroutine - Extended */
@@ -2279,7 +2280,7 @@ public class CPU extends Thread
                 jumpToSubroutine(io.readWord(memoryResult.get()));
                 updatePC = false;
                 operationTicks = 8;
-                setShortDesc("JSR, EXT", null);
+                setShortDesc("JSR, EXT [%04X]", memoryResult);
                 break;
 
             /* LDX - Load X - Extended */
@@ -2287,7 +2288,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 loadRegister(Register.X, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("LDX, EXT", memoryResult);
+                setShortDesc("LDX, EXT [%04X]", memoryResult);
                 break;
 
             /* STX - Store X - Extended */
@@ -2295,7 +2296,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 storeWordRegister(Register.X, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("STX, EXT", memoryResult);
+                setShortDesc("STX, EXT [%04X]", memoryResult);
                 break;
 
             /* SUBB - Subtract M from B - Immediate */
@@ -2303,7 +2304,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 subtractM(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("SUBB, IMM", null);
+                setShortDesc("SUBB, IMM [%04X]", memoryResult);
                 break;
 
             /* CMPB - Compare B - Immediate */
@@ -2311,7 +2312,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 compareByte(io.getByteRegister(Register.B), memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("CMPB, IMM", null);
+                setShortDesc("CMPB, IMM [%04X]", memoryResult);
                 break;
 
             /* SBCB - Subtract M and C from B - Immediate */
@@ -2319,7 +2320,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 subtractMC(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("SBCB, IMM", null);
+                setShortDesc("SBCB, IMM [%04X]", memoryResult);
                 break;
 
             /* ADDD - Add D - Immediate */
@@ -2327,7 +2328,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 addD(memoryResult.get());
                 operationTicks = 4;
-                setShortDesc("ADDD, IMM", null);
+                setShortDesc("ADDD, IMM [%04X]", memoryResult);
                 break;
 
             /* ANDB - Logical AND B - Immediate */
@@ -2335,7 +2336,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 logicalAnd(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ANDB, IMM", null);
+                setShortDesc("ANDB, IMM [%04X]", memoryResult);
                 break;
 
             /* BITB - Test B - Immediate */
@@ -2343,7 +2344,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 test(new UnsignedByte(io.getByteRegister(Register.B).getShort() & memoryResult.get().getHigh().getShort()));
                 operationTicks = 2;
-                setShortDesc("BITB, IMM", null);
+                setShortDesc("BITB, IMM [%04X]", memoryResult);
                 break;
 
             /* LDB - Load B - Immediate */
@@ -2351,7 +2352,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 loadByteRegister(Register.B, memoryResult.get().getHigh());
                 operationTicks = 4;
-                setShortDesc("LDB, IMM", null);
+                setShortDesc("LDB, IMM [%04X]", memoryResult);
                 break;
 
             /* EORB - Exclusive OR B - Immediate */
@@ -2359,7 +2360,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 exclusiveOr(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("EORB, IMM", null);
+                setShortDesc("EORB, IMM [%04X]", memoryResult);
                 break;
 
             /* ADCB - Add with Carry B - Immediate */
@@ -2367,7 +2368,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 addWithCarry(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ADCB, IMM", null);
+                setShortDesc("ADCB, IMM [%04X]", memoryResult);
                 break;
 
             /* ORB - Logical OR B - Immediate */
@@ -2375,7 +2376,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 logicalOr(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ORB, IMM", null);
+                setShortDesc("ORB, IMM [%04X]", memoryResult);
                 break;
 
             /* ADDB - Add B - Immediate */
@@ -2383,7 +2384,7 @@ public class CPU extends Thread
                 memoryResult = io.getImmediateByte();
                 addByteRegister(Register.B, memoryResult.get().getHigh());
                 operationTicks = 2;
-                setShortDesc("ADDB, IMM", null);
+                setShortDesc("ADDB, IMM [%04X]", memoryResult);
                 break;
 
             /* LDD - Load D - Immediate */
@@ -2407,7 +2408,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractM(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SUBB, DIR", null);
+                setShortDesc("SUBB, DIR [%04X]", memoryResult);
                 break;
 
             /* CMPB - Compare B - Direct */
@@ -2415,7 +2416,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 compareByte(io.getByteRegister(Register.B), io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("CMPB, DIR", null);
+                setShortDesc("CMPB, DIR [%04X]", memoryResult);
                 break;
 
             /* SBCB - Subtract M and C from B - Direct */
@@ -2423,7 +2424,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractMC(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SBCB, IMM", null);
+                setShortDesc("SBCB, IMM [%04X]", memoryResult);
                 break;
 
             /* ADDD - Add D - Direct */
@@ -2431,7 +2432,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 addD(io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("ADDD, DIR", null);
+                setShortDesc("ADDD, DIR [%04X]", memoryResult);
                 break;
 
             /* ANDB - Logical AND B - Direct */
@@ -2447,7 +2448,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 test(new UnsignedByte(io.getByteRegister(Register.B).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 4;
-                setShortDesc("BITB, DIR", null);
+                setShortDesc("BITB, DIR [%04X]", memoryResult);
                 break;
 
             /* LDB - Load B - Direct */
@@ -2455,7 +2456,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 loadByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2;
-                setShortDesc("LDB, DIR", null);
+                setShortDesc("LDB, DIR [%04X]", memoryResult);
                 break;
 
             /* STB - Store B - Direct */
@@ -2463,7 +2464,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeByteRegister(Register.B, memoryResult.get());
                 operationTicks = 2;
-                setShortDesc("STB, DIR", null);
+                setShortDesc("STB, DIR [%04X]", memoryResult);
                 break;
 
             /* EORB - Exclusive OR B - Direct */
@@ -2471,7 +2472,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 exclusiveOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("EORB, DIR", null);
+                setShortDesc("EORB, DIR [%04X]", memoryResult);
                 break;
 
             /* ADCB - Add with Carry B - Direct */
@@ -2479,7 +2480,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 addWithCarry(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ADCB, DIR", null);
+                setShortDesc("ADCB, DIR [%04X]", memoryResult);
                 break;
 
             /* ORB - Logical OR B - Direct */
@@ -2487,7 +2488,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 logicalOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ORB, DIR", null);
+                setShortDesc("ORB, DIR [%04X]", memoryResult);
                 break;
 
             /* ADDB - Add B - Direct */
@@ -2495,7 +2496,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 addByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("ADDB, DIR", null);
+                setShortDesc("ADDB, DIR [%04X]", memoryResult);
                 break;
 
             /* LDD - Load - Direct */
@@ -2503,7 +2504,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 loadRegister(Register.D, io.readWord(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("LDD, DIR", null);
+                setShortDesc("LDD, DIR [%04X]", memoryResult);
                 break;
 
             /* STD - Store D - Direct */
@@ -2511,7 +2512,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeWordRegister(Register.D, memoryResult.get());
                 operationTicks = 5;
-                setShortDesc("STD, DIR", memoryResult);
+                setShortDesc("STD, DIR [%04X]", memoryResult);
                 break;
 
             /* LDU - Load U - Direct */
@@ -2519,7 +2520,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 loadRegister(Register.U, io.readWord(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("LDU, DIR", null);
+                setShortDesc("LDU, DIR [%04X]", memoryResult);
                 break;
 
             /* STU - Store U - Direct */
@@ -2527,7 +2528,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeWordRegister(Register.U, memoryResult.get());
                 operationTicks = 5;
-                setShortDesc("STU, DIR", memoryResult);
+                setShortDesc("STU, DIR [%04X]", memoryResult);
                 break;
 
             /* SUBB - Subtract M from B - Indexed */
@@ -2535,7 +2536,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 subtractM(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SUBB, IND", null);
+                setShortDesc("SUBB, IND [%04X]", memoryResult);
                 break;
 
             /* CMPB - Compare B - Indexed */
@@ -2543,7 +2544,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 compareByte(io.getByteRegister(Register.B), io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("CMPB, IND", null);
+                setShortDesc("CMPB, IND [%04X]", memoryResult);
                 break;
 
             /* SBCB - Subtract M and C from B - Indexed */
@@ -2551,7 +2552,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 subtractMC(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SBCB, IND", null);
+                setShortDesc("SBCB, IND [%04X]", memoryResult);
                 break;
 
             /* ADDD - Add D - Indexed */
@@ -2559,7 +2560,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 addD(io.readWord(memoryResult.get()));
                 operationTicks = 6 + memoryResult.getBytesConsumed();
-                setShortDesc("ADDD, IND", null);
+                setShortDesc("ADDD, IND [%04X]", memoryResult);
                 break;
 
             /* ANDB - Logical AND B - Indexed */
@@ -2567,7 +2568,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 logicalAnd(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ANDB, IND", null);
+                setShortDesc("ANDB, IND [%04X]", memoryResult);
                 break;
 
             /* BITB - Test B - Indexed */
@@ -2575,7 +2576,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 test(new UnsignedByte(io.getByteRegister(Register.B).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("BITB, IND", null);
+                setShortDesc("BITB, IND [%04X]", memoryResult);
                 break;
 
             /* LDB - Load B - Indexed */
@@ -2583,7 +2584,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 loadByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LDB, IND", null);
+                setShortDesc("LDB, IND [%04X]", memoryResult);
                 break;
 
             /* STB - Store B - Indexed */
@@ -2591,7 +2592,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 storeByteRegister(Register.B, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("STB, IND", null);
+                setShortDesc("STB, IND [%04X]", memoryResult);
                 break;
 
             /* EORB - Exclusive OR B - Indexed */
@@ -2599,7 +2600,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 exclusiveOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("EORB, IND", null);
+                setShortDesc("EORB, IND [%04X]", memoryResult);
                 break;
 
             /* ADCB - Add with Carry B - Indexed */
@@ -2607,7 +2608,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 addWithCarry(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ADCB, IND", null);
+                setShortDesc("ADCB, IND [%04X]", memoryResult);
                 break;
 
             /* ORB - Logical OR B - Indexed */
@@ -2615,7 +2616,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 logicalOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ORB, IND", null);
+                setShortDesc("ORB, IND [%04X]", memoryResult);
                 break;
 
             /* ADDB - Add B - Indexed */
@@ -2623,7 +2624,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 addByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("ADDB, IND", null);
+                setShortDesc("ADDB, IND [%04X]", memoryResult);
                 break;
 
             /* LDD - Load D - Indexed */
@@ -2631,7 +2632,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 loadRegister(Register.D, io.readWord(memoryResult.get()));
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("LDD, IND", null);
+                setShortDesc("LDD, IND [%04X]", memoryResult);
                 break;
 
             /* STD - Store D - Indexed */
@@ -2639,7 +2640,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 storeWordRegister(Register.D, memoryResult.get());
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("STD, IND", memoryResult);
+                setShortDesc("STD, IND [%04X]", memoryResult);
                 break;
 
             /* LDU - Load U - Indexed */
@@ -2647,7 +2648,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 loadRegister(Register.U, io.readWord(memoryResult.get()));
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("LDU, IND", null);
+                setShortDesc("LDU, IND [%04X]", memoryResult);
                 break;
 
             /* STU - Store U - Indexed */
@@ -2655,7 +2656,7 @@ public class CPU extends Thread
                 memoryResult = io.getIndexed();
                 storeWordRegister(Register.U, memoryResult.get());
                 operationTicks = 3 + memoryResult.getBytesConsumed();
-                setShortDesc("STU, IND", memoryResult);
+                setShortDesc("STU, IND [%04X]", memoryResult);
                 break;
 
             /* SUBB - Subtract M from B - Extended */
@@ -2663,7 +2664,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 subtractM(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("SUBB, EXT", null);
+                setShortDesc("SUBB, EXT [%04X]", memoryResult);
                 break;
 
             /* CMPB - Compare B - Extended */
@@ -2671,7 +2672,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 compareByte(io.getByteRegister(Register.B), io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("CMPB, EXT", null);
+                setShortDesc("CMPB, EXT [%04X]", memoryResult);
                 break;
 
             /* SBCB - Subtract M and C from B - Extended */
@@ -2679,7 +2680,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 subtractMC(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("SBCB, EXT", null);
+                setShortDesc("SBCB, EXT [%04X]", memoryResult);
                 break;
 
             /* ADDD - Add D - Extended */
@@ -2687,7 +2688,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 addD(io.readWord(memoryResult.get()));
                 operationTicks = 7;
-                setShortDesc("ADDD, EXT", null);
+                setShortDesc("ADDD, EXT [%04X]", memoryResult);
                 break;
 
             /* ANDB - Logical AND B - Extended */
@@ -2695,7 +2696,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 logicalAnd(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ANDB, EXT", null);
+                setShortDesc("ANDB, EXT [%04X]", memoryResult);
                 break;
 
             /* BITB - Test B - Extended */
@@ -2703,7 +2704,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 test(new UnsignedByte(io.getByteRegister(Register.B).getShort() & io.readByte(memoryResult.get()).getShort()));
                 operationTicks = 5;
-                setShortDesc("BITB, EXT", null);
+                setShortDesc("BITB, EXT [%04X]", memoryResult);
                 break;
 
             /* LDB - Load B - Extended */
@@ -2711,7 +2712,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 loadByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("LDB, EXT", null);
+                setShortDesc("LDB, EXT [%04X]", memoryResult);
                 break;
 
             /* STB - Store B - Extended */
@@ -2719,7 +2720,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 storeByteRegister(Register.B, memoryResult.get());
                 operationTicks = 5;
-                setShortDesc("STB, EXT", null);
+                setShortDesc("STB, EXT [%04X]", memoryResult);
                 break;
 
             /* EORB - Exclusive OR B - Extended */
@@ -2727,7 +2728,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 exclusiveOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("EORB, EXT", null);
+                setShortDesc("EORB, EXT [%04X]", memoryResult);
                 break;
 
             /* ADCB - Add with Carry B - Extended */
@@ -2735,7 +2736,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 addWithCarry(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ADCB, EXT", null);
+                setShortDesc("ADCB, EXT [%04X]", memoryResult);
                 break;
 
             /* ORB - Logical OR B - Extended */
@@ -2743,7 +2744,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 logicalOr(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ORB, EXT", null);
+                setShortDesc("ORB, EXT [%04X]", memoryResult);
                 break;
 
             /* ADDB - Add B - Extended */
@@ -2751,7 +2752,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 addByteRegister(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 5;
-                setShortDesc("ADDB, EXT", null);
+                setShortDesc("ADDB, EXT [%04X]", memoryResult);
                 break;
 
             /* LDD - Load D - Extended */
@@ -2759,7 +2760,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 loadRegister(Register.D, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("LDD, EXT", null);
+                setShortDesc("LDD, EXT [%04X]", memoryResult);
                 break;
 
             /* STD - Store D - Extended */
@@ -2767,7 +2768,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 storeWordRegister(Register.D, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("STD, EXT", memoryResult);
+                setShortDesc("STD, EXT [%04X]", memoryResult);
                 break;
 
             /* LDU - Load U - Extended */
@@ -2775,7 +2776,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 loadRegister(Register.U, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("LDU, EXT", null);
+                setShortDesc("LDU, EXT [%04X]", memoryResult);
                 break;
 
             /* STD - Store U - Extended */
@@ -2783,13 +2784,11 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 storeWordRegister(Register.U, io.readWord(memoryResult.get()));
                 operationTicks = 6;
-                setShortDesc("STU, EXT", memoryResult);
+                setShortDesc("STU, EXT [%04X]", memoryResult);
                 break;
         }
 
-        if (updatePC) {
-            io.getWordRegister(Register.PC).add(memoryResult.getBytesConsumed());
-        }
+        System.out.println(opShortDesc);
 
         return operationTicks;
     }
@@ -3033,6 +3032,9 @@ public class CPU extends Thread
      * @param offset the amount to offset the program counter
      */
     public void branchShort(UnsignedByte offset) {
+        System.out.println("Branching short to PC " + io.getWordRegister(Register.PC) + " + " + offset);
+        System.out.println("offset is negative: " + offset.isNegative());
+        System.out.println("Adding the following: " + offset.getSignedShort());
         io.getWordRegister(Register.PC).add(offset.isNegative() ? offset.getSignedShort() : offset.getShort());
     }
 

@@ -39,7 +39,9 @@ public class MemoryTest
 
     @Test
     public void testGetPhysicalAddressWorksCorrectly() {
-        assertEquals(0x70412, memory.getPhysicalAddress(new UnsignedWord(0x0412)));
+        UnsignedWord address = new UnsignedWord(0x0412);
+        int par = memory.getPAR(address);
+        assertEquals(0x70412, memory.getPhysicalAddress(par, address.getInt()));
     }
     
     @Test
@@ -94,5 +96,134 @@ public class MemoryTest
 
         memory.setTaskPAR(7, new UnsignedByte(0xB8));
         assertEquals(0xB8, memory.taskPAR[7]);
+    }
+
+    @Test
+    public void testReadPhysicalByteReadsFromRAMOnly() {
+        memory.enableAllRAMMode();
+        memory.memory[0x78000] = 0xBE;
+        memory.rom[0] = 0xCE;
+        assertEquals(0xBE, memory.readPhysicalByte(new UnsignedWord(0x8000)));
+    }
+
+    @Test
+    public void testReadPhysicalByteReadsFrom32KROMCorrectly() {
+        memory.disableAllRAMMode();
+        memory.setROMMode(new UnsignedByte(0x2));
+
+        /* First 8K segment */
+        memory.memory[0x78000] = 0xBE;
+        memory.rom[0] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0x8000)));
+
+        /* Second 8K segment */
+        memory.memory[0x7A000] = 0xBE;
+        memory.rom[0x2000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xA000)));
+
+        /* Third 8K segment */
+        memory.memory[0x7C000] = 0xBE;
+        memory.rom[0x4000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xC000)));
+
+        /* Fourth 8K segment */
+        memory.memory[0x7E000] = 0xBE;
+        memory.rom[0x6000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xE000)));
+
+        /* Anything Else */
+        memory.memory[0x74000] = 0xBE;
+        assertEquals(0xBE, memory.readPhysicalByte(new UnsignedWord(0x4000)));
+    }
+
+    @Test
+    public void testReadPhysicalByteReadsFrom32KCartROMCorrectly() {
+        memory.disableAllRAMMode();
+        memory.setROMMode(new UnsignedByte(0x3));
+
+        /* First 8K segment */
+        memory.memory[0x78000] = 0xBE;
+        memory.cartROM[0] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0x8000)));
+
+        /* Second 8K segment */
+        memory.memory[0x7A000] = 0xBE;
+        memory.cartROM[0x2000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xA000)));
+
+        /* Third 8K segment */
+        memory.memory[0x7C000] = 0xBE;
+        memory.cartROM[0x4000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xC000)));
+
+        /* Fourth 8K segment */
+        memory.memory[0x7E000] = 0xBE;
+        memory.cartROM[0x6000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xE000)));
+
+        /* Anything Else */
+        memory.memory[0x74000] = 0xBE;
+        assertEquals(0xBE, memory.readPhysicalByte(new UnsignedWord(0x4000)));
+    }
+
+    @Test
+    public void testReadPhysicalByteReadsFrom16KCart16KROMCorrectly() {
+        memory.disableAllRAMMode();
+        memory.setROMMode(new UnsignedByte(0x1));
+
+        /* First 8K segment */
+        memory.memory[0x78000] = 0xBE;
+        memory.rom[0] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0x8000)));
+
+        /* Second 8K segment */
+        memory.memory[0x7A000] = 0xBE;
+        memory.rom[0x2000] = 0xCE;
+        assertEquals(0xCE, memory.readPhysicalByte(new UnsignedWord(0xA000)));
+
+        /* Third 8K segment */
+        memory.memory[0x7C000] = 0xBE;
+        memory.cartROM[0x0000] = 0xDE;
+        assertEquals(0xDE, memory.readPhysicalByte(new UnsignedWord(0xC000)));
+
+        /* Fourth 8K segment */
+        memory.memory[0x7E000] = 0xBE;
+        memory.cartROM[0x2000] = 0xDE;
+        assertEquals(0xDE, memory.readPhysicalByte(new UnsignedWord(0xE000)));
+
+        /* Anything Else */
+        memory.memory[0x74000] = 0xBE;
+        assertEquals(0xBE, memory.readPhysicalByte(new UnsignedWord(0x4000)));
+    }
+
+    @Test
+    public void testWriteByteToROMDoesNotWrite() {
+        memory.disableAllRAMMode();
+        memory.setROMMode(new UnsignedByte(0x1));
+
+        /* First 8K segment */
+        memory.rom[0] = 0xCE;
+        memory.writeByte(new UnsignedWord(0x8000), new UnsignedByte(0xAA));
+        assertEquals(new UnsignedByte(0xCE), memory.readByte(new UnsignedWord(0x8000)));
+
+        /* Second 8K segment */
+        memory.rom[0x2000] = 0xCE;
+        memory.writeByte(new UnsignedWord(0xA000), new UnsignedByte(0xAA));
+        assertEquals(new UnsignedByte(0xCE), memory.readByte(new UnsignedWord(0xA000)));
+
+        /* Third 8K segment */
+        memory.cartROM[0x0000] = 0xDE;
+        memory.writeByte(new UnsignedWord(0xC000), new UnsignedByte(0xAA));
+        assertEquals(new UnsignedByte(0xDE), memory.readByte(new UnsignedWord(0xC000)));
+
+        /* Fourth 8K segment */
+        memory.cartROM[0x2000] = 0xDE;
+        memory.writeByte(new UnsignedWord(0xE000), new UnsignedByte(0xAA));
+        assertEquals(new UnsignedByte(0xDE), memory.readByte(new UnsignedWord(0xE000)));
+
+        /* Anything Else */
+        memory.memory[0x74000] = 0xBE;
+        memory.writeByte(new UnsignedWord(0x4000), new UnsignedByte(0xAA));
+        assertEquals(0xAA, memory.readPhysicalByte(new UnsignedWord(0x4000)));
     }
 }

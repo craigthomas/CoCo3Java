@@ -40,7 +40,7 @@ public class UnsignedByte
      */
     public short getSignedShort() {
         if (isMasked(0x80)) {
-            return (short) -(value & 0x7F);
+            return (short) (int)-(twosCompliment().getShort());
         }
         return getShort();
     }

@@ -50,7 +50,7 @@ public class Emulator
         // Attempt to load specified ROM file
         if (romFile != null) {
             InputStream romFileStream = openStream(romFile);
-            if (!memory.loadStreamIntoMemory(romFileStream, CPU.PC_START)) {
+            if (!memory.loadROM(memory.loadStream(romFileStream))) {
                 LOGGER.severe("Could not load ROM file [" + romFile + "]");
             }
             closeStream(romFileStream);
@@ -130,6 +130,7 @@ public class Emulator
      * will repaint the screen and listen for any debug key presses.
      */
     public void start() {
+        ioController.reset();
         cpu.start();
         Timer timer = new Timer();
         TimerTask task = new TimerTask() {
