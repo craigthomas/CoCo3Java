@@ -171,7 +171,7 @@ public class UnsignedByteTest
         UnsignedByte result = new UnsignedByte(0x40);
         assertEquals(0x40, result.getSignedShort());
 
-        result = new UnsignedByte(0x81);
+        result = new UnsignedByte(0xFF);
         assertEquals(-1, result.getSignedShort());
     }
 

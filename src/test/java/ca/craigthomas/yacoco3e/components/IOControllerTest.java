@@ -450,7 +450,7 @@ public class IOControllerTest
     @Test
     public void testGetIndexed8BitNegativeOffset() throws IllegalIndexedPostbyteException{
         regs.setX(new UnsignedWord(0xB000));
-        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8882));
+        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x88FE));
         assertEquals(new UnsignedWord(0xAFFE), io.getIndexed().get());
     }
 
@@ -466,7 +466,7 @@ public class IOControllerTest
     public void testGetIndexed8BitNegativeOffsetIndirect() throws IllegalIndexedPostbyteException{
         regs.setX(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xAFFE), new UnsignedWord(0xBEEF));
-        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9882));
+        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x98FE));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
 
@@ -482,7 +482,7 @@ public class IOControllerTest
     public void testGetIndexed16BitNegativeOffset() throws IllegalIndexedPostbyteException{
         regs.setX(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x89));
-        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x8200));
+        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
         assertEquals(new UnsignedWord(0xAE00), io.getIndexed().get());
     }
 
@@ -500,7 +500,7 @@ public class IOControllerTest
         regs.setX(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xAE00), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x99));
-        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x8200));
+        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
 
@@ -524,26 +524,26 @@ public class IOControllerTest
     @Test
     public void testGetIndexedPCWith8BitPositiveOffset() throws IllegalIndexedPostbyteException{
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8C0A));
-        assertEquals(new UnsignedWord(0x000A), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0x000C), io.getIndexed().get());
     }
 
     @Test
     public void testGetIndexedPCWith8BitNegativeOffset() throws IllegalIndexedPostbyteException{
-        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8C82));
+        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8CFC));
         assertEquals(new UnsignedWord(0xFFFE), io.getIndexed().get());
     }
 
     @Test
     public void testGetIndexedPCWith8BitPositiveOffsetIndexed() throws IllegalIndexedPostbyteException{
-        io.writeWord(new UnsignedWord(0x000A), new UnsignedWord(0xBEEF));
+        io.writeWord(new UnsignedWord(0x000C), new UnsignedWord(0xBEEF));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9C0A));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
 
     @Test
     public void testGetIndexedPCWith8BitNegativeOffsetIndexed() throws IllegalIndexedPostbyteException{
-        io.writeWord(new UnsignedWord(0xFFFE), new UnsignedWord(0xBEEF));
-        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9C82));
+        io.writeWord(new UnsignedWord(0xFFFC), new UnsignedWord(0xBEEF));
+        io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9CFA));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
 
@@ -551,19 +551,19 @@ public class IOControllerTest
     public void testGetIndexedPCWith16BitPositiveOffset() throws IllegalIndexedPostbyteException{
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x8D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
-        assertEquals(new UnsignedWord(0x0200), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0x0203), io.getIndexed().get());
     }
 
     @Test
     public void testGetIndexedPCWith16BitNegativeOffset() throws IllegalIndexedPostbyteException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x8D));
-        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x8200));
-        assertEquals(new UnsignedWord(0xFE00), io.getIndexed().get());
+        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
+        assertEquals(new UnsignedWord(0xFE03), io.getIndexed().get());
     }
 
     @Test
     public void testGetIndexedPCWith16BitPositiveOffsetIndexed() throws IllegalIndexedPostbyteException {
-        io.writeWord(new UnsignedWord(0x0200), new UnsignedWord(0xBEEF));
+        io.writeWord(new UnsignedWord(0x0203), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
@@ -571,9 +571,9 @@ public class IOControllerTest
 
     @Test
     public void testGetIndexedPCWith16BitNegativeOffsetIndexed() throws IllegalIndexedPostbyteException {
-        io.writeWord(new UnsignedWord(0xFE00), new UnsignedWord(0xBEEF));
+        io.writeWord(new UnsignedWord(0xFE03), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9D));
-        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x8200));
+        io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
 
@@ -612,5 +612,19 @@ public class IOControllerTest
         lowByte = io.readByte(new UnsignedWord(0xFF02));
         assertEquals(new UnsignedByte(0xFF), highByte);
         assertEquals(new UnsignedByte(0xFF), lowByte);
+    }
+
+    @Test
+    public void testDisableRAMMode() {
+        memory.enableAllRAMMode();
+        io.writeByte(new UnsignedWord(0xFFDE), new UnsignedByte(0));
+        assertFalse(memory.allRAMMode);
+    }
+
+    @Test
+    public void testEnableRAMMode() {
+        memory.disableAllRAMMode();
+        io.writeByte(new UnsignedWord(0xFFDF), new UnsignedByte(0));
+        assertTrue(memory.allRAMMode);
     }
 }
