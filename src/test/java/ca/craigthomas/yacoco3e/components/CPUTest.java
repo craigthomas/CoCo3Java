@@ -11,6 +11,7 @@ import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CPUTest
@@ -26,6 +27,16 @@ public class CPUTest
         registerSet = new RegisterSet();
         io = new IOController(memory, registerSet, new Keyboard());
         cpu = new CPU(io);
+    }
+
+    @Test
+    public void testNegateCorrect() {
+        UnsignedByte result = cpu.negate(new UnsignedByte(0xFC));
+        assertEquals(new UnsignedByte(0x04), result);
+        assertTrue(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
     }
 
     @Test
@@ -50,6 +61,17 @@ public class CPUTest
     public void testNegateSetsNegativeFlag() {
         cpu.negate(new UnsignedByte(0x01));
         assertTrue(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testComplimentWorksCorrectly() {
+        UnsignedByte value = new UnsignedByte(0xE6);
+        UnsignedByte result = cpu.compliment(value);
+        assertEquals(new UnsignedByte(0x19), result);
+        assertTrue(io.ccCarrySet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
     }
 
     @Test
@@ -84,6 +106,15 @@ public class CPUTest
         UnsignedByte result = cpu.compliment(new UnsignedByte(0xFF));
         assertEquals(0, result.getShort());
         assertTrue(io.ccZeroSet());
+    }
+
+    @Test
+    public void testLogicalShiftRightCorrect() {
+        UnsignedByte result = cpu.logicalShiftRight(new UnsignedByte(0x9E));
+        assertEquals(new UnsignedByte(0x4F), result);
+        assertFalse(io.ccCarrySet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
     }
 
     @Test
@@ -149,6 +180,15 @@ public class CPUTest
     }
 
     @Test
+    public void testArithmeticShiftRightCorrect() {
+        UnsignedByte result = cpu.arithmeticShiftRight(new UnsignedByte(0x85));
+        assertEquals(0xC2, result.getShort());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
+    }
+
+    @Test
     public void testArithmeticShiftRightOneCorrect() {
         UnsignedByte result = cpu.arithmeticShiftRight(new UnsignedByte(0x1));
         assertEquals(0, result.getShort());
@@ -167,6 +207,26 @@ public class CPUTest
     }
 
     @Test
+    public void testArithmeticShiftLeftCorrect() {
+        UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x55));
+        assertEquals(0xAA, result.getShort());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccOverflowSet());
+        assertTrue(io.ccNegativeSet());
+        assertFalse(io.ccCarrySet());
+    }
+
+    @Test
+    public void testArithmeticShiftLeftCorrectSecondTest() {
+        UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x8A));
+        assertEquals(0x14, result.getShort());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
+    }
+
+    @Test
     public void testArithmeticShiftLeftOneCorrect() {
         UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x1));
         assertEquals(0x2, result.getShort());
@@ -181,18 +241,8 @@ public class CPUTest
         UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0x81));
         assertEquals(0x2, result.getShort());
         assertFalse(io.ccZeroSet());
-        assertFalse(io.ccOverflowSet());
-        assertFalse(io.ccNegativeSet());
-        assertTrue(io.ccCarrySet());
-    }
-
-    @Test
-    public void testArithmeticShiftLeftOverflowSet() {
-        UnsignedByte result = cpu.arithmeticShiftLeft(new UnsignedByte(0xC0));
-        assertEquals(0x80, result.getShort());
-        assertFalse(io.ccZeroSet());
         assertTrue(io.ccOverflowSet());
-        assertTrue(io.ccNegativeSet());
+        assertFalse(io.ccNegativeSet());
         assertTrue(io.ccCarrySet());
     }
 
@@ -211,7 +261,7 @@ public class CPUTest
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0x80));
         assertEquals(0x0, result.getShort());
         assertTrue(io.ccCarrySet());
-        assertFalse(io.ccOverflowSet());
+        assertTrue(io.ccOverflowSet());
         assertTrue(io.ccZeroSet());
         assertFalse(io.ccNegativeSet());
     }
@@ -228,11 +278,20 @@ public class CPUTest
     }
 
     @Test
-    public void testRotateLeftSetsOverflow() {
+    public void testRotateLeftClearsOverflow() {
         UnsignedByte result = cpu.rotateLeft(new UnsignedByte(0xC0));
         assertEquals(0x80, result.getShort());
         assertTrue(io.ccCarrySet());
-        assertTrue(io.ccOverflowSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccZeroSet());
+        assertTrue(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testDecrementWorksCorrectly() {
+        UnsignedByte result = cpu.decrement(new UnsignedByte(0xC4));
+        assertEquals(0xC3, result.getShort());
+        assertFalse(io.ccOverflowSet());
         assertFalse(io.ccZeroSet());
         assertTrue(io.ccNegativeSet());
     }
@@ -308,6 +367,28 @@ public class CPUTest
         UnsignedByte result = cpu.clear(new UnsignedByte(0x4));
         assertEquals(0, result.getShort());
         assertTrue(io.ccZeroSet());
+    }
+
+    @Test
+    public void testCompareByteWorksCorrectly() {
+        UnsignedByte byte1 = new UnsignedByte(0xA3);
+        UnsignedByte byte2 = new UnsignedByte(0x11);
+        cpu.compareByte(byte1, byte2);
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccCarrySet());
+        assertTrue(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testCompareWordWorksCorrectly() {
+        UnsignedWord word1 = new UnsignedWord(0x021A);
+        UnsignedWord word2 = new UnsignedWord(0x072E);
+        cpu.compareWord(word1, word2);
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccOverflowSet());
+        assertTrue(io.ccNegativeSet());
+        assertTrue(io.ccCarrySet());
     }
 
     @Test
@@ -473,11 +554,12 @@ public class CPUTest
 
     @Test
     public void testSubtractMWorksCorrectly() {
-        registerSet.setA(new UnsignedByte(0x80));
-        cpu.subtractM(Register.A, new UnsignedByte(0x1));
-        assertEquals(new UnsignedByte(0x7F), registerSet.getA());
+        registerSet.setA(new UnsignedByte(0x6A));
+        cpu.subtractM(Register.A, new UnsignedByte(0x27));
+        assertEquals(new UnsignedByte(0x43), registerSet.getA());
         assertFalse(io.ccZeroSet());
         assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
     }
 
     @Test
@@ -507,10 +589,12 @@ public class CPUTest
     }
 
     @Test
+    @Ignore
     public void testSubtractMCWorksCorrectly() {
-        registerSet.setA(new UnsignedByte(0x80));
-        cpu.subtractMC(Register.A, new UnsignedByte(0x1));
-        assertEquals(new UnsignedByte(0x7F), registerSet.getA());
+        registerSet.setA(new UnsignedByte(0x67));
+        registerSet.setCC(new UnsignedByte(IOController.CC_C));
+        cpu.subtractMC(Register.A, new UnsignedByte(0x24));
+        assertEquals(new UnsignedByte(0x42), registerSet.getA());
         assertFalse(io.ccZeroSet());
         assertFalse(io.ccNegativeSet());
     }
@@ -669,6 +753,14 @@ public class CPUTest
 
     @Test
     public void testLogicalOrWorksCorrectly() {
+        registerSet.setA(new UnsignedByte(0x40));
+        registerSet.setB(new UnsignedByte(0x1));
+        cpu.logicalOr(Register.A, new UnsignedByte(0x11));
+        assertEquals(new UnsignedByte(0x51), registerSet.getA());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+
         registerSet.setA(new UnsignedByte(0x1));
         registerSet.setB(new UnsignedByte(0x1));
         cpu.logicalOr(Register.A, new UnsignedByte(0x0));
@@ -730,5 +822,16 @@ public class CPUTest
         assertEquals(new UnsignedByte(0x22), registerSet.getA());
         assertFalse(io.ccZeroSet());
         assertFalse(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testAddWithCarryWorksCorrectly() {
+        registerSet.setA(new UnsignedByte(0x68));
+        cpu.addWithCarry(Register.A, new UnsignedByte(0xA5));
+        assertEquals(new UnsignedByte(0x0D), registerSet.getA());
+        assertTrue(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccHalfCarrySet());
+        assertFalse(io.ccZeroSet());
     }
 }

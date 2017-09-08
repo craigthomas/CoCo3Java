@@ -39,7 +39,7 @@ public class Screen
     private IOController io;
 
     /* Where the video buffer is in io */
-    private final UnsignedWord SCREEN_MEMORY = new UnsignedWord(0x0200);
+    private final UnsignedWord SCREEN_MEMORY = new UnsignedWord(0x0400);
 
     /* Color definitions for semi-graphics 4 mode */
     private final Color colors[] = {
@@ -1045,7 +1045,7 @@ public class Screen
     /**
      * Draw a Semi Graphics 4 character on the screen at the specified
      * column and row. The value of the byte may be between 0 and 64,
-     * and referece SG4_CHARACTERS. Values above 64 are treated as
+     * and reference SG4_CHARACTERS. Values above 64 are treated as
      * inverse characters.
      *
      * @param value the value of the byte to write
@@ -1055,17 +1055,14 @@ public class Screen
     public void drawSG4Character(UnsignedByte value, int col, int row) {
         int x = 32 + (col * 8);
         int y = 25 + (row * 12);
-        int intValue = value.getShort();
-        if (intValue > 128) {
-            intValue = 0;
-        }
+        int intValue = value.getShort() & 0x3F;
         int character = intValue > SG4_CHARACTERS.length ?
                 intValue - SG4_CHARACTERS.length : intValue;
         boolean inverse = value.getShort() < SG4_CHARACTERS.length;
 
         for (int i = 0; i < 12; i++) {
             for (int j = 0; j < 8; j++) {
-                drawSG4Pixel(x + j, y + i, SG4_CHARACTERS[character][i][j], inverse);
+                drawSG4Pixel(x + j, y + i, SG4_CHARACTERS[character][i][j],!inverse);
             }
         }
     }

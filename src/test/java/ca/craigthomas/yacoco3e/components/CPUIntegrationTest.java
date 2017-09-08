@@ -336,7 +336,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x1), extendedAddress);
         cpuSpy.executeInstruction();
         verify(ioSpy).getExtended();
-        verify(cpuSpy).jump(expectedExtendedWord);
+        verify(cpuSpy).jump(extendedAddress);
     }
 
     @Test
@@ -607,7 +607,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102C));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).branchLong(new UnsignedWord(0xBEEF));
+        verify(cpuSpy, never()).branchLong(new UnsignedWord(0xBEEF));
     }
 
     @Test
@@ -616,7 +616,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102C));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).branchLong(new UnsignedWord(0xBEEF));
+        verify(cpuSpy, never()).branchLong(new UnsignedWord(0xBEEF));
     }
 
 
@@ -625,7 +625,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102C));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy, never()).branchLong(new UnsignedWord(0xBEEF));
+        verify(cpuSpy).branchLong(new UnsignedWord(0xBEEF));
     }
 
     @Test
@@ -635,12 +635,12 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102C));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy, never()).branchLong(new UnsignedWord(0xBEEF));
+        verify(cpuSpy).branchLong(new UnsignedWord(0xBEEF));
     }
 
     @Test
     public void testLongBranchOnGTCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.setCCZero();
+        ioSpy.setCCNegative();
         ioSpy.setCCOverflow();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102E));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
@@ -649,8 +649,10 @@ public class CPUIntegrationTest
     }
 
     @Test
-    public void testLongBranchOnGTNotCalledIfNotZeroSet() throws IllegalIndexedPostbyteException {
+    public void testLongBranchOnGTNotCalledIfZeroSet() throws IllegalIndexedPostbyteException {
+        ioSpy.setCCZero();
         ioSpy.setCCOverflow();
+        ioSpy.setCCNegative();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x102E));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xBEEF));
         cpuSpy.executeInstruction();
@@ -1065,7 +1067,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xAE00));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).loadRegister(Register.X, new UnsignedWord(0xB000));
+        verify(cpuSpy).loadRegister(Register.X, new UnsignedWord());
     }
 
     @Test
@@ -1082,7 +1084,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x109F));
         cpuSpy.executeInstruction();
         verify(ioSpy).getDirect();
-        verify(cpuSpy).storeWordRegister(Register.Y, new UnsignedWord(expectedDirectByte, new UnsignedByte(0)));
+        verify(cpuSpy).storeWordRegister(Register.Y, new UnsignedWord(0xA000));
     }
 
     @Test
@@ -1090,7 +1092,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x10AF));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).storeWordRegister(Register.Y, new UnsignedWord());
+        verify(cpuSpy).storeWordRegister(Register.Y, new UnsignedWord(0xB000));
     }
 
     @Test
@@ -1099,7 +1101,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x2), extendedAddress);
         cpuSpy.executeInstruction();
         verify(ioSpy).getExtended();
-        verify(cpuSpy).storeWordRegister(Register.Y, expectedExtendedWord);
+        verify(cpuSpy).storeWordRegister(Register.Y, extendedAddress);
     }
 
     @Test
@@ -1124,7 +1126,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x1), extendedAddress);
         cpuSpy.executeInstruction();
         verify(ioSpy).getExtended();
-        verify(cpuSpy).storeWordRegister(Register.X, expectedExtendedWord);
+        verify(cpuSpy).storeWordRegister(Register.X, extendedAddress);
     }
 
     @Test
@@ -1132,7 +1134,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x10DF));
         cpuSpy.executeInstruction();
         verify(ioSpy).getDirect();
-        verify(cpuSpy).storeWordRegister(Register.S, new UnsignedWord(expectedDirectByte, new UnsignedByte(0)));
+        verify(cpuSpy).storeWordRegister(Register.S, new UnsignedWord(0xA000));
     }
 
     @Test
@@ -1140,7 +1142,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x10EF));
         cpuSpy.executeInstruction();
         verify(ioSpy).getIndexed();
-        verify(cpuSpy).storeWordRegister(Register.S, new UnsignedWord());
+        verify(cpuSpy).storeWordRegister(Register.S, new UnsignedWord(0xB000));
     }
 
     @Test
@@ -1149,7 +1151,7 @@ public class CPUIntegrationTest
         ioSpy.writeWord(new UnsignedWord(0x2), extendedAddress);
         cpuSpy.executeInstruction();
         verify(ioSpy).getExtended();
-        verify(cpuSpy).storeWordRegister(Register.S, expectedExtendedWord);
+        verify(cpuSpy).storeWordRegister(Register.S, extendedAddress);
     }
 
     @Test
@@ -2023,7 +2025,7 @@ public class CPUIntegrationTest
         ioSpy.setCCOverflow();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2CEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).branchShort(new UnsignedByte(0xEF));
+        verify(cpuSpy, never()).branchShort(new UnsignedByte(0xEF));
     }
 
     @Test
@@ -2031,14 +2033,14 @@ public class CPUIntegrationTest
         ioSpy.setCCNegative();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2CEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy).branchShort(new UnsignedByte(0xEF));
+        verify(cpuSpy, never()).branchShort(new UnsignedByte(0xEF));
     }
 
     @Test
     public void testBranchOnGENotCalledWhenNegativeAndOverflowNotSet() throws IllegalIndexedPostbyteException {
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2CEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy, never()).branchShort(new UnsignedByte(0xEF));
+        verify(cpuSpy).branchShort(new UnsignedByte(0xEF));
     }
 
     @Test
@@ -2047,12 +2049,12 @@ public class CPUIntegrationTest
         ioSpy.setCCOverflow();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2CEF));
         cpuSpy.executeInstruction();
-        verify(cpuSpy, never()).branchShort(new UnsignedByte(0xEF));
+        verify(cpuSpy).branchShort(new UnsignedByte(0xEF));
     }
 
     @Test
     public void testBranchOnGTCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.setCCZero();
+        ioSpy.setCCNegative();
         ioSpy.setCCOverflow();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2EEF));
         cpuSpy.executeInstruction();
@@ -2060,8 +2062,10 @@ public class CPUIntegrationTest
     }
 
     @Test
-    public void testBranchOnGTNotCalledIfNotZeroSet() throws IllegalIndexedPostbyteException {
+    public void testBranchOnGTNotCalledIfZeroSet() throws IllegalIndexedPostbyteException {
+        ioSpy.setCCNegative();
         ioSpy.setCCOverflow();
+        ioSpy.setCCZero();
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x2EEF));
         cpuSpy.executeInstruction();
         verify(cpuSpy, never()).branchShort(new UnsignedByte(0xEF));
@@ -2112,8 +2116,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testLoadEffectiveAddressXCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xB000));
-        ioSpy.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
+        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xBEEF));
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x309F));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xA000));
         cpuSpy.executeInstruction();
@@ -2122,8 +2125,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testLoadEffectiveAddressYCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xB000));
-        ioSpy.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
+        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xBEEF));
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x319F));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xA000));
         cpuSpy.executeInstruction();
@@ -2132,8 +2134,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testLoadEffectiveAddressSCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xB000));
-        ioSpy.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
+        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xBEEF));
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x329F));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xA000));
         cpuSpy.executeInstruction();
@@ -2142,8 +2143,7 @@ public class CPUIntegrationTest
 
     @Test
     public void testLoadEffectiveAddressUCalledCorrectly() throws IllegalIndexedPostbyteException {
-        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xB000));
-        ioSpy.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
+        ioSpy.writeWord(new UnsignedWord(0xA000), new UnsignedWord(0xBEEF));
         ioSpy.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x339F));
         ioSpy.writeWord(new UnsignedWord(0x2), new UnsignedWord(0xA000));
         cpuSpy.executeInstruction();
@@ -2211,13 +2211,13 @@ public class CPUIntegrationTest
         ioSpy.writeByte(new UnsignedWord(0x9FF7), new UnsignedByte(0x03));
         ioSpy.writeByte(new UnsignedWord(0x9FF6), new UnsignedByte(0x02));
         ioSpy.writeByte(new UnsignedWord(0x9FF5), new UnsignedByte(0x01));
-        ioSpy.writeByte(new UnsignedWord(0x9FF4), new UnsignedByte(0x04));
+        ioSpy.writeByte(new UnsignedWord(0x9FF4), new UnsignedByte(IOController.CC_E));
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x3B));
         cpuSpy.executeInstruction();
         assertEquals(new UnsignedByte(0x1), registerSetSpy.getA());
         assertEquals(new UnsignedByte(0x2), registerSetSpy.getB());
         assertEquals(new UnsignedByte(0x3), registerSetSpy.getDP());
-        assertEquals(new UnsignedByte(0x4), registerSetSpy.getCC());
+        assertEquals(new UnsignedByte(IOController.CC_E), registerSetSpy.getCC());
         assertEquals(new UnsignedWord(0x5566), registerSetSpy.getX());
         assertEquals(new UnsignedWord(0x7788), registerSetSpy.getY());
         assertEquals(new UnsignedWord(0x99AA), registerSetSpy.getU());
@@ -2226,9 +2226,10 @@ public class CPUIntegrationTest
 
     @Test
     public void testRTIPCOnly() throws IllegalIndexedPostbyteException {
-        ioSpy.setS(new UnsignedWord(0x9FF4));
+        ioSpy.setS(new UnsignedWord(0x9FF3));
         ioSpy.writeByte(new UnsignedWord(0x9FF5), new UnsignedByte(0xEF));
         ioSpy.writeByte(new UnsignedWord(0x9FF4), new UnsignedByte(0xBE));
+        ioSpy.writeByte(new UnsignedWord(0x9FF3), new UnsignedByte(0x0));
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x3B));
         cpuSpy.executeInstruction();
         assertEquals(new UnsignedWord(0xBEEF), registerSetSpy.getPC());
@@ -2262,13 +2263,14 @@ public class CPUIntegrationTest
 
     @Test
     public void testMULWorksCorrect() throws IllegalIndexedPostbyteException {
-        ioSpy.setA(new UnsignedByte(0x2));
-        ioSpy.setB(new UnsignedByte(0x3));
+        ioSpy.setA(new UnsignedByte(0x4B));
+        ioSpy.setB(new UnsignedByte(0x0C));
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x3D));
         cpuSpy.executeInstruction();
-        assertEquals(new UnsignedWord(0x6), registerSetSpy.getD());
+        assertEquals(new UnsignedWord(0x0384), registerSetSpy.getD());
         assertFalse(ioSpy.ccNegativeSet());
         assertFalse(ioSpy.ccZeroSet());
+        assertTrue(ioSpy.ccCarrySet());
     }
 
     @Test
@@ -3199,7 +3201,7 @@ public class CPUIntegrationTest
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0xBD));
         ioSpy.writeWord(new UnsignedWord(0x1), extendedAddress);
         cpuSpy.executeInstruction();
-        verify(cpuSpy).jumpToSubroutine(expectedExtendedWord);
+        verify(cpuSpy).jumpToSubroutine(extendedAddress);
         verify(ioSpy).getExtended();
     }
 
@@ -3224,7 +3226,7 @@ public class CPUIntegrationTest
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0xFD));
         ioSpy.writeWord(new UnsignedWord(0x1), extendedAddress);
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeWordRegister(Register.D, expectedExtendedWord);
+        verify(cpuSpy).storeWordRegister(Register.D, extendedAddress);
         verify(ioSpy).getExtended();
     }
 
@@ -3249,7 +3251,7 @@ public class CPUIntegrationTest
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0xFF));
         ioSpy.writeWord(new UnsignedWord(0x1), extendedAddress);
         cpuSpy.executeInstruction();
-        verify(cpuSpy).storeWordRegister(Register.U, expectedExtendedWord);
+        verify(cpuSpy).storeWordRegister(Register.U, extendedAddress);
         verify(ioSpy).getExtended();
     }
 

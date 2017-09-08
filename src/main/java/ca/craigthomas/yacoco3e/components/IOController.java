@@ -405,19 +405,18 @@ public class IOController
         /* 5-bit offset - check for signed values */
         if (!postByte.isMasked(0x80)) {
             r = getWordRegister(getIndexedRegister(postByte));
-            System.out.println(r);
-
             UnsignedByte offset = new UnsignedByte(postByte.getShort() & 0x1F);
             if (offset.isMasked(0x10)) {
                 offset.and(0xF);
-                result = new UnsignedWord(r.getInt() - offset.getShort());
+                UnsignedByte newOffset = offset.twosCompliment();
+                newOffset.and(0xF);
+                System.out.print(" (new 5-bit offset = -" + newOffset + ", R = " + r.toString() + ") ");
+                result = new UnsignedWord(r.getInt() - newOffset.getShort());
             } else {
                 result = new UnsignedWord(r.getInt() + offset.getShort());
             }
             return new MemoryResult(1, result);
         }
-
-        System.out.println("postbyte " + new UnsignedByte(postByte.getShort() & 0x1F));
 
         switch (postByte.getShort() & 0x1F) {
             /* ,R+ -> R, then increment R */
@@ -501,7 +500,6 @@ public class IOController
 
             /* n,PC -> 16-bit offset from PC */
             case 0x0D:
-                System.out.println("Indexed mode n,PC");
                 r = getWordRegister(Register.PC);
                 nWord = readWord(regs.getPC());
                 regs.incrementPC();
@@ -784,16 +782,15 @@ public class IOController
 
         /* Check to see if a full carry occurred and we should flag it */
         if (flagCarry) {
-            UnsignedWord test = new UnsignedWord(value1 & 0xFF);
-            test.add(value2 & 0xFF);
-            if (test.isMasked(0x100) && flagCarry) {
+            if (((value1 + value2) & 0x10000) > 0) {
                 setCCCarry();
             }
         }
 
         /* Check to see if overflow occurred and we should flag it */
         if (flagOverflow) {
-            if ((value1 + value2) > 0xFFFF) {
+            int signedResult = val1.getSignedInt() + val2.getSignedInt();
+            if (signedResult > 32767 || signedResult < -32767) {
                 setCCOverflow();
             }
         }
@@ -829,18 +826,16 @@ public class IOController
         }
 
         /* Check for full carries */
-        /* TODO: Check for correctness here */
         if (flagCarry) {
-            UnsignedByte test = new UnsignedByte(value1 & 0xFF);
-            test.add(value2 & 0xFF);
-            if (test.isMasked(0x100)) {
+            if (((value1 + value2) & 0x100) > 0) {
                 setCCCarry();
             }
         }
 
         /* Check for overflow */
         if (flagOverflow) {
-            if ((value1 + value2) > 255) {
+            int signedResult = val1.getSignedShort() + val2.getSignedShort();
+            if (signedResult > 127 || signedResult < -127) {
                 setCCOverflow();
             }
         }

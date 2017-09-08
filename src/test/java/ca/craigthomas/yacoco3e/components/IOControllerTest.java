@@ -145,8 +145,8 @@ public class IOControllerTest
 
     @Test
     public void testBinaryAddWordConditionCodesOverflow() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0xFFFF), new UnsignedWord(1), false, false, true);
-        assertEquals(new UnsignedWord(0), result);
+        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0x8FFF), new UnsignedWord(0x8FFF), false, false, true);
+        assertEquals(new UnsignedWord(0x1FFE), result);
         assertEquals(new UnsignedByte(IOController.CC_V), regs.getCC());
     }
 
@@ -352,7 +352,7 @@ public class IOControllerTest
     @Test
     public void testGetIndexed5BitNegativeOffset() throws IllegalIndexedPostbyteException{
         regs.setX(new UnsignedWord(0xB000));
-        io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x11));
+        io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x1F));
         assertEquals(new UnsignedWord(0xAFFF), io.getIndexed().get());
     }
 
