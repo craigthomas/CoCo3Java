@@ -15,6 +15,7 @@ public class CPU extends Thread
 {
     /* CPU Internal Variables */
     String opShortDesc;
+    String opLongDesc;
     IOController io;
 
     /* Whether the CPU should be in a running state */
@@ -60,13 +61,15 @@ public class CPU extends Thread
         int operationTicks = 0;
         MemoryResult memoryResult = new MemoryResult();
         UnsignedByte operand = io.readByte(io.getWordRegister(Register.PC));
-        System.out.print("PC " + io.getWordRegister(Register.PC) + ", ");
+        System.out.print("PC " + io.getWordRegister(Register.PC) + ", operand " + operand + " : ");
         io.incrementPC();
         int bytes = 0;
         UnsignedWord tempWord = new UnsignedWord();
         updatePC = true;
         UnsignedByte a;
         UnsignedByte b;
+        opShortDesc = "";
+        opLongDesc = "";
 
         switch (operand.getShort()) {
 
@@ -315,7 +318,7 @@ public class CPU extends Thread
                     /* LBGE - Long Branch on Greater Than or Equal to Zero */
                     case 0x2C:
                         memoryResult = io.getImmediateWord();
-                        if (!io.ccNegativeSet() ^ !io.ccOverflowSet()) {
+                        if ((io.ccNegativeSet() && io.ccOverflowSet()) || (!io.ccNegativeSet() && !io.ccOverflowSet())) {
                             branchLong(memoryResult.get());
                             operationTicks = 6;
                             updatePC = false;
@@ -328,7 +331,7 @@ public class CPU extends Thread
                     /* LBLT - Long Branch on Less Than or Equal to Zero */
                     case 0x2D:
                         memoryResult = io.getImmediateWord();
-                        if (io.ccNegativeSet() ^ io.ccOverflowSet()) {
+                        if ((io.ccNegativeSet() && !io.ccOverflowSet()) || (!io.ccNegativeSet() && io.ccOverflowSet())) {
                             branchLong(memoryResult.get());
                             operationTicks = 6;
                             updatePC = false;
@@ -341,7 +344,7 @@ public class CPU extends Thread
                     /* LBGT - Long Branch on Greater Than Zero */
                     case 0x2E:
                         memoryResult = io.getImmediateWord();
-                        if (io.ccZeroSet() && (io.ccNegativeSet() ^ io.ccOverflowSet())) {
+                        if (!io.ccZeroSet() && ((io.ccNegativeSet() && io.ccOverflowSet()) || (!io.ccNegativeSet() && !io.ccOverflowSet()))) {
                             branchLong(memoryResult.get());
                             operationTicks = 6;
                             updatePC = false;
@@ -354,7 +357,7 @@ public class CPU extends Thread
                     /* LBLE - Long Branch on Less Than Zero */
                     case 0x2F:
                         memoryResult = io.getImmediateWord();
-                        if (io.ccZeroSet() || (io.ccNegativeSet() ^ io.ccOverflowSet())) {
+                        if (io.ccZeroSet() || ((io.ccNegativeSet() && !io.ccOverflowSet()) || (!io.ccNegativeSet() && io.ccOverflowSet()))) {
                             branchLong(memoryResult.get());
                             operationTicks = 6;
                             updatePC = false;
@@ -422,7 +425,7 @@ public class CPU extends Thread
                     /* STY - Store Y - Direct */
                     case 0x9F:
                         memoryResult = io.getDirect();
-                        storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.Y, memoryResult.get());
                         operationTicks = 6;
                         setShortDesc("STY, DIR [%04X]", memoryResult);
                         break;
@@ -443,7 +446,7 @@ public class CPU extends Thread
                         setShortDesc("CMPY, IND [%04X]", memoryResult);
                         break;
 
-                    /* LDY - Load Y - Direct */
+                    /* LDY - Load Y - Indexed */
                     case 0xAE:
                         memoryResult = io.getIndexed();
                         loadRegister(Register.Y, io.readWord(memoryResult.get()));
@@ -454,7 +457,7 @@ public class CPU extends Thread
                     /* STY - Store Y - Indexed */
                     case 0xAF:
                         memoryResult = io.getIndexed();
-                        storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.Y, memoryResult.get());
                         operationTicks = 4 + memoryResult.getBytesConsumed();
                         setShortDesc("STY, IND [%04X]", memoryResult);
                         break;
@@ -486,7 +489,7 @@ public class CPU extends Thread
                     /* STY - Store Y - Extended */
                     case 0xBF:
                         memoryResult = io.getExtended();
-                        storeWordRegister(Register.Y, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.Y, memoryResult.get());
                         operationTicks = 7;
                         setShortDesc("STY, EXT [%04X]", memoryResult);
                         break;
@@ -510,7 +513,7 @@ public class CPU extends Thread
                     /* STS - Store S - Direct */
                     case 0xDF:
                         memoryResult = io.getDirect();
-                        storeWordRegister(Register.S, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.S, memoryResult.get());
                         operationTicks = 6;
                         setShortDesc("STS, DIR [%04X]", memoryResult);
                         break;
@@ -526,7 +529,7 @@ public class CPU extends Thread
                     /* STS - Store S - Indexed */
                     case 0xEF:
                         memoryResult = io.getIndexed();
-                        storeWordRegister(Register.S, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.S, memoryResult.get());
                         operationTicks = 4 + memoryResult.getBytesConsumed();
                         setShortDesc("STS, IND [%04X]", memoryResult);
                         break;
@@ -542,7 +545,7 @@ public class CPU extends Thread
                     /* STS - Store S - Extended */
                     case 0xFF:
                         memoryResult = io.getExtended();
-                        storeWordRegister(Register.S, io.readWord(memoryResult.get()));
+                        storeWordRegister(Register.S, memoryResult.get());
                         operationTicks = 7;
                         setShortDesc("STS, EXT [%04X]", memoryResult);
                         break;
@@ -648,6 +651,16 @@ public class CPU extends Thread
                 operationTicks = 5;
                 updatePC = false;
                 setShortDesc("LBRA, IMM [%04X]", memoryResult);
+                break;
+
+            /* LBSR - Long Branch to Subroutine */
+            case 0x17:
+                memoryResult = io.getImmediateWord();
+                io.pushStack(Register.S, io.getWordRegister(Register.PC));
+                branchLong(memoryResult.get());
+                operationTicks = 9;
+                updatePC = false;
+                setShortDesc("LBSR, IMM [%04X]", memoryResult);
                 break;
 
             /* DAA - Decimal Addition Adjust */
@@ -1135,6 +1148,7 @@ public class CPU extends Thread
 
             /* BRN - Branch Never */
             case 0x21:
+                memoryResult = io.getImmediateByte();
                 operationTicks = 3;
                 setShortDesc("BRN, IMM [%04X]", memoryResult);
                 break;
@@ -1153,7 +1167,7 @@ public class CPU extends Thread
             /* BLE - Branch on Lower or Same */
             case 0x23:
                 memoryResult = io.getImmediateByte();
-                if (io.ccCarrySet() || io.ccZeroSet()) {
+                if ((io.ccZeroSet() || ((io.ccNegativeSet() && !io.ccOverflowSet()) || (!io.ccNegativeSet() && io.ccOverflowSet())))) {
                     branchShort(memoryResult.get().getHigh());
                     updatePC = false;
                 }
@@ -1252,7 +1266,7 @@ public class CPU extends Thread
             /* BGE - Branch on Greater Than or Equal to Zero */
             case 0x2C:
                 memoryResult = io.getImmediateByte();
-                if (!io.ccNegativeSet() ^ !io.ccOverflowSet()) {
+                if ((io.ccNegativeSet() && io.ccOverflowSet()) || (!io.ccNegativeSet() && !io.ccOverflowSet())) {
                     branchShort(memoryResult.get().getHigh());
                     updatePC = false;
                 }
@@ -1263,7 +1277,7 @@ public class CPU extends Thread
             /* BLT - Branch on Less Than or Equal to Zero */
             case 0x2D:
                 memoryResult = io.getImmediateByte();
-                if (io.ccNegativeSet() ^ io.ccOverflowSet()) {
+                if ((io.ccNegativeSet() && !io.ccOverflowSet()) || (!io.ccNegativeSet() && io.ccOverflowSet())) {
                     branchShort(memoryResult.get().getHigh());
                     updatePC = false;
                 }
@@ -1274,7 +1288,7 @@ public class CPU extends Thread
             /* BGT - Branch on Greater Than Zero */
             case 0x2E:
                 memoryResult = io.getImmediateByte();
-                if (io.ccZeroSet() && (io.ccNegativeSet() ^ io.ccOverflowSet())) {
+                if (!io.ccZeroSet() && ((io.ccNegativeSet() && io.ccOverflowSet()) || (!io.ccNegativeSet() && !io.ccOverflowSet()))) {
                     branchShort(memoryResult.get().getHigh());
                     updatePC = false;
                 }
@@ -1296,23 +1310,23 @@ public class CPU extends Thread
             /* LEAX - Load Effective Address into X register */
             case 0x30:
                 memoryResult = io.getIndexed();
-                loadEffectiveAddress(Register.X, io.readWord(memoryResult.get()));
+                loadEffectiveAddress(Register.X, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LEAX, IMM [%04X]", memoryResult);
+                setShortDesc("LEAX, IND [%04X]", memoryResult);
                 break;
 
             /* LEAY - Load Effective Address into Y register */
             case 0x31:
                 memoryResult = io.getIndexed();
-                loadEffectiveAddress(Register.Y, io.readWord(memoryResult.get()));
+                loadEffectiveAddress(Register.Y, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LEAY, IMM [%04X]", memoryResult);
+                setShortDesc("LEAY, IND [%04X], Y' = " + io.getWordRegister(Register.Y), memoryResult);
                 break;
 
             /* LEAS - Load Effective Address into S register */
             case 0x32:
                 memoryResult = io.getIndexed();
-                loadEffectiveAddress(Register.S, io.readWord(memoryResult.get()));
+                loadEffectiveAddress(Register.S, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
                 setShortDesc("LEAS, IMM [%04X]", memoryResult);
                 break;
@@ -1320,9 +1334,9 @@ public class CPU extends Thread
             /* LEAU - Load Effective Address into U register */
             case 0x33:
                 memoryResult = io.getIndexed();
-                loadEffectiveAddress(Register.U, io.readWord(memoryResult.get()));
+                loadEffectiveAddress(Register.U, memoryResult.get());
                 operationTicks = 2 + memoryResult.getBytesConsumed();
-                setShortDesc("LEAU, IMM [%04X]", memoryResult);
+                setShortDesc("LEAU, IND [%04X]", memoryResult);
                 break;
 
             /* PSHS - Push Registers onto S Stack */
@@ -1385,9 +1399,9 @@ public class CPU extends Thread
 
             /* RTI - Return from Interrupt */
             case 0x3B:
+                io.setCC(io.popStack(Register.S));
                 if (io.ccEverythingSet()) {
                     operationTicks = 9;
-                    io.setCC(io.popStack(Register.S));
                     io.setA(io.popStack(Register.S));
                     io.setB(io.popStack(Register.S));
                     io.setDP(io.popStack(Register.S));
@@ -1443,13 +1457,12 @@ public class CPU extends Thread
             case 0x3D:
                 a = io.getByteRegister(Register.A);
                 b = io.getByteRegister(Register.B);
-                int tempResult = a.getShort() * b.getShort();
-                tempResult &= 0xFFFF;
+                UnsignedWord tempResult = new UnsignedWord(a.getShort() * b.getShort());
+                io.setD(tempResult);
                 cc = io.getCC();
                 cc.and(~(IOController.CC_Z | IOController.CC_C));
-                cc.or(tempResult == 0 ? IOController.CC_Z : 0);
-                cc.or(b.isNegative() ? IOController.CC_C : 0);
-                io.setD(new UnsignedWord(tempResult));
+                cc.or(tempResult.isZero() ? IOController.CC_Z : 0);
+                cc.or(tempResult.isMasked(0x80) ? IOController.CC_C : 0);
                 operationTicks = 11;
                 setShortDesc("MUL, IMM", null);
                 break;
@@ -1796,7 +1809,7 @@ public class CPU extends Thread
                 memoryResult = io.getExtended();
                 operationTicks = 4;
                 updatePC = false;
-                jump(io.readWord(memoryResult.get()));
+                jump(memoryResult.get());
                 setShortDesc("JMP, EXT [%04X]", memoryResult);
                 break;
 
@@ -1902,6 +1915,15 @@ public class CPU extends Thread
                 compareWord(io.getWordRegister(Register.X), memoryResult.get());
                 operationTicks = 4;
                 setShortDesc("CMPX, IMM [%04X]", memoryResult);
+                break;
+
+            /* BSR - Branch to Subroutine - Immediate */
+            case 0x8D:
+                memoryResult = io.getImmediateByte();
+                io.pushStack(Register.S, io.getWordRegister(Register.PC));
+                branchShort(memoryResult.get().getHigh());
+                operationTicks = 7;
+                setShortDesc("BSR, IMM [%04X]", memoryResult);
                 break;
 
             /* LDX - Load X - Immediate */
@@ -2157,7 +2179,7 @@ public class CPU extends Thread
             /* LDX - Load X - Indexed */
             case 0xAE:
                 memoryResult = io.getIndexed();
-                loadRegister(Register.X, memoryResult.get());
+                loadRegister(Register.X, io.readWord(memoryResult.get()));
                 operationTicks = 3 + memoryResult.getBytesConsumed();
                 setShortDesc("LDX, IND [%04X]", memoryResult);
                 break;
@@ -2277,7 +2299,7 @@ public class CPU extends Thread
             /* JSR - Jump to Subroutine - Extended */
             case 0xBD:
                 memoryResult = io.getExtended();
-                jumpToSubroutine(io.readWord(memoryResult.get()));
+                jumpToSubroutine(memoryResult.get());
                 updatePC = false;
                 operationTicks = 8;
                 setShortDesc("JSR, EXT [%04X]", memoryResult);
@@ -2294,7 +2316,7 @@ public class CPU extends Thread
             /* STX - Store X - Extended */
             case 0xBF:
                 memoryResult = io.getExtended();
-                storeWordRegister(Register.X, io.readWord(memoryResult.get()));
+                storeWordRegister(Register.X, memoryResult.get());
                 operationTicks = 6;
                 setShortDesc("STX, EXT [%04X]", memoryResult);
                 break;
@@ -2766,7 +2788,7 @@ public class CPU extends Thread
             /* STD - Store D - Extended */
             case 0xFD:
                 memoryResult = io.getExtended();
-                storeWordRegister(Register.D, io.readWord(memoryResult.get()));
+                storeWordRegister(Register.D, memoryResult.get());
                 operationTicks = 6;
                 setShortDesc("STD, EXT [%04X]", memoryResult);
                 break;
@@ -2782,13 +2804,16 @@ public class CPU extends Thread
             /* STD - Store U - Extended */
             case 0xFF:
                 memoryResult = io.getExtended();
-                storeWordRegister(Register.U, io.readWord(memoryResult.get()));
+                storeWordRegister(Register.U, memoryResult.get());
                 operationTicks = 6;
                 setShortDesc("STU, EXT [%04X]", memoryResult);
                 break;
+
+            default:
+                throw new RuntimeException("Un-implemented OP code " + operand);
         }
 
-        System.out.println(opShortDesc);
+        System.out.println(opShortDesc + " : " + opLongDesc);
 
         return operationTicks;
     }
@@ -2836,9 +2861,20 @@ public class CPU extends Thread
         UnsignedByte result = value.twosCompliment();
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V | IOController.CC_C));
-        cc.or(result.isMasked(0x80) ? IOController.CC_V : 0);
-        cc.or(result.isZero() ? IOController.CC_Z | IOController.CC_N : 0);
-        cc.or(result.isNegative() ? IOController.CC_N : 0);
+
+        /* Exception cases */
+        if (value.equals(new UnsignedByte(0x80))) {
+            result = new UnsignedByte(0x80);
+            cc.or(IOController.CC_V);
+        } else if (value.equals(new UnsignedByte(0x0))) {
+            result = new UnsignedByte(0x0);
+            cc.or(IOController.CC_Z);
+        } else {
+            cc.or(result.isMasked(0x80) ? IOController.CC_V : 0);
+            cc.or(result.isZero() ? IOController.CC_Z : 0);
+            cc.or(result.isNegative() ? IOController.CC_N : 0);
+            cc.or(IOController.CC_C);
+        }
         return result;
     }
 
@@ -2908,7 +2944,9 @@ public class CPU extends Thread
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V | IOController.CC_C));
         cc.or(value.isMasked(0x80) ? IOController.CC_C : 0);
-        cc.or(value.isMasked(0xC0) ? IOController.CC_V : 0);
+        boolean bit7 = value.isMasked(0x80);
+        boolean bit6 = value.isMasked(0x40);
+        cc.or(bit7 ^ bit6 ? IOController.CC_V : 0);
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
         return result;
@@ -2927,7 +2965,12 @@ public class CPU extends Thread
         result.add(io.ccCarrySet() ? 0x1 : 0x0);
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_C | IOController.CC_V));
         cc.or(value.isMasked(0x80) ? IOController.CC_C : 0);
-        cc.or(value.isMasked(0xC0) ? IOController.CC_V : 0);
+        boolean bit7 = value.isMasked(0x80);
+        boolean bit6 = value.isMasked(0x40);
+        cc.or(IOController.CC_V);
+        if ((bit7 && bit6) || (!bit7 && !bit6)) {
+            cc.and(~IOController.CC_V);
+        }
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
         return result;
@@ -2956,10 +2999,9 @@ public class CPU extends Thread
      * @return the incremented byte value
      */
     public UnsignedByte increment(UnsignedByte value) {
-        UnsignedByte result = io.binaryAdd(value, new UnsignedByte(0x1), false, false, false);
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V));
-        cc.or(value.isMasked(0x7F) ? IOController.CC_V : 0);
+        UnsignedByte result = io.binaryAdd(value, new UnsignedByte(0x1), false, false, true);
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
         return result;
@@ -2998,6 +3040,7 @@ public class CPU extends Thread
         UnsignedWord pc = io.getWordRegister(Register.PC);
         io.pushStack(Register.S, pc);
         pc.set(address);
+        opLongDesc = "PC'=" + io.getWordRegister(Register.PC);
     }
 
     /**
@@ -3010,6 +3053,7 @@ public class CPU extends Thread
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_C | IOController.CC_V));
         cc.or(IOController.CC_Z);
+        cc.or(IOController.CC_C);
         return new UnsignedByte(0);
     }
 
@@ -3022,6 +3066,7 @@ public class CPU extends Thread
      */
     public void branchLong(UnsignedWord offset) {
         io.getWordRegister(Register.PC).add(offset.isNegative() ? offset.getSignedInt() : offset.getInt());
+        opLongDesc = "PC'=" + io.getWordRegister(Register.PC);
     }
 
     /**
@@ -3032,10 +3077,8 @@ public class CPU extends Thread
      * @param offset the amount to offset the program counter
      */
     public void branchShort(UnsignedByte offset) {
-        System.out.println("Branching short to PC " + io.getWordRegister(Register.PC) + " + " + offset);
-        System.out.println("offset is negative: " + offset.isNegative());
-        System.out.println("Adding the following: " + offset.getSignedShort());
         io.getWordRegister(Register.PC).add(offset.isNegative() ? offset.getSignedShort() : offset.getShort());
+        opLongDesc = "PC'=" + io.getWordRegister(Register.PC);
     }
 
     /**
@@ -3065,11 +3108,13 @@ public class CPU extends Thread
      * @param word2 the second word to compare
      */
     public UnsignedWord compareWord(UnsignedWord word1, UnsignedWord word2) {
-        UnsignedWord result = io.binaryAdd(word1, word2.twosCompliment(), false, true, true);
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V | IOController.CC_C));
+        UnsignedWord result = io.binaryAdd(word1, word2.twosCompliment(), false, false, true);
+        cc.or(word1.getInt() < word2.getInt() ? IOController.CC_C : 0);
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = word1 + " vs " + word2;
         return result;
     }
 
@@ -3080,11 +3125,13 @@ public class CPU extends Thread
      * @param byte2 the second byte to compare
      */
     public void compareByte(UnsignedByte byte1, UnsignedByte byte2) {
-        UnsignedByte result = io.binaryAdd(byte1, byte2.twosCompliment(), false, true, true);
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V | IOController.CC_C));
+        UnsignedByte result = io.binaryAdd(byte1, byte2.twosCompliment(), false, false, true);
+        cc.or(byte1.getShort() < byte2.getShort() ? IOController.CC_C : 0);
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = byte1 + " vs " + byte2;
     }
 
     /**
@@ -3096,10 +3143,17 @@ public class CPU extends Thread
     public void loadRegister(Register registerFlag, UnsignedWord value) {
         UnsignedWord register = io.getWordRegister(registerFlag);
         UnsignedByte cc = io.getCC();
-        register.set(value);
+
+        /* D is a special register */
+        if (registerFlag == Register.D) {
+            io.setD(value);
+        } else {
+            register.set(value);
+        }
         cc.and(~(IOController.CC_V | IOController.CC_N | IOController.CC_Z));
         cc.or(register.isZero() ? IOController.CC_Z : 0);
         cc.or(register.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = registerFlag + "'=" + value;
     }
 
     /**
@@ -3115,6 +3169,7 @@ public class CPU extends Thread
         cc.and(~(IOController.CC_V | IOController.CC_N | IOController.CC_Z));
         cc.or(register.isZero() ? IOController.CC_Z : 0);
         cc.or(register.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = "M[" + address + "]'=" + register;
     }
 
     /**
@@ -3130,6 +3185,7 @@ public class CPU extends Thread
         cc.and(~(IOController.CC_V | IOController.CC_N | IOController.CC_Z));
         cc.or(register.isZero() ? IOController.CC_Z : 0);
         cc.or(register.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = "M[" + address + "]'=" + register;
     }
 
     /**
@@ -3174,8 +3230,11 @@ public class CPU extends Thread
         UnsignedWord reg = io.getWordRegister(register);
         UnsignedByte cc = io.getCC();
         reg.set(value);
-        cc.and(~(IOController.CC_Z));
-        cc.or(reg.isZero() ? IOController.CC_Z : 0);
+        if (register == Register.X || register == Register.Y) {
+            cc.and(~(IOController.CC_Z));
+            cc.or(reg.isZero() ? IOController.CC_Z : 0);
+        }
+        opLongDesc = register + "'=" + value;
     }
 
     /**
@@ -3190,26 +3249,22 @@ public class CPU extends Thread
     public int pushStack(Register register, UnsignedByte postByte) {
         int bytes = 0;
         if (postByte.isMasked(0x80)) {
-            io.pushStack(register, io.getWordRegister(Register.PC).getLow());
-            io.pushStack(register, io.getWordRegister(Register.PC).getHigh());
+            io.pushStack(register, io.getWordRegister(Register.PC));
             bytes += 2;
         }
 
         if (postByte.isMasked(0x40)) {
-            io.pushStack(register, io.getWordRegister(Register.U).getLow());
-            io.pushStack(register, io.getWordRegister(Register.U).getHigh());
+            io.pushStack(register, io.getWordRegister(Register.U));
             bytes += 2;
         }
 
         if (postByte.isMasked(0x20)) {
-            io.pushStack(register, io.getWordRegister(Register.Y).getLow());
-            io.pushStack(register, io.getWordRegister(Register.Y).getHigh());
+            io.pushStack(register, io.getWordRegister(Register.Y));
             bytes += 2;
         }
 
         if (postByte.isMasked(0x10)) {
-            io.pushStack(register, io.getWordRegister(Register.X).getLow());
-            io.pushStack(register, io.getWordRegister(Register.X).getHigh());
+            io.pushStack(register, io.getWordRegister(Register.X));
             bytes += 2;
         }
 
@@ -3358,14 +3413,9 @@ public class CPU extends Thread
         UnsignedByte reg = io.getByteRegister(register);
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_V | IOController.CC_Z | IOController.CC_C));
-        reg.set(io.binaryAdd(reg, value.twosCompliment(), true, true, true));
+        reg.set(io.binaryAdd(reg, value.twosCompliment(), false, true, true));
         cc.or(reg.isZero() ? IOController.CC_Z : 0);
         cc.or(reg.isNegative() ? IOController.CC_N : 0);
-        if (cc.isMasked(IOController.CC_C)) {
-            cc.and(~(IOController.CC_C));
-        } else {
-            cc.or(IOController.CC_C);
-        }
     }
 
     /**
@@ -3426,6 +3476,7 @@ public class CPU extends Thread
         reg.set(value);
         cc.or(reg.isZero() ? IOController.CC_Z : 0);
         cc.or(reg.isNegative() ? IOController.CC_N : 0);
+        opLongDesc = register + "'=" + value;
     }
 
     /**
@@ -3439,10 +3490,15 @@ public class CPU extends Thread
     public void addWithCarry(Register register, UnsignedByte value) {
         UnsignedByte reg = io.getByteRegister(register);
         UnsignedByte cc = io.getCC();
+        boolean setCC = false;
         cc.and(~(IOController.CC_N | IOController.CC_V | IOController.CC_Z | IOController.CC_C | IOController.CC_H));
-        UnsignedByte tempByte = new UnsignedByte(io.ccCarrySet() ? 1 : 0);
-        reg.set(io.binaryAdd(reg, value, true, true, true));
-        reg.set(io.binaryAdd(reg, tempByte, true, true, true));
+        int result = value.getShort() + (io.ccCarrySet() ? 1 : 0);
+        if (result > 255) {
+            result = 0;
+            setCC = true;
+        }
+        reg.set(io.binaryAdd(reg, new UnsignedByte(result), true, true, true));
+        cc.or(setCC ? IOController.CC_C : 0);
         cc.or(reg.isZero() ? IOController.CC_Z : 0);
         cc.or(reg.isNegative() ? IOController.CC_N : 0);
     }
