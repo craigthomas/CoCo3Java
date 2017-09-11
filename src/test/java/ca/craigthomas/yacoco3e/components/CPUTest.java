@@ -11,7 +11,6 @@ import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class CPUTest
@@ -20,12 +19,14 @@ public class CPUTest
     private Memory memory;
     private IOController io;
     private RegisterSet registerSet;
+    private Screen screen;
 
     @Before
     public void setUp() {
         memory = new Memory();
         registerSet = new RegisterSet();
-        io = new IOController(memory, registerSet, new Keyboard());
+        screen = new Screen(1);
+        io = new IOController(memory, registerSet, new Keyboard(), screen);
         cpu = new CPU(io);
     }
 
@@ -434,6 +435,15 @@ public class CPUTest
     }
 
     @Test
+    public void testLoadRegisterSetsZeroRegisterD() {
+        io.setD(new UnsignedWord(1));
+        UnsignedWord word1 = new UnsignedWord();
+        cpu.loadRegister(Register.D, word1);
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccNegativeSet());
+    }
+
+    @Test
     public void testLoadRegisterSetsNegative() {
         UnsignedWord word1 = new UnsignedWord(0x8100);
         cpu.loadRegister(Register.S, word1);
@@ -589,7 +599,6 @@ public class CPUTest
     }
 
     @Test
-    @Ignore
     public void testSubtractMCWorksCorrectly() {
         registerSet.setA(new UnsignedByte(0x67));
         registerSet.setCC(new UnsignedByte(IOController.CC_C));
@@ -830,6 +839,18 @@ public class CPUTest
         cpu.addWithCarry(Register.A, new UnsignedByte(0xA5));
         assertEquals(new UnsignedByte(0x0D), registerSet.getA());
         assertTrue(io.ccCarrySet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccHalfCarrySet());
+        assertFalse(io.ccZeroSet());
+    }
+
+    @Test
+    public void testAddWithCarryWorksCorrectlyTest2() {
+        registerSet.setA(new UnsignedByte(0x30));
+        io.setCCCarry();
+        cpu.addWithCarry(Register.A, new UnsignedByte(0xC3));
+        assertEquals(new UnsignedByte(0xF4), registerSet.getA());
+        assertFalse(io.ccCarrySet());
         assertFalse(io.ccOverflowSet());
         assertFalse(io.ccHalfCarrySet());
         assertFalse(io.ccZeroSet());

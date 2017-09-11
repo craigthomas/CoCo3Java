@@ -37,13 +37,13 @@ public class Emulator
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
 
 
-    public Emulator(int scaleFactor, String romFile) {
+    public Emulator(int scaleFactor, String romFile, boolean trace) {
         memory = new Memory();
         keyboard = new Keyboard();
-        ioController = new IOController(memory, new RegisterSet(), keyboard);
-        screen = new Screen(ioController, scaleFactor);
+        screen = new Screen(scaleFactor);
+        ioController = new IOController(memory, new RegisterSet(), keyboard, screen);
         cpu = new CPU(ioController);
-        screen.sg4ClearScreen();
+        cpu.setTrace(trace);
 
         initEmulatorJFrame();
 

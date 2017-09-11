@@ -17,6 +17,19 @@ public class IOController
     protected Memory memory;
     protected RegisterSet regs;
     protected Keyboard keyboard;
+    protected Screen screen;
+
+    /* CoCo Compatible Mode */
+    protected boolean cocoCompatibleMode;
+
+    /* Vertical Offset Register */
+    protected UnsignedWord verticalOffsetRegister;
+
+    /* SAM Display Offset Register */
+    protected UnsignedByte samDisplayOffsetRegister;
+
+    /* PIA1 DRB */
+    protected UnsignedByte pia1DRB;
 
     /* Condition Code - Carry */
     public static final short CC_C = 0x01;
@@ -42,11 +55,35 @@ public class IOController
     /* Condition Code - Everything */
     public static final short CC_E = 0x80;
 
-    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard) {
+
+    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen) {
         ioMemory = new short[IO_ADDRESS_SIZE];
         this.memory = memory;
         this.regs = registerSet;
         this.keyboard = keyboard;
+        this.cocoCompatibleMode = false;
+        this.screen = screen;
+
+        /* Display registers */
+        verticalOffsetRegister = new UnsignedWord(0x0400);
+        samDisplayOffsetRegister = new UnsignedByte(0x0);
+
+        /* PIA */
+        pia1DRB = new UnsignedByte(0);
+
+        screen.setIOController(this);
+    }
+
+    /**
+     * Reads a byte from RAM, bypassing the MMU, and reading only from
+     * the physical RAM array. This method should be used by devices
+     * which need to read from RAM such as the screen.
+     *
+     * @param address the address into memory to read
+     * @return the byte value read from the physical address
+     */
+    public UnsignedByte readPhysicalByte(int address) {
+        return new UnsignedByte(memory.memory[address]);
     }
 
     /**
@@ -73,22 +110,14 @@ public class IOController
         switch (address) {
             /* Keyboard High Byte */
             case 0xFF00:
-                return keyboard.getHighByte();
+                return keyboard.getHighByte(pia1DRB);
 
             /* Keyboard Low Byte */
             case 0xFF02:
-                return keyboard.getLowByte();
-
-            /* Reset Interrupt Vector - High */
-            case 0xFFFE:
-                return new UnsignedByte(0x8C);
-
-            /* Reset Interrupt Vector - Low */
-            case 0xFFFF:
-                return new UnsignedByte(0x1B);
+                return pia1DRB;
         }
 
-        return new UnsignedByte(ioMemory[address - 0xFF00]);
+        return memory.readByte(new UnsignedWord(address));
     }
 
     /**
@@ -130,6 +159,10 @@ public class IOController
         ioMemory[intAddress] = value.getShort();
 
         switch (address.getInt()) {
+            /* PIA 1 DRB */
+            case 0xFF02:
+                pia1DRB = new UnsignedByte(value.getShort());
+                break;
 
             /* INIT 0 */
             case 0xFF90:
@@ -142,6 +175,10 @@ public class IOController
                 } else {
                     memory.disableMMU();
                 }
+
+                /* CoCo Compatible Mode - enable or disable */
+                cocoCompatibleMode = (value.isMasked(0x80));
+                updateVerticalOffset();
                 break;
 
             /* INIT 1 */
@@ -152,6 +189,18 @@ public class IOController
                 } else {
                     memory.enableTaskPAR();
                 }
+                break;
+
+            /* Vertical Offset Register 1 */
+            case 0xFF9D:
+                verticalOffsetRegister.setHigh(value);
+                updateVerticalOffset();
+                break;
+
+            /* Vertical Offset Register 0 */
+            case 0xFF9E:
+                verticalOffsetRegister.setLow(value);
+                updateVerticalOffset();
                 break;
 
             /* EXEC PAR 0 */
@@ -234,6 +283,90 @@ public class IOController
                 memory.setTaskPAR(7, value);
                 break;
 
+            /* SAM - Display Offset Register - Bit 0 - Clear */
+            case 0xFFC6:
+                samDisplayOffsetRegister.and(~0x01);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 0 - Set */
+            case 0xFFC7:
+                samDisplayOffsetRegister.or(0x01);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 1 - Clear */
+            case 0xFFC8:
+                samDisplayOffsetRegister.and(~0x02);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 1 - Set */
+            case 0xFFC9:
+                samDisplayOffsetRegister.or(0x02);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 2 - Clear */
+            case 0xFFCA:
+                samDisplayOffsetRegister.and(~0x04);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 2 - Set */
+            case 0xFFCB:
+                samDisplayOffsetRegister.or(0x04);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 3 - Clear */
+            case 0xFFCC:
+                samDisplayOffsetRegister.and(~0x08);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 3 - Set */
+            case 0xFFCD:
+                samDisplayOffsetRegister.or(0x08);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 4 - Clear */
+            case 0xFFCE:
+                samDisplayOffsetRegister.and(~0x10);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 4 - Set */
+            case 0xFFCF:
+                samDisplayOffsetRegister.or(0x10);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 5 - Clear */
+            case 0xFFD0:
+                samDisplayOffsetRegister.and(~0x20);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 5 - Set */
+            case 0xFFD1:
+                samDisplayOffsetRegister.or(0x20);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 6 - Clear */
+            case 0xFFD2:
+                samDisplayOffsetRegister.and(~0x40);
+                updateVerticalOffset();
+                break;
+
+            /* SAM - Display Offset Register - Bit 6 - Set */
+            case 0xFFD3:
+                samDisplayOffsetRegister.or(0x40);
+                updateVerticalOffset();
+                break;
+
             /* Clear SAM TY Bit - ROM/RAM mode */
             case 0xFFDE:
                 memory.disableAllRAMMode();
@@ -244,12 +377,37 @@ public class IOController
                 memory.enableAllRAMMode();
                 break;
 
-            /* Reset Interrupt Vector */
-            case 0xFFFE:
+            default:
+                memory.writeByte(address, value);
                 break;
         }
     }
 
+    /**
+     * Updates where in physical memory the screen should be read from. When
+     * CoCo compatible mode is turned off, uses the verticalOffsetRegister to
+     * set the physical address (shifted by 3 bits). When in CoCo compatible mode,
+     * uses a combination of the vertical offset register plus the samDisplayRegister
+     * to determine where in physical memory to read from. The SAM calculation is:
+     *
+     *   Vertical Offset = VO
+     *   Sam Display Register = SAM
+     *
+     * Offset = (VO15 VO14 VO13) * 64K + SAM * 512 + (VO5 VO4 VO3 VO2 VO1 VO0) * 8
+     */
+    public void updateVerticalOffset() {
+        if (cocoCompatibleMode) {
+            int newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
+            newOffset = newOffset >> 5;
+            newOffset *= 65536;
+            newOffset += (samDisplayOffsetRegister.getShort() * 0x200);
+            newOffset += ((verticalOffsetRegister.getLow().getShort() & 0x3F) * 0x04);
+            screen.setMemoryOffset(newOffset);
+        } else {
+            int newOffset = verticalOffsetRegister.getInt() << 3;
+            screen.setMemoryOffset(newOffset);
+        }
+    }
     /**
      * Writes an UnsignedWord to the specified memory address.
      *
@@ -410,7 +568,6 @@ public class IOController
                 offset.and(0xF);
                 UnsignedByte newOffset = offset.twosCompliment();
                 newOffset.and(0xF);
-                System.out.print(" (new 5-bit offset = -" + newOffset + ", R = " + r.toString() + ") ");
                 result = new UnsignedWord(r.getInt() - newOffset.getShort());
             } else {
                 result = new UnsignedWord(r.getInt() + offset.getShort());
@@ -433,18 +590,18 @@ public class IOController
                 r.add(2);
                 return new MemoryResult(1, result);
 
-            /* ,R- -> R, then decrement */
+            /* ,-R -> Decrement R, then R */
             case 0x02:
                 r = getWordRegister(getIndexedRegister(postByte));
-                result = new UnsignedWord(r.getInt());
                 r.add(-1);
+                result = new UnsignedWord(r.getInt());
                 return new MemoryResult(1, result);
 
-            /* ,R-- -> R, then decrement by two */
+            /* ,--R -> Decrement R by two, then R */
             case 0x03:
                 r = getWordRegister(getIndexedRegister(postByte));
-                result = new UnsignedWord(r.getInt());
                 r.add(-2);
+                result = new UnsignedWord(r.getInt());
                 return new MemoryResult(1, result);
 
             /* ,R -> No offset, just R */
@@ -514,11 +671,11 @@ public class IOController
                 r.add(2);
                 return new MemoryResult(1, result);
 
-            /* [,R--] -> R, then decrement by two - indirect*/
+            /* [,--R] -> Decrement R by two, then R - indirect*/
             case 0x13:
                 r = getWordRegister(getIndexedRegister(postByte));
-                result = readWord(new UnsignedWord(r.getInt()));
                 r.add(-2);
+                result = readWord(new UnsignedWord(r.getInt()));
                 return new MemoryResult(1, result);
 
             /* [,R] -> No offset, just R - indirect */

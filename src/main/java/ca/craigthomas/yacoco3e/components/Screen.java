@@ -37,9 +37,7 @@ public class Screen
     private int foreColor;
     private int backColor;
     private IOController io;
-
-    /* Where the video buffer is in io */
-    private final UnsignedWord SCREEN_MEMORY = new UnsignedWord(0x0400);
+    private int memoryOffset;
 
     /* Color definitions for semi-graphics 4 mode */
     private final Color colors[] = {
@@ -954,15 +952,38 @@ public class Screen
             }
     };
 
-    public Screen(IOController io, int scale) {
+    public Screen(int scale) {
         this.width = SG4_WIDTH;
         this.height = SG4_HEIGHT;
         this.scale = scale;
         this.screenMode = ScreenMode.SEMIGRAPHICS4;
         this.foreColor = 0;
         this.backColor = 8;
-        this.io = io;
+        memoryOffset = 0x0200;
         createBackBuffer();
+    }
+
+    /**
+     * Sets an IO controller.
+     *
+     * @param ioController the IO controller associated with the screen
+     */
+    public void setIOController(IOController ioController) {
+        this.io = ioController;
+    }
+
+    /**
+     * Sets the offset in Physical RAM where the screen buffer should
+     * read from.
+     *
+     * @param offset the physical offset in ram (19-bit offset)
+     */
+    public void setMemoryOffset(int offset) {
+        memoryOffset = offset;
+    }
+
+    public int getMemoryOffset() {
+        return memoryOffset;
     }
 
     /**
@@ -1011,12 +1032,12 @@ public class Screen
                 192 * scale
         );
 
-        UnsignedWord memoryPointer = SCREEN_MEMORY.copy();
+        int memoryPointer = memoryOffset;
         for (int y = 0; y < 16; y++) {
             for (int x = 0; x < 32; x++) {
-                UnsignedByte value = io.readByte(memoryPointer);
+                UnsignedByte value = io.readPhysicalByte(memoryPointer);
                 drawSG4Character(value, x, y);
-                memoryPointer.add(1);
+                memoryPointer++;
             }
         }
 
@@ -1032,13 +1053,20 @@ public class Screen
      * @param x the x position to draw to
      * @param y the y position to draw to
      * @param on whether to turn the pixel on
-     * @param inverse whether to invert colors between fore and back
      */
-    public void drawSG4Pixel(int x, int y, int on, boolean inverse) {
-        if ((on == 1 && inverse) || (on == 0 && !inverse)) {
-            drawPixel(x, y, colors[backColor]);
+    public void drawSG4Pixel(int x, int y, int on, int fore, int back) {
+        if (on == 1) {
+            drawPixel(x, y, colors[fore]);
         } else {
-            drawPixel(x, y, colors[foreColor]);
+            drawPixel(x, y, colors[back]);
+        }
+    }
+
+    public void drawSG4Block(int col, int row, int width, int height, int color) {
+        for (int x = col; x < col + width; x++) {
+            for (int y = row; y < row + height; y++) {
+                drawPixel(x, y, colors[color]);
+            }
         }
     }
 
@@ -1053,16 +1081,47 @@ public class Screen
      * @param row the row to write at
      */
     public void drawSG4Character(UnsignedByte value, int col, int row) {
+        /* Translated position in pixels */
         int x = 32 + (col * 8);
-        int y = 25 + (row * 12);
-        int intValue = value.getShort() & 0x3F;
-        int character = intValue > SG4_CHARACTERS.length ?
-                intValue - SG4_CHARACTERS.length : intValue;
-        boolean inverse = value.getShort() < SG4_CHARACTERS.length;
+        int y = 24 + (row * 12);
 
-        for (int i = 0; i < 12; i++) {
-            for (int j = 0; j < 8; j++) {
-                drawSG4Pixel(x + j, y + i, SG4_CHARACTERS[character][i][j],!inverse);
+        /* Foreground and background colors */
+        int fore = foreColor;
+        int back = backColor;
+
+        if (value.isNegative()) {
+            int color = (value.getShort() & 0x70) >> 4;
+
+            /* Upper Left Bit */
+            int on = value.isMasked(0x8) ? 1 : 0;
+            drawSG4Block(x, y, 4, 6, on == 1 ? color : back);
+
+            /* Upper Right Bit */
+            on = value.isMasked(0x4) ? 1 : 0;
+            drawSG4Block(x + 4, y, 4, 6, on == 1 ? color : back);
+
+            /* Lower Left Bit */
+            on = value.isMasked(0x2) ? 1 : 0;
+            drawSG4Block(x, y + 6, 4, 6, on == 1 ? color : back);
+
+            /* Lower Right Bit */
+            on = value.isMasked(0x1) ? 1 : 0;
+            drawSG4Block(x + 4, y + 6, 4, 6, on == 1 ? color : back);
+        } else {
+            int intValue = value.getShort() & 0x3F;
+            int character = intValue > SG4_CHARACTERS.length ?
+                    intValue - SG4_CHARACTERS.length : intValue;
+            boolean inverse = value.getShort() < SG4_CHARACTERS.length;
+
+            if (!inverse) {
+                fore = backColor;
+                back = foreColor;
+            }
+
+            for (int i = 0; i < 12; i++) {
+                for (int j = 0; j < 8; j++) {
+                    drawSG4Pixel(x + j, y + i, SG4_CHARACTERS[character][i][j], fore, back);
+                }
             }
         }
     }
@@ -1101,16 +1160,5 @@ public class Screen
      */
     public int getHeight() {
         return height;
-    }
-
-    /**
-     * Clears the Semi Graphics 4 screen by writing spaces to it
-     */
-    public void sg4ClearScreen() {
-        UnsignedWord videoMemory = SCREEN_MEMORY.copy();
-        for (int x = 0; x < 512; x += 2) {
-            io.writeWord(videoMemory, new UnsignedWord(0x2020));
-            videoMemory.add(2);
-        }
     }
 }
