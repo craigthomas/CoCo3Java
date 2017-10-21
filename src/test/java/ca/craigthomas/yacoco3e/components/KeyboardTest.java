@@ -116,8 +116,8 @@ public class KeyboardTest
     }
 
     @Test
-    public void testKeyboardKeyPressColon() {
-        Mockito.when(event.getKeyCode()).thenReturn(KeyEvent.VK_COLON);
+    public void testKeyboardKeyPressQuote() {
+        Mockito.when(event.getKeyCode()).thenReturn(KeyEvent.VK_QUOTE);
         keyboard.keyPressed(event);
         assertEquals(new UnsignedByte(0xDF), keyboard.getHighByte(new UnsignedByte(0xFB)));
     }
