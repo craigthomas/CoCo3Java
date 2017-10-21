@@ -19,6 +19,8 @@ import static org.mockito.Mockito.verify;
 
 public class CPUIntegrationTest
 {
+    private Screen screen;
+
     private CPU cpu;
     private CPU cpuSpy;
 
@@ -45,7 +47,9 @@ public class CPUIntegrationTest
         registerSet = new RegisterSet();
         registerSetSpy = spy(registerSet);
 
-        io = new IOController(memorySpy, registerSetSpy, new Keyboard());
+        screen = new Screen(1);
+
+        io = new IOController(memorySpy, registerSetSpy, new Keyboard(), screen);
         ioSpy = spy(io);
 
         cpu = new CPU(ioSpy);

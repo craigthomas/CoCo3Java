@@ -17,7 +17,7 @@ public class Runner
         jCommander.setProgramName("yacoco3e");
         jCommander.parse(argv);
 
-        Emulator emulator = new Emulator(arguments.scale, arguments.romFile);
+        Emulator emulator = new Emulator(arguments.scale, arguments.romFile, arguments.trace);
         emulator.start();
     }
 }

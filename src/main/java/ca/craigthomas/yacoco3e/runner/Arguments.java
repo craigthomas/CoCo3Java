@@ -16,4 +16,7 @@ public class Arguments
 
     @Parameter(names="--scale", description="scale factor")
     public Integer scale = 2;
+
+    @Parameter(names="--trace", description="trace output")
+    public Boolean trace = false;
 }
