@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
  * HIGH
  *   7
  *   6   SHIFT   F2    F1   CTRL   ALT   BRK   CLR   ENTER
- *   5     /     .     -     ,      ;     :     9      8
+ *   5     /     .     -     ,      ;     "     9      8
  *   4     7     6     5     4      3     2     1      0
  *   3   SPACE   RIGHT LEFT  DOW    UP    z     y      x
  *   2     w     v     u     t      s     r     q      p
@@ -138,8 +138,8 @@ public class Keyboard extends KeyAdapter
                 column3.or(0x20);
                 break;
 
-            /* : */
-            case KeyEvent.VK_COLON:
+            /* ' */
+            case KeyEvent.VK_QUOTE:
                 column2.or(0x20);
                 break;
 
@@ -425,8 +425,8 @@ public class Keyboard extends KeyAdapter
                 column3.and(~0x20);
                 break;
 
-            /* : */
-            case KeyEvent.VK_COLON:
+            /* ' */
+            case KeyEvent.VK_QUOTE:
                 column2.and(~0x20);
                 break;
 
