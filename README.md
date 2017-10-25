@@ -57,7 +57,7 @@ The compiled Jar file will be placed in the `build/libs` directory.
 
 ## Running
 
-### Running a ROM
+#### Running a ROM
 
 The command-line interface requires a single argument, which is the
 path to a Color Computer 3 ROM file. The ROM may be either a 
@@ -68,7 +68,7 @@ follows:
 java -jar build/libs/yacoco3e-1.0-all.jar /path/to/rom/file.rom
 ```
 
-### Trace Mode
+#### Trace Mode
 
 It is possible to have the emulator provide a full disassembly of what
 is running as the emulator is running it. Note however that the speed of
@@ -77,6 +77,37 @@ the emulator will be significantly slower:
 ```bash
 java -jar build/libs/yacoco3e-1.0-all.jar file.rom --trace
 ```
+
+## Cassette Tapes
+
+#### Reading 
+
+The emulator can read standard CAS files. To load a cassette file into
+the input buffer, click on the menu item *Cassette*, *Open for Playback*.
+You will be prompted to browse to a location on your computer where the
+cassette file is located. You can then issue `CLOAD` or `CLOADM` commands
+as usual in the emulator window.
+
+You can also attach a cassette tape file to the emulator on startup with the 
+following:
+
+```bash
+java -jar build/libs/yacoco3e-1.0-all.jar file.rom --cassette /path/to/cas/file
+```
+ 
+#### Writing
+
+To write to a cassette file, you must first create a new cassette file. You can 
+do this by clicking the menu item *Cassette*, *New Cassette File*. You will be
+prompted to create a new file on your computer where the cassette file contents
+will be saved.
+
+Once the cassette file has been created, you can perform a `CSAVE` or `CSAVEM`
+as usual in the emulator window.
+
+Once you have performed a `CSAVE` or `CSAVEM`, you must then flush the contents
+of the tape buffer to the actual file. You can to that by clicking the menu item
+*Cassette*, *Flush Buffer to File*. 
 
 ## Keyboard
 
@@ -121,11 +152,11 @@ Below are a list of items that are currently working:
 - INIT 1 Register (`$FF91`)
 - SAM Display Offset Registers (`$FFC6` - `$FFD3`)
 - SAM TY Bits (`$FFDE`, `$FFDF`) 
+- Cassette tape interface
 
 Yet to be implemented:
 
 - Disk interface
-- Cassette tape interface
 - Menu system
 - Semigraphcs Modes `SG6`, `SG8`, `SG12`, `SG24`
 - Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`

@@ -4,12 +4,18 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
+import ca.craigthomas.yacoco3e.listeners.FlushCassetteMenuItemActionListener;
+import ca.craigthomas.yacoco3e.listeners.OpenCassetteMenuItemActionListener;
 import ca.craigthomas.yacoco3e.listeners.QuitMenuItemActionListener;
+import ca.craigthomas.yacoco3e.listeners.RecordCassetteMenuItemActionListener;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.*;
@@ -25,6 +31,7 @@ public class Emulator
     private Keyboard keyboard;
     private CPU cpu;
     private IOController ioController;
+    private Cassette cassette;
 
     // The Canvas on which all the drawing will take place
     private Canvas canvas;
@@ -36,12 +43,12 @@ public class Emulator
     /* A logger for the emulator */
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
 
-
-    public Emulator(int scaleFactor, String romFile, boolean trace) {
+    public Emulator(int scaleFactor, String romFile, boolean trace, String cassetteFile) {
         memory = new Memory();
         keyboard = new Keyboard();
         screen = new Screen(scaleFactor);
-        ioController = new IOController(memory, new RegisterSet(), keyboard, screen);
+        cassette = new Cassette();
+        ioController = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
         cpu = new CPU(ioController);
         cpu.setTrace(trace);
 
@@ -49,14 +56,23 @@ public class Emulator
 
         // Attempt to load specified ROM file
         if (romFile != null) {
-            InputStream romFileStream = openStream(romFile);
-            if (!memory.loadROM(memory.loadStream(romFileStream))) {
+            InputStream romFileStream = IO.openInputStream(romFile);
+            if (!memory.loadROM(IO.loadStream(romFileStream))) {
                 LOGGER.severe("Could not load ROM file [" + romFile + "]");
             }
-            closeStream(romFileStream);
+            IO.closeStream(romFileStream);
         } else {
             LOGGER.severe("no ROM file specified");
             System.exit(1);
+        }
+
+        // Attempt to load specified cassette file
+        if (cassetteFile != null) {
+            if (!cassette.openFile(cassetteFile)) {
+                LOGGER.severe("Could not load cassette file [" + cassetteFile + "]");
+            } else {
+                LOGGER.info("Loaded cassette file [" + cassetteFile + "]");
+            }
         }
     }
 
@@ -78,6 +94,25 @@ public class Emulator
         fileMenu.add(quitFile);
         menuBar.add(fileMenu);
 
+        // Cassette menu
+        JMenu cassetteMenu = new JMenu("Cassette");
+        cassetteMenu.setMnemonic(KeyEvent.VK_C);
+
+        JMenuItem newCassetteItem = new JMenuItem("New Cassette File", KeyEvent.VK_N);
+        newCassetteItem.addActionListener(new RecordCassetteMenuItemActionListener(this, cassette));
+        cassetteMenu.add(newCassetteItem);
+
+        JMenuItem flushItem = new JMenuItem("Flush Buffer to File", KeyEvent.VK_F);
+        flushItem.addActionListener(new FlushCassetteMenuItemActionListener(this, cassette));
+        cassetteMenu.add(flushItem);
+
+        cassetteMenu.addSeparator();
+
+        JMenuItem openCassetteItem = new JMenuItem("Open for Playback", KeyEvent.VK_O);
+        openCassetteItem.addActionListener(new OpenCassetteMenuItemActionListener(this, cassette));
+        cassetteMenu.add(openCassetteItem);
+
+        menuBar.add(cassetteMenu);
         attachCanvas();
     }
 
@@ -144,35 +179,37 @@ public class Emulator
     }
 
     /**
-     * Attempts to open the specified filename as an InputStream. Will return null if there is
-     * an error.
-     *
-     * @param filename The String containing the full path to the filename to open
-     * @return An opened InputStream, or null if there is an error
+     * Opens a dialog box to prompt the user to choose a cassette file
+     * to open for playback.
      */
-    private InputStream openStream(String filename) {
-        InputStream inputStream;
-        try {
-            inputStream = new FileInputStream(new File(filename));
-            return inputStream;
-        } catch (FileNotFoundException e) {
-            LOGGER.severe("Error opening file");
-            LOGGER.severe(e.getMessage());
-            return null;
+    public void openCassetteFileDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileFilter filter1 = new FileNameExtensionFilter("Cassette Files (*.cas)", "cas");
+        fileChooser.setCurrentDirectory(new java.io.File("."));
+        fileChooser.setDialogTitle("Open Cassette File");
+        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setFileFilter(filter1);
+        if (fileChooser.showOpenDialog(container) == JFileChooser.APPROVE_OPTION) {
+            if (!cassette.openFile(fileChooser.getSelectedFile().toString())) {
+                JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    /**
-     * Closes an open InputStream.
-     *
-     * @param stream the Input Stream to close
-     */
-    private void closeStream(InputStream stream) {
-        try {
-            stream.close();
-        } catch (IOException e) {
-            LOGGER.severe("Error closing stream");
-            LOGGER.severe(e.getMessage());
+    public void saveCassetteFileDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileFilter filter1 = new FileNameExtensionFilter("Cassette Files (*.cas)", "cas");
+        fileChooser.setCurrentDirectory(new java.io.File("."));
+        fileChooser.setDialogTitle("Create Cassette File");
+        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setFileFilter(filter1);
+        if (fileChooser.showSaveDialog(container) == JFileChooser.APPROVE_OPTION) {
+            if (!cassette.openFile(fileChooser.getSelectedFile().toString())) {
+                JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
+
 }

@@ -27,6 +27,9 @@ public class CPUIntegrationTest
     private Memory memory;
     private Memory memorySpy;
 
+    private Cassette cassette;
+    private Cassette cassetteSpy;
+
     private IOController io;
     private IOController ioSpy;
 
@@ -47,9 +50,12 @@ public class CPUIntegrationTest
         registerSet = new RegisterSet();
         registerSetSpy = spy(registerSet);
 
+        cassette = new Cassette();
+        cassetteSpy = spy(cassette);
+
         screen = new Screen(1);
 
-        io = new IOController(memorySpy, registerSetSpy, new Keyboard(), screen);
+        io = new IOController(memorySpy, registerSetSpy, new Keyboard(), screen, cassetteSpy);
         ioSpy = spy(io);
 
         cpu = new CPU(ioSpy);

@@ -21,6 +21,7 @@ public class IOControllerTest
     private IOController io;
     private Keyboard keyboard;
     private Screen screen;
+    private Cassette cassette;
 
     @Before
     public void setUp() throws IllegalIndexedPostbyteException{
@@ -28,7 +29,8 @@ public class IOControllerTest
         regs = new RegisterSet();
         keyboard = new Keyboard();
         screen = new Screen(1);
-        io = new IOController(memory, regs, keyboard, screen);
+        cassette = new Cassette();
+        io = new IOController(memory, regs, keyboard, screen, cassette);
     }
 
     @Test
@@ -630,5 +632,29 @@ public class IOControllerTest
         memory.disableAllRAMMode();
         io.writeByte(new UnsignedWord(0xFFDF), new UnsignedByte(0));
         assertTrue(memory.allRAMMode);
+    }
+
+    @Test
+    public void testResetSetsCorrectValues() {
+        io.reset();
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccZeroSet());
+        assertFalse(io.ccHalfCarrySet());
+        assertFalse(io.ccCarrySet());
+        assertTrue(io.ccFastInterruptSet());
+        assertTrue(io.ccInterruptSet());
+
+        assertEquals(new UnsignedWord(0xC000), regs.getPC());
+        assertFalse(memory.mmuEnabled);
+    }
+
+    @Test
+    public void testTurnCassetteMotorOnOff() {
+        io.writeByte(new UnsignedWord(0xFF21), new UnsignedByte(0x08));
+        assertTrue(cassette.isMotorOn());
+
+        io.writeByte(new UnsignedWord(0xFF21), new UnsignedByte(0x00));
+        assertFalse(cassette.isMotorOn());
     }
 }

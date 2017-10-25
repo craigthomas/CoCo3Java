@@ -20,13 +20,15 @@ public class CPUTest
     private IOController io;
     private RegisterSet registerSet;
     private Screen screen;
+    private Cassette cassette;
 
     @Before
     public void setUp() {
         memory = new Memory();
         registerSet = new RegisterSet();
         screen = new Screen(1);
-        io = new IOController(memory, registerSet, new Keyboard(), screen);
+        cassette = new Cassette();
+        io = new IOController(memory, registerSet, new Keyboard(), screen, cassette);
         cpu = new CPU(io);
     }
 

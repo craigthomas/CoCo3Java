@@ -14,10 +14,12 @@ public class IOController
     /* The IO memory address space */
     protected short [] ioMemory;
 
+    /* IO Devices */
     protected Memory memory;
     protected RegisterSet regs;
     protected Keyboard keyboard;
     protected Screen screen;
+    protected Cassette cassette;
 
     /* CoCo Compatible Mode */
     protected boolean cocoCompatibleMode;
@@ -30,6 +32,10 @@ public class IOController
 
     /* PIA1 DRB */
     protected UnsignedByte pia1DRB;
+
+    /* PIA2 DRA & DRAC */
+    protected UnsignedByte pia2DRA;
+    protected UnsignedByte pia2DRAC;
 
     /* Condition Code - Carry */
     public static final short CC_C = 0x01;
@@ -56,20 +62,24 @@ public class IOController
     public static final short CC_E = 0x80;
 
 
-    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen) {
+    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette) {
         ioMemory = new short[IO_ADDRESS_SIZE];
         this.memory = memory;
         this.regs = registerSet;
         this.keyboard = keyboard;
         this.cocoCompatibleMode = false;
         this.screen = screen;
+        this.cassette = cassette;
 
         /* Display registers */
         verticalOffsetRegister = new UnsignedWord(0x0400);
         samDisplayOffsetRegister = new UnsignedByte(0x0);
 
-        /* PIA */
+        /* PIAs */
         pia1DRB = new UnsignedByte(0);
+
+        pia2DRAC = new UnsignedByte(0);
+        pia2DRA = new UnsignedByte(0);
 
         screen.setIOController(this);
     }
@@ -108,13 +118,25 @@ public class IOController
      */
     public UnsignedByte readIOByte(int address) {
         switch (address) {
-            /* Keyboard High Byte */
+            /* PIA 1 DRA */
             case 0xFF00:
                 return keyboard.getHighByte(pia1DRB);
 
-            /* Keyboard Low Byte */
+            /* PIA 1 DRB */
             case 0xFF02:
                 return pia1DRB;
+
+            /* PIA 2 DRA */
+            case 0xFF20:
+                pia2DRA.and(0);
+
+                /* Bit 0 = Cassette Data Input */
+                pia2DRA.or(cassette.nextBit());
+                return pia2DRA;
+
+            /* PIA 2 DRAC */
+            case 0xFF21:
+                return pia2DRAC;
         }
 
         return memory.readByte(new UnsignedWord(address));
@@ -162,6 +184,23 @@ public class IOController
             /* PIA 1 DRB */
             case 0xFF02:
                 pia1DRB = new UnsignedByte(value.getShort());
+                break;
+
+            /* PIA 2 DRA */
+            case 0xFF20:
+                /* Bits 2-7 digital analog values */
+                cassette.byteInput(value);
+                break;
+
+            /* PIA 2 DRAC */
+            case 0xFF21:
+                /* Bit 3 = Cassette Motor Control */
+                if (value.isMasked(0x08)) {
+                    cassette.motorOn();
+                } else {
+                    cassette.motorOff();
+                }
+                pia2DRAC = value.copy();
                 break;
 
             /* INIT 0 */
