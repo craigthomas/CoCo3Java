@@ -13,6 +13,8 @@ import java.io.InputStream;
 import java.nio.ByteOrder;
 import java.util.logging.Logger;
 
+import static ca.craigthomas.yacoco3e.common.IO.loadStream;
+
 /**
  * The Memory class controls access to and from memory locations in the memory
  * array. Additionally, the memory class controls access to and from memory
@@ -40,9 +42,6 @@ public class Memory
     UnsignedByte romMode;
 
     protected static final int TOTAL_PAGES = 0x3F;
-
-    // The logger for the class
-    private final static Logger LOGGER = Logger.getLogger(Memory.class.getName());
 
     public Memory() {
         this(MEM_512K);
@@ -339,40 +338,6 @@ public class Memory
             return true;
         }
         return false;
-    }
-
-    /**
-     * Loads a stream into an array of bytes.
-     *
-     * @param stream the stream to read from
-     * @return an array of bytes, null on error
-     */
-    byte[] loadStream(InputStream stream) {
-        try {
-            byte[] data;
-
-            /* Determine appropriate endianess */
-            if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-                LOGGER.info("little endian system detected");
-                ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
-                byte[] bytes = new byte[2];
-                int bytesRead = stream.read(bytes);
-                while (bytesRead != -1) {
-                    tempStream.write(bytes);
-                    bytesRead = stream.read(bytes);
-                }
-                data = tempStream.toByteArray();
-                tempStream.close();
-            } else {
-                LOGGER.info("big endian system detected");
-                data = IOUtils.toByteArray(stream);
-            }
-            return data;
-        } catch (Exception e) {
-            LOGGER.severe("error reading from stream");
-            LOGGER.severe(e.getMessage());
-            return null;
-        }
     }
 
     /**

@@ -19,4 +19,7 @@ public class Arguments
 
     @Parameter(names="--trace", description="trace output")
     public Boolean trace = false;
+
+    @Parameter(names="--cassette", description="cassette file")
+    public String cassetteFile;
 }
