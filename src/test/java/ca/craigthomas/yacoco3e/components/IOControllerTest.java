@@ -22,6 +22,7 @@ public class IOControllerTest
     private Keyboard keyboard;
     private Screen screen;
     private Cassette cassette;
+    private CPU cpu;
 
     @Before
     public void setUp() throws IllegalIndexedPostbyteException{
@@ -31,6 +32,8 @@ public class IOControllerTest
         screen = new Screen(1);
         cassette = new Cassette();
         io = new IOController(memory, regs, keyboard, screen, cassette);
+        cpu = new CPU(io);
+        io.setCPU(cpu);
     }
 
     @Test
@@ -40,12 +43,319 @@ public class IOControllerTest
         assertEquals(new UnsignedByte(0xAB), result);
     }
 
-    @Ignore
     @Test
     public void testReadIOByteReadsCorrectByte() throws IllegalIndexedPostbyteException{
-        io.ioMemory[0x1] = 0xAB;
+        io.pia1CRA = new UnsignedByte(0x1122);
         UnsignedByte result = io.readByte(new UnsignedWord(0xFF01));
-        assertEquals(new UnsignedByte(0xAB), result);
+        assertEquals(new UnsignedByte(0x1122), result);
+
+        io.pia1DRB = new UnsignedByte(0x3344);
+        result = io.readByte(new UnsignedWord(0xFF02));
+        assertEquals(new UnsignedByte(0x3344), result);
+
+        io.pia1CRB = new UnsignedByte(0x5566);
+        result = io.readByte(new UnsignedWord(0xFF03));
+        assertEquals(new UnsignedByte(0x5566), result);
+
+        io.pia2CRA = new UnsignedByte(0x7788);
+        result = io.readByte(new UnsignedWord(0xFF21));
+        assertEquals(new UnsignedByte(0x7788), result);
+
+        io.pia2CRB = new UnsignedByte(0x99AA);
+        result = io.readByte(new UnsignedWord(0xFF23));
+        assertEquals(new UnsignedByte(0x99AA), result);
+
+        io.irqStatus = new UnsignedByte(0xBB);
+        result = io.readByte(new UnsignedWord(0xFF92));
+        assertEquals(new UnsignedByte(0xBB), result);
+
+        io.firqStatus = new UnsignedByte(0xCC);
+        result = io.readByte(new UnsignedWord(0xFF93));
+        assertEquals(new UnsignedByte(0xCC), result);
+
+        io.timerResetValue = new UnsignedWord(0xBEEF);
+        result = io.readByte(new UnsignedWord(0xFF94));
+        assertEquals(new UnsignedByte(0xBE), result);
+        result = io.readByte(new UnsignedWord(0xFF95));
+        assertEquals(new UnsignedByte(0xEF), result);
+    }
+
+    @Test
+    public void testPIA1CRASetTimerTo635Micros() {
+        io.writeByte(new UnsignedWord(0xFF01), new UnsignedByte(0x1));
+        UnsignedByte result = io.readByte(new UnsignedWord(0xFF01));
+        assertEquals(new UnsignedByte(0x1), result);
+        assertTrue(io.pia1FastTimerEnabled);
+    }
+
+    @Test
+    public void testPIA1CRASetTimerTo166Millis() {
+        io.writeByte(new UnsignedWord(0xFF03), new UnsignedByte(0x1));
+        UnsignedByte result = io.readByte(new UnsignedWord(0xFF03));
+        assertEquals(new UnsignedByte(0x1), result);
+        assertTrue(io.pia1SlowTimerEnabled);
+    }
+
+    @Test
+    public void testIRQStatusSetCorrectly() {
+        io.writeByte(new UnsignedWord(0xFF92), new UnsignedByte(0xFF));
+        assertEquals(new UnsignedByte(0x3F), io.readByte(new UnsignedWord(0xFF92)));
+    }
+
+    @Test
+    public void testFIRQStatusSetCorrectly() {
+        io.writeByte(new UnsignedWord(0xFF93), new UnsignedByte(0xFF));
+        assertEquals(new UnsignedByte(0x3F), io.readByte(new UnsignedWord(0xFF93)));
+    }
+
+    @Test
+    public void testTimer1SetCorrectly() {
+        io.writeByte(new UnsignedWord(0xFF94), new UnsignedByte(0xFF));
+        assertEquals(new UnsignedByte(0x0F), io.readByte(new UnsignedWord(0xFF94)));
+        assertEquals(io.timerResetValue, new UnsignedWord(0x0F00));
+    }
+
+    @Test
+    public void testTimer0SetCorrectly() {
+        io.writeByte(new UnsignedWord(0xFF95), new UnsignedByte(0xFF));
+        assertEquals(new UnsignedByte(0xFF), io.readByte(new UnsignedWord(0xFF95)));
+        assertEquals(io.timerResetValue, new UnsignedWord(0x00FF));
+    }
+
+    @Test
+    public void testVerticalOffsetRegister1SetCorrectly() {
+        io.writeByte(new UnsignedWord(0xFF9D), new UnsignedByte(0xFA));
+        assertEquals(new UnsignedByte(0xFA), io.readByte(new UnsignedWord(0xFF9D)));
+        assertEquals(io.verticalOffsetRegister, new UnsignedWord(0xFA00));
+    }
+
+    @Test
+    public void testVerticalOffsetRegister0SetCorrectly() {
+        io.verticalOffsetRegister = new UnsignedWord(0);
+        io.writeByte(new UnsignedWord(0xFF9E), new UnsignedByte(0xFA));
+        assertEquals(new UnsignedByte(0xFA), io.readByte(new UnsignedWord(0xFF9E)));
+        assertEquals(io.verticalOffsetRegister, new UnsignedWord(0x00FA));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit0() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFC6), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x1));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit0() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFC7), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x1));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit1() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFC8), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x2));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit1() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFC9), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x2));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit2() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFCA), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x4));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit2() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFCB), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x4));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit3() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFCC), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x8));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit3() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFCD), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x8));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit4() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFCE), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x10));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit4() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFCF), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x10));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit5() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFD0), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x20));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit5() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFD1), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x20));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterClearBit6() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0xFF);
+        io.writeByte(new UnsignedWord(0xFFD2), new UnsignedByte(0x1));
+        assertFalse(io.samDisplayOffsetRegister.isMasked(0x40));
+    }
+
+    @Test
+    public void testSAMDisplayOffsetRegisterSetBit6() {
+        io.samDisplayOffsetRegister = new UnsignedByte(0x00);
+        io.writeByte(new UnsignedWord(0xFFD3), new UnsignedByte(0x1));
+        assertTrue(io.samDisplayOffsetRegister.isMasked(0x40));
+    }
+
+    @Test
+    public void testUpdateVerticalOffsetCoCoCompatibleWorksCorrectly() {
+        io.cocoCompatibleMode = true;
+        io.verticalOffsetRegister = new UnsignedWord(0x0402);
+        io.samDisplayOffsetRegister = new UnsignedByte(0x20);
+        io.updateVerticalOffset();
+        assertEquals(16392, screen.getMemoryOffset());
+    }
+
+    @Test
+    public void testNoInterruptThrownOnPIAInterruptsIfInterruptsTurnedOff() {
+        io.pia1SlowTimer = 99999;
+        io.pia1SlowTimerEnabled = true;
+        io.getCC().and(~IOController.CC_I);
+        io.timerTick(1);
+        assertEquals(0, io.pia1SlowTimer);
+        assertFalse(io.pia1CRA.isMasked(0x80));
+        assertFalse(io.pia1CRB.isMasked(0x80));
+    }
+
+    @Test
+    public void testInterruptThrownOnPIAInterruptsIfInterruptsTurnedOn() {
+        io.pia1CRB = new UnsignedByte(0x1);
+        io.pia1SlowTimer = 99999;
+        io.pia1SlowTimerEnabled = true;
+        io.getCC().or(IOController.CC_I);
+        io.timerTick(1);
+        assertEquals(0, io.pia1SlowTimer);
+        assertFalse(io.pia1CRA.isMasked(0x80));
+        assertTrue(io.pia1CRB.isMasked(0x80));
+    }
+
+    @Test
+    public void testInterruptThrownOnPIAInterruptsIfInterruptsTurnedOnWithCorrectFlag() {
+        io.pia1FastTimer = 99999;
+        io.pia1FastTimerEnabled = true;
+        io.pia1CRB = new UnsignedByte(0);
+        io.pia1CRA = new UnsignedByte(0x1);
+        io.getCC().or(IOController.CC_I);
+        io.timerTick(1);
+        assertEquals(0, io.pia1FastTimer);
+        assertTrue(io.pia1CRA.isMasked(0x80));
+        assertFalse(io.pia1CRB.isMasked(0x80));
+    }
+
+    @Test
+    public void testGIMETimerInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
+        io.timerTickCounter = 999999;
+        io.timerResetValue = new UnsignedWord(0xBEEF);
+        io.timerValue = new UnsignedWord(0x1);
+        io.irqEnabled = true;
+        io.irqStatus = new UnsignedByte(0x20);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+    }
+
+    @Test
+    public void testGIMETimerFastInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
+        io.timerTickCounter = 999999;
+        io.timerResetValue = new UnsignedWord(0xBEEF);
+        io.timerValue = new UnsignedWord(0x1);
+        io.firqEnabled = true;
+        io.firqStatus = new UnsignedByte(0x20);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+    }
+
+    @Test
+    public void testGIMEHorizontalBorderInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
+        io.horizontalBorderTickValue = 999999;
+        io.irqEnabled = true;
+        io.irqStatus = new UnsignedByte(0x10);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+    }
+
+    @Test
+    public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
+        io.horizontalBorderTickValue = 999999;
+        io.firqEnabled = true;
+        io.firqStatus = new UnsignedByte(0x10);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+    }
+
+    @Test
+    public void testGIMEVerticalBorderInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
+        io.verticalBorderTickValue = 999999;
+        io.irqEnabled = true;
+        io.irqStatus = new UnsignedByte(0x8);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+    }
+
+    @Test
+    public void testGIMEVerticalBorderFastInterruptFiresCorrectly() {
+        memory.enableAllRAMMode();
+        regs.setS(new UnsignedWord(0x0300));
+        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
+        io.verticalBorderTickValue = 999999;
+        io.firqEnabled = true;
+        io.firqStatus = new UnsignedByte(0x8);
+        io.timerTick(1);
+        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
@@ -65,16 +375,6 @@ public class IOControllerTest
         memory.memory[0x7BEEE] = 0xAB;
         memory.memory[0x7BEEF] = 0xCD;
         UnsignedWord result = io.readWord(new UnsignedWord(0xBEEE));
-        assertEquals(new UnsignedWord(0xABCD), result);
-    }
-
-    @Ignore
-    @Test
-    public void testReadIOWordReadsCorrectWord() throws IllegalIndexedPostbyteException{
-        /* Need to check whether this is correct behaviour */
-        io.ioMemory[0x3] = 0xAB;
-        io.ioMemory[0x4] = 0xCD;
-        UnsignedWord result = io.readWord(new UnsignedWord(0xFF03));
         assertEquals(new UnsignedWord(0xABCD), result);
     }
 

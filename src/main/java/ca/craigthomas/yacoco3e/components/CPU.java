@@ -2865,6 +2865,10 @@ public class CPU extends Thread
                 throw new RuntimeException("Un-implemented OP code " + operand);
         }
 
+        /* Increment timers if necessary */
+        io.timerTick(operationTicks);
+
+        /* Check to see if we should trace the output */
         if (trace) {
             System.out.println(opShortDesc + " : " + opLongDesc);
         }
@@ -3166,6 +3170,65 @@ public class CPU extends Thread
         io.pushStack(Register.S, io.getByteRegister(Register.A));
         io.pushStack(Register.S, io.getByteRegister(Register.CC));
         pc.set(io.readWord(offset));
+    }
+
+    /**
+     * Performs an Interrupt Request (IRQ). Will save the PC, U, Y,
+     * X, DP, B, A and CC registers on the stack, and jump to the address
+     * stored at $FFF8.
+     */
+    public void interruptRequest() {
+        UnsignedWord pc = io.getWordRegister(Register.PC);
+        UnsignedByte cc = io.getCC();
+        io.pushStack(Register.S, pc);
+        io.pushStack(Register.S, io.getWordRegister(Register.U));
+        io.pushStack(Register.S, io.getWordRegister(Register.Y));
+        io.pushStack(Register.S, io.getWordRegister(Register.X));
+        io.pushStack(Register.S, io.getByteRegister(Register.DP));
+        io.pushStack(Register.S, io.getByteRegister(Register.B));
+        io.pushStack(Register.S, io.getByteRegister(Register.A));
+        cc.or(IOController.CC_E);
+        io.pushStack(Register.S, cc);
+        io.setCCInterrupt();
+        io.setPC(io.readWord(new UnsignedWord(0xFFF8)));
+    }
+
+    /**
+     * Performs a Fast Interrupt Request (FIRQ). Will save the PC and
+     * CC registers on the stack, and jump to the address stored at
+     * $FFF6.
+     */
+    public void fastInterruptRequest() {
+        UnsignedWord pc = io.getWordRegister(Register.PC);
+        UnsignedByte cc = io.getCC();
+        io.pushStack(Register.S, pc);
+        cc.and(~IOController.CC_E);
+        io.pushStack(Register.S, cc);
+        io.setCCFastInterrupt();
+        io.setCCInterrupt();
+        io.setPC(io.readWord(new UnsignedWord(0xFFF6)));
+    }
+
+    /**
+     * Performs a Non Maskable Interrupt Request (NMI). Will save the PC, U, Y,
+     * X, DP, B, A and CC registers on the stack, and jump to the address
+     * stored at $FFFC.
+     */
+    public void nonMaskableInterruptRequest() {
+        UnsignedWord pc = io.getWordRegister(Register.PC);
+        UnsignedByte cc = io.getCC();
+        io.pushStack(Register.S, pc);
+        io.pushStack(Register.S, io.getWordRegister(Register.U));
+        io.pushStack(Register.S, io.getWordRegister(Register.Y));
+        io.pushStack(Register.S, io.getWordRegister(Register.X));
+        io.pushStack(Register.S, io.getByteRegister(Register.DP));
+        io.pushStack(Register.S, io.getByteRegister(Register.B));
+        io.pushStack(Register.S, io.getByteRegister(Register.A));
+        cc.or(IOController.CC_E);
+        io.pushStack(Register.S, cc);
+        io.setCCInterrupt();
+        io.setCCFastInterrupt();
+        io.setPC(io.readWord(new UnsignedWord(0xFFFC)));
     }
 
     /**

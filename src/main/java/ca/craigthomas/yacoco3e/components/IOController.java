@@ -20,6 +20,7 @@ public class IOController
     protected Keyboard keyboard;
     protected Screen screen;
     protected Cassette cassette;
+    protected CPU cpu;
 
     /* CoCo Compatible Mode */
     protected boolean cocoCompatibleMode;
@@ -31,11 +32,18 @@ public class IOController
     protected UnsignedByte samDisplayOffsetRegister;
 
     /* PIA1 DRB */
-    protected UnsignedByte pia1DRB;
+    protected UnsignedByte pia1DRA;
+    protected UnsignedByte pia1CRA;
 
-    /* PIA2 DRA & DRAC */
+    protected UnsignedByte pia1DRB;
+    protected UnsignedByte pia1CRB;
+
+    /* PIA2 Data Register and Control Register */
     protected UnsignedByte pia2DRA;
-    protected UnsignedByte pia2DRAC;
+    protected UnsignedByte pia2CRA;
+
+    protected UnsignedByte pia2DRB;
+    protected UnsignedByte pia2CRB;
 
     /* Condition Code - Carry */
     public static final short CC_C = 0x01;
@@ -61,6 +69,45 @@ public class IOController
     /* Condition Code - Everything */
     public static final short CC_E = 0x80;
 
+    /* GIME IRQ enabled / disabled */
+    public boolean irqEnabled;
+
+    /* GIME IRQ status */
+    public UnsignedByte irqStatus;
+
+    /* GIME FIRQ enabled / disabled */
+    public boolean firqEnabled;
+
+    /* GIME FIRQ status */
+    public UnsignedByte firqStatus;
+
+    /* The number of ticks to pass in 63.5 microseconds */
+    public static final int TIMER_63_5_MICROS = 56;
+
+    /* The number of ticks to pass in 16.6 milliseconds */
+    public static final int TIMER_16_6_MILLIS = 14833;
+
+    /* The timer tick threshold */
+    public int timerTickThreshold;
+
+    /* The number of ticks that has passed for the timer */
+    public int timerTickCounter;
+
+    public UnsignedWord timerResetValue;
+
+    public UnsignedWord timerValue;
+
+    public int horizontalBorderTickValue;
+
+    public int verticalBorderTickValue;
+
+    /* PIA interrupt values */
+    public int pia1FastTimer;
+    public int pia1SlowTimer;
+
+    public boolean pia1FastTimerEnabled;
+    public boolean pia1SlowTimerEnabled;
+
 
     public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette) {
         ioMemory = new short[IO_ADDRESS_SIZE];
@@ -76,12 +123,37 @@ public class IOController
         samDisplayOffsetRegister = new UnsignedByte(0x0);
 
         /* PIAs */
+        pia1CRA = new UnsignedByte(0);
+        pia1DRA = new UnsignedByte(0);
+
+        pia1CRB = new UnsignedByte(0);
         pia1DRB = new UnsignedByte(0);
 
-        pia2DRAC = new UnsignedByte(0);
+        pia2CRA = new UnsignedByte(0);
         pia2DRA = new UnsignedByte(0);
 
+        pia2CRB = new UnsignedByte(0);
+        pia2DRB = new UnsignedByte(0);
+
+        /* Interrupts */
+        irqStatus = new UnsignedByte(0);
+        firqStatus = new UnsignedByte(0);
+
+        /* Timer related values */
+        timerTickThreshold = TIMER_63_5_MICROS;
+        timerResetValue = new UnsignedWord(0);
+        timerValue = new UnsignedWord(0);
+
         screen.setIOController(this);
+    }
+
+    /**
+     * Creates a back-reference to the CPU.
+     *
+     * @param cpu the CPU the io controller controls
+     */
+    public void setCPU(CPU cpu) {
+        this.cpu = cpu;
     }
 
     /**
@@ -118,15 +190,23 @@ public class IOController
      */
     public UnsignedByte readIOByte(int address) {
         switch (address) {
-            /* PIA 1 DRA */
+            /* PIA 1 Data Register A */
             case 0xFF00:
                 return keyboard.getHighByte(pia1DRB);
 
-            /* PIA 1 DRB */
+            /* PIA 1 Control Register A */
+            case 0xFF01:
+                return pia1CRA;
+
+            /* PIA 1 Data Register B */
             case 0xFF02:
                 return pia1DRB;
 
-            /* PIA 2 DRA */
+            /* PIA 1 Control Register B */
+            case 0xFF03:
+                return pia1CRB;
+
+            /* PIA 2 Data Register A */
             case 0xFF20:
                 pia2DRA.and(0);
 
@@ -134,9 +214,37 @@ public class IOController
                 pia2DRA.or(cassette.nextBit());
                 return pia2DRA;
 
-            /* PIA 2 DRAC */
+            /* PIA 2 Control Register A */
             case 0xFF21:
-                return pia2DRAC;
+                return pia2CRA;
+
+            /* PIA 2 Control Register B */
+            case 0xFF23:
+                return pia2CRB;
+
+            /* IRQs Enabled Register */
+            case 0xFF92:
+                return irqStatus;
+
+            /* FIRQs Enabled Register */
+            case 0xFF93:
+                return firqStatus;
+
+            /* Timer 1 */
+            case 0xFF94:
+                return timerResetValue.getHigh();
+
+            /* Timer 0 */
+            case 0xFF95:
+                return timerResetValue.getLow();
+
+            /* Vertical Offset Register 1 */
+            case 0xFF9D:
+                return verticalOffsetRegister.getHigh();
+
+            /* Vertical Offset Register 0 */
+            case 0xFF9E:
+                return verticalOffsetRegister.getLow();
         }
 
         return memory.readByte(new UnsignedWord(address));
@@ -181,53 +289,139 @@ public class IOController
         ioMemory[intAddress] = value.getShort();
 
         switch (address.getInt()) {
-            /* PIA 1 DRB */
-            case 0xFF02:
-                pia1DRB = new UnsignedByte(value.getShort());
+            /* PIA 1 Data Register A */
+            case 0xFF00:
+                pia1DRA = value.copy();
                 break;
 
-            /* PIA 2 DRA */
+            /* PIA 1 Control Register A */
+            case 0xFF01:
+                /* Bit 0 = IRQ 63.5 microseconds */
+                if (value.isMasked(0x1)) {
+                    pia1FastTimerEnabled = true;
+                    pia1FastTimer = 0;
+                } else {
+                    pia1FastTimerEnabled = false;
+                    pia1FastTimer = 0;
+                }
+
+                /* Bit 1 = hi/lo edge trigger (ignored) */
+
+                /* Bit 7 = IRQ triggered */
+                pia1CRA = value.copy();
+                break;
+
+            /* PIA 1 Data Register B */
+            case 0xFF02:
+                pia1DRB = value.copy();
+                break;
+
+            /* PIA 1 Control Register B */
+            case 0xFF03:
+                /* Bit 0 = IRQ 16 milliseconds */
+                if (value.isMasked(0x1)) {
+                    pia1SlowTimerEnabled = true;
+                    pia1SlowTimer = 0;
+                } else {
+                    pia1SlowTimerEnabled = false;
+                    pia1SlowTimer = 0;
+                }
+
+                /* Bit 1 = hi/lo edge trigger (ignored) */
+
+                /* Bit 7 = IRQ triggered */
+                pia1CRB = value.copy();
+                break;
+
+            /* PIA 2 Data Register A */
             case 0xFF20:
-                /* Bits 2-7 digital analog values */
+                /* Bits 2-7 = digital analog values */
                 cassette.byteInput(value);
                 break;
 
-            /* PIA 2 DRAC */
+            /* PIA 2 Control Register A */
             case 0xFF21:
+                /* Bit 0 = FIRQ from serial I/O port */
+
+                /* Bit 1 = hi/lo edge triggered */
+
                 /* Bit 3 = Cassette Motor Control */
                 if (value.isMasked(0x08)) {
                     cassette.motorOn();
                 } else {
                     cassette.motorOff();
                 }
-                pia2DRAC = value.copy();
+                pia2CRA = value.copy();
+                break;
+
+            /* PIA 2 Control Register B */
+            case 0xFF23:
+                /* Bit 0 = FIRQ from cartridge ROM */
+
+                /* Bit 1 = hi/lo edge triggered */
+
+                pia2CRB = value.copy();
                 break;
 
             /* INIT 0 */
             case 0xFF90:
-                /* ROM memory mapping - two lowest bits */
+                /* Bit 1 & 0 = ROM memory mapping */
                 memory.setROMMode(new UnsignedByte(value.getShort() & 0x3));
 
-                /* MMU - disable or enable */
+                /* Bit 4 = FIRQ - 0 disabled, 1 enabled */
+                firqEnabled = value.isMasked(0x10);
+
+                /* Bit 5 = IRQ - 0 disabled, 1 enabled */
+                irqEnabled = value.isMasked(0x20);
+
+                /* Bit 6 = MMU - disable or enable */
                 if (value.isMasked(0x40)) {
                     memory.enableMMU();
                 } else {
                     memory.disableMMU();
                 }
 
-                /* CoCo Compatible Mode - enable or disable */
+                /* Bit 7 = CoCo Compatible Mode - enable or disable */
                 cocoCompatibleMode = (value.isMasked(0x80));
                 updateVerticalOffset();
                 break;
 
             /* INIT 1 */
             case 0xFF91:
-                /* PAR selection - Task or Executive */
+                /* Bit 0 = PAR selection - Task or Executive */
                 if (value.isMasked(0x1)) {
                     memory.enableExecutivePAR();
                 } else {
                     memory.enableTaskPAR();
                 }
+
+                /* Bit 5 = Timer Rate - 0 is 63.5 microseconds, 1 is 70 nanoseconds */
+                timerTickThreshold = (value.isMasked(0x20)) ? TIMER_63_5_MICROS : TIMER_63_5_MICROS;
+                break;
+
+            /* IRQs Enabled Register */
+            case 0xFF92:
+                irqStatus = value.copy();
+                irqStatus.and(0x3F);
+                break;
+
+            /* FIRQs Enabled Register */
+            case 0xFF93:
+                firqStatus = value.copy();
+                firqStatus.and(0x3F);
+                break;
+
+            /* Timer 1 */
+            case 0xFF94:
+                timerResetValue.setHigh(value);
+                timerResetValue.and(0x0FFF);
+                timerValue.set(timerResetValue);
+                break;
+
+            /* Timer 0 */
+            case 0xFF95:
+                timerResetValue.setLow(value);
+                timerValue.set(timerResetValue);
                 break;
 
             /* Vertical Offset Register 1 */
@@ -885,10 +1079,19 @@ public class IOController
         return null;
     }
 
+    /**
+     * Returns true if the carry flag is set on the condition code register,
+     * false otherwise.
+     *
+     * @return true if the carry flag is set
+     */
     public boolean ccCarrySet() {
         return regs.getCC().isMasked(CC_C);
     }
 
+    /**
+     * Sets the carry flag on the condition code register.
+     */
     public void setCCCarry() {
         regs.getCC().or(CC_C);
     }
@@ -1039,10 +1242,20 @@ public class IOController
         return new UnsignedByte(value1 + value2);
     }
 
+    /**
+     * Sets the value of the A register.
+     *
+     * @param a the new value of the A register
+     */
     public void setA(UnsignedByte a) {
         regs.setA(a);
     }
 
+    /**
+     * Sets the value of the B register.
+     *
+     * @param b the new value of the B register
+     */
     public void setB(UnsignedByte b) {
         regs.setB(b);
     }
@@ -1097,5 +1310,79 @@ public class IOController
         /* Set ROM/RAM mode */
         memory.setROMMode(new UnsignedByte(0x2));
         memory.disableAllRAMMode();
+    }
+
+    /**
+     * Increments the timer by the specified number of ticks. If
+     * the number of ticks exceeds the threshold for when the timer
+     * should be decremented, will decrement the timer value by 1
+     * and reset the tick counter.
+     *
+     * @param ticks the number of ticks to increment
+     */
+    public void timerTick(int ticks) {
+        timerTickCounter += ticks;
+        horizontalBorderTickValue += ticks;
+        verticalBorderTickValue += ticks;
+
+        /* Check for old interrupts via PIAs */
+        if (pia1FastTimerEnabled) {
+            pia1FastTimer += ticks;
+            if (pia1FastTimer >= TIMER_63_5_MICROS) {
+                if (ccInterruptSet()) {
+                    cpu.interruptRequest();
+                    pia1CRA.or(0x80);
+                }
+                pia1FastTimer = 0;
+            }
+        }
+
+        if (pia1SlowTimerEnabled) {
+            pia1SlowTimer += ticks;
+            if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
+                if (ccInterruptSet()) {
+                    cpu.interruptRequest();
+                    pia1CRB.or(0x80);
+                }
+                pia1SlowTimer = 0;
+            }
+        }
+
+        /* Check for GIME timer related interrupts */
+        if (timerTickCounter >= timerTickThreshold) {
+            timerTickCounter = 0;
+            timerValue.add(-1);
+            if (timerValue.isZero()) {
+                if (irqEnabled && irqStatus.isMasked(0x20)) {
+                    cpu.interruptRequest();
+                }
+                if (firqEnabled && firqStatus.isMasked(0x20)) {
+                    cpu.fastInterruptRequest();
+                }
+                timerValue.set(timerResetValue);
+            }
+        }
+
+        /* Check for GIME horizontal border related interrupts */
+        if (horizontalBorderTickValue >= TIMER_63_5_MICROS) {
+            horizontalBorderTickValue = 0;
+            if (irqEnabled && irqStatus.isMasked(0x10)) {
+                cpu.interruptRequest();
+            }
+            if (firqEnabled && firqStatus.isMasked(0x10)) {
+                cpu.fastInterruptRequest();
+            }
+        }
+
+        /* Check for GIME vertical border related interrupts */
+        if (verticalBorderTickValue >= TIMER_16_6_MILLIS) {
+            verticalBorderTickValue = 0;
+            if (irqEnabled && irqStatus.isMasked(0x08)) {
+                cpu.interruptRequest();
+            }
+            if (firqEnabled && firqStatus.isMasked(0x08)) {
+                cpu.fastInterruptRequest();
+            }
+        }
     }
 }
