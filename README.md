@@ -153,6 +153,7 @@ Below are a list of items that are currently working:
 - SAM Display Offset Registers (`$FFC6` - `$FFD3`)
 - SAM TY Bits (`$FFDE`, `$FFDF`) 
 - Cassette tape interface
+- IRQ Interrupts (both PIA and GIME)
 
 Yet to be implemented:
 
@@ -169,6 +170,6 @@ Yet to be implemented:
 - Vertical Scroll Register (`$FF9C`)
 - Horizontal Offset Register (`$FF9F`)
 - Palette Registers (`$FFB0` - `$FFBF`) 
-- IRQ, FIRQ, and NMI interrupts
+- FIRQ and NMI interrupts
 - PIA2 interface
 - Sound

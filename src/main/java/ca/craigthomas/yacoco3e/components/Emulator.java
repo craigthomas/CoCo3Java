@@ -51,6 +51,7 @@ public class Emulator
         ioController = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
         cpu = new CPU(ioController);
         cpu.setTrace(trace);
+        ioController.setCPU(cpu);
 
         initEmulatorJFrame();
 
@@ -171,7 +172,6 @@ public class Emulator
         TimerTask task = new TimerTask() {
             public void run() {
                 screen.refreshScreen();
-                memory.writeByte(new UnsignedWord(0x0200), new UnsignedByte(0x1));
                 refreshScreen();
             }
         };

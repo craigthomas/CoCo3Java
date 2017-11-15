@@ -196,6 +196,7 @@ public class Memory
         /* RAM only */
         if (allRAMMode) {
             memory[getPhysicalAddress(par, intAddress)] = value.getShort();
+            return;
         }
 
         /* RAM + ROM modes - don't write anything to 3C, 3D, 3E, 3F*/

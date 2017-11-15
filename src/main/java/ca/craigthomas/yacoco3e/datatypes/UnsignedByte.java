@@ -137,19 +137,6 @@ public class UnsignedByte
         this.value = value.getShort();
     }
 
-    /**
-     * Swaps the high nibble and the low nibble of the byte.
-     */
-    public void swapNibbles() {
-        int low = value & 0x0F;
-        int high = value & 0xF0;
-
-        low = low << 4;
-        high = high >> 4;
-
-        value = (short) (low + high);
-    }
-
     public String toString() {
         return String.format("%02X", value);
     }
