@@ -26,7 +26,7 @@ public class IOController
     /* Disk Drive Selector */
     protected int diskDriveSelect;
 
-    /* Disk Drives Present */
+    public static final int NUM_DISK_DRIVES = 4;
 
     /* CoCo Compatible Mode */
     protected boolean cocoCompatibleMode;
@@ -150,6 +150,14 @@ public class IOController
         timerResetValue = new UnsignedWord(0);
         timerValue = new UnsignedWord(0);
 
+        /* Disks */
+        diskDriveSelect = 0;
+
+        disk = new DiskDrive[NUM_DISK_DRIVES];
+        for (int i = 0; i < NUM_DISK_DRIVES; i++) {
+            disk[i] = new DiskDrive(this);
+        }
+
         screen.setIOController(this);
     }
 
@@ -227,6 +235,14 @@ public class IOController
             /* PIA 2 Control Register B */
             case 0xFF23:
                 return pia2CRB;
+
+            /* Disk Track Status Register */
+            case 0xFF49:
+                return new UnsignedByte(disk[diskDriveSelect].getTrack());
+
+            /* Disk Sector Status Register */
+            case 0xFF4A:
+                return new UnsignedByte(disk[diskDriveSelect].getSector());
 
             /* IRQs Enabled Register */
             case 0xFF92:
@@ -372,6 +388,41 @@ public class IOController
 
             /* Disk Drive Control Register */
             case 0xFF40:
+                /* Bit 2-0 = Disk drive select */
+                diskDriveSelect = (value.isMasked(0x1)) ? 0 : diskDriveSelect;
+                diskDriveSelect = (value.isMasked(0x2)) ? 1 : diskDriveSelect;
+                diskDriveSelect = (value.isMasked(0x4)) ? 2 : diskDriveSelect;
+
+                /* Bit 6 = Disk drive select */
+                diskDriveSelect = (value.isMasked(0x40)) ? 3 : diskDriveSelect;
+
+                /* Bit 3 = Disk drive motor on */
+                if (value.isMasked(0x08)) {
+                    disk[diskDriveSelect].turnMotorOn();
+                } else {
+                    disk[diskDriveSelect].turnMotorOff();
+                }
+
+                /* Bit 4 = Write pre-compensation (ignored) */
+
+                /* Bit 5 = Density flag (ignored) */
+
+                /* Bit 7 = Halt flag */
+                if (value.isMasked(0x80)) {
+                    disk[diskDriveSelect].enableHalt();
+                } else {
+                    disk[diskDriveSelect].disableHalt();
+                }
+                break;
+
+            /* Track Status Register */
+            case 0xFF49:
+                disk[diskDriveSelect].setTrack(value);
+                break;
+
+            /* Sector Status Register */
+            case 0xFF4A:
+                disk[diskDriveSelect].setSector(value);
                 break;
 
             /* INIT 0 */

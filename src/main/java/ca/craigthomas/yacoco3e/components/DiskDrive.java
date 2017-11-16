@@ -4,6 +4,8 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
+
 public class DiskDrive
 {
     public static final int TRACKS = 35;
@@ -15,6 +17,8 @@ public class DiskDrive
     protected int track;
     protected int sector;
     protected byte [] diskData;
+
+    protected boolean haltEnabled;
 
     protected IOController io;
 
@@ -28,7 +32,31 @@ public class DiskDrive
         return track;
     }
 
+    public void setTrack(UnsignedByte track) {
+        this.track = track.getShort();
+    }
+
     public int getSector() {
         return sector;
+    }
+
+    public void setSector(UnsignedByte sector) {
+        this.sector = sector.getShort();
+    }
+
+    public void turnMotorOn() {
+        motorOn = true;
+    }
+
+    public void turnMotorOff() {
+        motorOn = false;
+    }
+
+    public void enableHalt() {
+        haltEnabled = true;
+    }
+
+    public void disableHalt() {
+        haltEnabled = false;
     }
 }
