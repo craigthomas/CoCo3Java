@@ -153,6 +153,7 @@ public class IOController
         /* Disks */
         diskDriveSelect = 0;
 
+        /* Initialize drive data */
         disk = new DiskDrive[NUM_DISK_DRIVES];
         for (int i = 0; i < NUM_DISK_DRIVES; i++) {
             disk[i] = new DiskDrive(this);
@@ -413,6 +414,11 @@ public class IOController
                 } else {
                     disk[diskDriveSelect].disableHalt();
                 }
+                break;
+
+            /* Disk Command Register */
+            case 0xFF48:
+                disk[diskDriveSelect].executeCommand(value);
                 break;
 
             /* Track Status Register */
@@ -1446,5 +1452,12 @@ public class IOController
                 cpu.fastInterruptRequest();
             }
         }
+    }
+
+    /**
+     * Fires a non-maskable interrupt on the CPU.
+     */
+    public void nonMaskableInterrupt() {
+        cpu.nonMaskableInterruptRequest();
     }
 }
