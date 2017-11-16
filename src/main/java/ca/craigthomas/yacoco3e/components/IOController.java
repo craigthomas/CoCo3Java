@@ -21,6 +21,12 @@ public class IOController
     protected Screen screen;
     protected Cassette cassette;
     protected CPU cpu;
+    protected DiskDrive [] disk;
+
+    /* Disk Drive Selector */
+    protected int diskDriveSelect;
+
+    /* Disk Drives Present */
 
     /* CoCo Compatible Mode */
     protected boolean cocoCompatibleMode;
@@ -361,6 +367,11 @@ public class IOController
                 /* Bit 1 = hi/lo edge triggered */
 
                 pia2CRB = value.copy();
+                break;
+
+
+            /* Disk Drive Control Register */
+            case 0xFF40:
                 break;
 
             /* INIT 0 */

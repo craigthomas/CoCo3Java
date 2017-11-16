@@ -43,7 +43,7 @@ public class Emulator
     /* A logger for the emulator */
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
 
-    public Emulator(int scaleFactor, String romFile, boolean trace, String cassetteFile) {
+    public Emulator(int scaleFactor, String romFile, boolean trace, String cassetteFile, String diskBasicROM) {
         memory = new Memory();
         keyboard = new Keyboard();
         screen = new Screen(scaleFactor);
@@ -65,6 +65,19 @@ public class Emulator
         } else {
             LOGGER.severe("no ROM file specified");
             System.exit(1);
+        }
+
+        // Check to see if disk basic was specified
+        if (diskBasicROM != null) {
+            InputStream romFileStream = IO.openInputStream(diskBasicROM);
+            if (!memory.loadCartROM(IO.loadStream(romFileStream))) {
+                LOGGER.severe("Could not load Disk Basic ROM file [" + diskBasicROM + "]");
+            } else {
+                LOGGER.info("Loaded Disk Basic ROM [" + diskBasicROM + "]");
+            }
+            IO.closeStream(romFileStream);
+        } else {
+            LOGGER.info("Disk Basic ROM file not specified");
         }
 
         // Attempt to load specified cassette file
