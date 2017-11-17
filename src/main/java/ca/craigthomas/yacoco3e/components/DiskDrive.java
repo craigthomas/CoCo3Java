@@ -21,6 +21,7 @@ public class DiskDrive
     protected byte [] diskData;
     protected UnsignedByte dataRegister;
     protected int direction;
+    protected UnsignedByte statusRegister;
 
     protected boolean haltEnabled;
 
@@ -31,6 +32,7 @@ public class DiskDrive
         motorOn = false;
         this.io = io;
         direction = -1;
+        statusRegister = new UnsignedByte();
     }
 
     public int getTrack() {
@@ -66,6 +68,27 @@ public class DiskDrive
     }
 
     /**
+     * Returns the contents of the status register.
+     *
+     * @return the status register
+     */
+    public UnsignedByte getStatusRegister() {
+        return statusRegister;
+    }
+
+    public void setBusy() {
+        statusRegister.or(0x01);
+    }
+
+    public void setNotBusy() {
+        statusRegister.and(~0x01);
+    }
+
+    public void fireInterrupt() {
+        io.nonMaskableInterrupt();
+    }
+
+    /**
      * Executes the specified command on the disk.
      *
      * @param command the command to execute
@@ -74,52 +97,76 @@ public class DiskDrive
         int intCommand = command.getShort() >> 4;
         boolean verify = command.isMasked(0x04);
 
+        /* Set busy flag on the status register */
+        setBusy();
+
         /* Restore - seek track 0 */
         if (intCommand == 0x0) {
             restore(verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Seek - seek to track specified in track register */
         if (intCommand == 0x1) {
             seek(verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step without Update - steps once in the last direction */
         if (intCommand == 0x2) {
             step(false, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step with Update - steps once in the last direction */
         if (intCommand == 0x3) {
             step(true, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step In without Update - steps once towards track 76 */
         if (intCommand == 0x4) {
             stepIn(false, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step In with Update - steps once towards track 76 */
         if (intCommand == 0x5) {
             stepIn(true, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step Out without Update - steps once towards track 0 */
         if (intCommand == 0x6) {
             stepOut(false, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
         }
 
         /* Step In with Update - steps once towards track 0 */
         if (intCommand == 0x7) {
             stepOut(true, verify);
+            setNotBusy();
+            fireInterrupt();
             return;
+        }
+
+        /* Read single sector */
+        if (intCommand == 0x08) {
+
         }
     }
 
@@ -130,7 +177,6 @@ public class DiskDrive
         currentTrack = 0;
         direction = -1;
         setTrack(new UnsignedByte(0));
-        io.nonMaskableInterrupt();
     }
 
     /**
@@ -149,7 +195,6 @@ public class DiskDrive
         }
 
         setTrack(dataRegister);
-        io.nonMaskableInterrupt();
     }
 
     /**
@@ -163,7 +208,6 @@ public class DiskDrive
         if (update) {
             setTrack(new UnsignedByte(currentTrack));
         }
-        io.nonMaskableInterrupt();
     }
 
     /**

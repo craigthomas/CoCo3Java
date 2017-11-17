@@ -241,6 +241,10 @@ public class IOController
             case 0xFF23:
                 return pia2CRB;
 
+            /* Disk Drive Status Register */
+            case 0xFF48:
+                return disk[diskDriveSelect].getStatusRegister();
+
             /* Disk Track Status Register */
             case 0xFF49:
                 return new UnsignedByte(disk[diskDriveSelect].getTrack());
