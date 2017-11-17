@@ -207,6 +207,8 @@ public class IOController
         switch (address) {
             /* PIA 1 Data Register A */
             case 0xFF00:
+                /* Clear PIA 1 CRA bits 7 and 6 for interrupts */
+                pia1CRA.and(~0xC0);
                 return keyboard.getHighByte(pia1DRB);
 
             /* PIA 1 Control Register A */
@@ -215,6 +217,8 @@ public class IOController
 
             /* PIA 1 Data Register B */
             case 0xFF02:
+                /* Clear PIA 1 CRB bits 7 and 6 for interrupts */
+                pia1CRB.and(~0xC0);
                 return pia1DRB;
 
             /* PIA 1 Control Register B */
@@ -268,6 +272,23 @@ public class IOController
             /* Vertical Offset Register 0 */
             case 0xFF9E:
                 return verticalOffsetRegister.getLow();
+
+            /* Interrupt vectors */
+            case 0xFFF2:
+            case 0xFFF3:
+            case 0xFFF4:
+            case 0xFFF5:
+            case 0xFFF6:
+            case 0xFFF7:
+            case 0xFFF8:
+            case 0xFFF9:
+            case 0xFFFA:
+            case 0xFFFB:
+            case 0xFFFC:
+            case 0xFFFD:
+            case 0xFFFE:
+            case 0xFFFF:
+                return memory.readROMByte(address);
         }
 
         return memory.readByte(new UnsignedWord(address));
@@ -331,7 +352,10 @@ public class IOController
                 /* Bit 1 = hi/lo edge trigger (ignored) */
 
                 /* Bit 7 = IRQ triggered */
-                pia1CRA = value.copy();
+
+                pia1CRA = new UnsignedByte(value.getShort() +
+                        (pia1CRA.isMasked(0x80) ? 0x80 : 0) +
+                        (pia1CRA.isMasked(0x40) ? 0x40 : 0));
                 break;
 
             /* PIA 1 Data Register B */
@@ -353,7 +377,10 @@ public class IOController
                 /* Bit 1 = hi/lo edge trigger (ignored) */
 
                 /* Bit 7 = IRQ triggered */
-                pia1CRB = value.copy();
+
+                pia1CRB = new UnsignedByte(value.getShort() +
+                        (pia1CRB.isMasked(0x80) ? 0x80 : 0) +
+                        (pia1CRB.isMasked(0x40) ? 0x40 : 0));
                 break;
 
             /* PIA 2 Data Register A */
@@ -1369,15 +1396,15 @@ public class IOController
         regs.cc.or(IOController.CC_I);
         regs.cc.or(IOController.CC_F);
 
-        /* Load PC with Reset Interrupt Vector */
-        regs.setPC(new UnsignedWord(0xC000));
-
         /* Disable MMU */
         memory.disableMMU();
 
         /* Set ROM/RAM mode */
         memory.setROMMode(new UnsignedByte(0x2));
         memory.disableAllRAMMode();
+
+        /* Load PC with Reset Interrupt Vector */
+        regs.setPC(readWord(new UnsignedWord(0xFFFE)));
     }
 
     /**
@@ -1397,10 +1424,10 @@ public class IOController
         if (pia1FastTimerEnabled) {
             pia1FastTimer += ticks;
             if (pia1FastTimer >= TIMER_63_5_MICROS) {
-                if (ccInterruptSet()) {
+                if (!ccInterruptSet() && !pia1CRA.isMasked(0x80)) {
                     cpu.interruptRequest();
-                    pia1CRA.or(0x80);
                 }
+                pia1CRA.or(0x80);
                 pia1FastTimer = 0;
             }
         }
@@ -1408,10 +1435,10 @@ public class IOController
         if (pia1SlowTimerEnabled) {
             pia1SlowTimer += ticks;
             if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
-                if (ccInterruptSet()) {
+                if (!ccInterruptSet() && !pia1CRB.isMasked(0x80)) {
                     cpu.interruptRequest();
-                    pia1CRB.or(0x80);
                 }
+                pia1CRB.or(0x80);
                 pia1SlowTimer = 0;
             }
         }

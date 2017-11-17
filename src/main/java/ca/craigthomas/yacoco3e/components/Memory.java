@@ -183,6 +183,22 @@ public class Memory
     }
 
     /**
+     * This routine is used to map the upper 16 bytes from either
+     * ROM or CART ROM to the addresses $FFF0 - $FFFF.
+     *
+     * @param address the address to read from
+     * @return the ROM byte at that location
+     */
+    public UnsignedByte readROMByte(int address) {
+        /* CART ROM = 32K ROM - read from lower 16K */
+        if (romMode.equals(new UnsignedByte(0x3))) {
+            return new UnsignedByte(cartROM[0x3FF0 + (address & 0x000F)]);
+        }
+
+        return new UnsignedByte(rom[0x3FF0 + (address & 0x000F)]);
+    }
+
+    /**
      * Writes an UnsignedByte to the specified memory address. If the system
      * is in a ROM mode, will not write bytes to a ROM location.
      *
