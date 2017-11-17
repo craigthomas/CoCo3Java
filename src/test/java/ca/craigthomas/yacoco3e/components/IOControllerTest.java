@@ -251,8 +251,6 @@ public class IOControllerTest
         io.getCC().and(~IOController.CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1SlowTimer);
-        assertFalse(io.pia1CRA.isMasked(0x80));
-        assertFalse(io.pia1CRB.isMasked(0x80));
     }
 
     @Test
@@ -283,8 +281,11 @@ public class IOControllerTest
     @Test
     public void testGIMETimerInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF8] = (short) 0xDE;
+        memory.rom[0x3FF9] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
         io.timerTickCounter = 999999;
         io.timerResetValue = new UnsignedWord(0xBEEF);
         io.timerValue = new UnsignedWord(0x1);
@@ -298,8 +299,11 @@ public class IOControllerTest
     @Test
     public void testGIMETimerFastInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF6] = (short) 0xDE;
+        memory.rom[0x3FF7] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
         io.timerTickCounter = 999999;
         io.timerResetValue = new UnsignedWord(0xBEEF);
         io.timerValue = new UnsignedWord(0x1);
@@ -313,8 +317,11 @@ public class IOControllerTest
     @Test
     public void testGIMEHorizontalBorderInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF8] = (short) 0xDE;
+        memory.rom[0x3FF9] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
         io.horizontalBorderTickValue = 999999;
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x10);
@@ -325,8 +332,11 @@ public class IOControllerTest
     @Test
     public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF6] = (short) 0xDE;
+        memory.rom[0x3FF7] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
         io.horizontalBorderTickValue = 999999;
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x10);
@@ -337,8 +347,11 @@ public class IOControllerTest
     @Test
     public void testGIMEVerticalBorderInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF8] = (short) 0xDE;
+        memory.rom[0x3FF9] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF8), new UnsignedWord(0xDEAD));
         io.verticalBorderTickValue = 999999;
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x8);
@@ -349,8 +362,11 @@ public class IOControllerTest
     @Test
     public void testGIMEVerticalBorderFastInterruptFiresCorrectly() {
         memory.enableAllRAMMode();
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FF6] = (short) 0xDE;
+        memory.rom[0x3FF7] = (short) 0xAD;
+
         regs.setS(new UnsignedWord(0x0300));
-        io.writeWord(new UnsignedWord(0xFFF6), new UnsignedWord(0xDEAD));
         io.verticalBorderTickValue = 999999;
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x8);
@@ -850,7 +866,10 @@ public class IOControllerTest
 
     @Test
     public void testGetIndexedPCWith8BitNegativeOffsetIndexed() throws IllegalIndexedPostbyteException{
-        io.writeWord(new UnsignedWord(0xFFFC), new UnsignedWord(0xBEEF));
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FFC] = (short) 0xBE;
+        memory.rom[0x3FFD] = (short) 0xEF;
+
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9CFA));
         assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
     }
@@ -936,6 +955,9 @@ public class IOControllerTest
 
     @Test
     public void testResetSetsCorrectValues() {
+        memory.rom = new short [0x4000];
+        memory.rom[0x3FFE] = (short) 0xC0;
+
         io.reset();
         assertFalse(io.ccOverflowSet());
         assertFalse(io.ccNegativeSet());

@@ -32,7 +32,6 @@ public class IO
 
             /* Determine appropriate endianess */
             if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
-                LOGGER.info("little endian system detected");
                 ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
                 byte[] bytes = new byte[2];
                 int bytesRead = stream.read(bytes);
@@ -43,7 +42,6 @@ public class IO
                 data = tempStream.toByteArray();
                 tempStream.close();
             } else {
-                LOGGER.info("big endian system detected");
                 data = IOUtils.toByteArray(stream);
             }
             return data;

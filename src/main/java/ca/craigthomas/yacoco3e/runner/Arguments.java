@@ -22,4 +22,7 @@ public class Arguments
 
     @Parameter(names="--cassette", description="cassette file")
     public String cassetteFile;
+
+    @Parameter(names="--diskbas", description="Disk Basic ROM")
+    public String diskBasicROM;
 }
