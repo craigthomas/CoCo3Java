@@ -466,6 +466,11 @@ public class IOController
                 disk[diskDriveSelect].setSector(value);
                 break;
 
+            /* Disk Data Register */
+            case 0xFF4B:
+                disk[diskDriveSelect].setDataRegister(value);
+                break;
+
             /* INIT 0 */
             case 0xFF90:
                 /* Bit 1 & 0 = ROM memory mapping */

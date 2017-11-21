@@ -19,9 +19,11 @@ public class DiskDrive
     protected int sector;
     protected int currentSector;
     protected byte [] diskData;
-    protected UnsignedByte dataRegister;
+    protected UnsignedByte dataRegisterOut;
+    protected UnsignedByte dataRegisterIn;
     protected int direction;
     protected UnsignedByte statusRegister;
+    protected int dataMark;
 
     protected boolean haltEnabled;
 
@@ -39,9 +41,11 @@ public class DiskDrive
         this.io = io;
         direction = -1;
         statusRegister = new UnsignedByte();
-        dataRegister = new UnsignedByte();
+        dataRegisterOut = new UnsignedByte();
+        dataRegisterIn = new UnsignedByte();
         currentCommand = -1;
         currentBytePointer = -1;
+        dataMark = 0;
     }
 
     public int getTrack() {
@@ -74,6 +78,20 @@ public class DiskDrive
 
     public void disableHalt() {
         haltEnabled = false;
+    }
+
+    public void setDataRegister(UnsignedByte value) {
+        if (inCommand) {
+            switch (currentCommand) {
+                case 0x0A:
+                    writeSector(value);
+                    return;
+
+                case 0x0B:
+                    writeMultipleSectors(value);
+                    return;
+            }
+        }
     }
 
     public UnsignedByte getDataRegister() {
@@ -219,6 +237,18 @@ public class DiskDrive
             currentBytePointer = 0;
             currentCommand = intCommand;
             inCommand = true;
+            dataMark = command.isMasked(0x1) ? 1 : 0;
+            setBusy();
+            setDRQ();
+            return;
+        }
+
+        /* Write multiple sectors */
+        if (intCommand == 0x0B) {
+            currentBytePointer = 0;
+            currentCommand = intCommand;
+            inCommand = true;
+            dataMark = command.isMasked(0x1) ? 1 : 0;
             setBusy();
             setDRQ();
             return;
@@ -238,7 +268,7 @@ public class DiskDrive
      * Seeks to the track specified in the data register.
      */
     public void seek(boolean verify) {
-        int trackToSeek = dataRegister.getShort();
+        int trackToSeek = dataRegisterIn.getShort();
         while (currentTrack > trackToSeek) {
             direction = -1;
             currentTrack--;
@@ -249,7 +279,7 @@ public class DiskDrive
             currentTrack++;
         }
 
-        setTrack(dataRegister);
+        setTrack(dataRegisterIn);
     }
 
     /**
@@ -293,8 +323,8 @@ public class DiskDrive
      * @return returns the current byte of data under the drive head
      */
     public UnsignedByte getCurrentByte() {
-        int currentLocation = currentTrack * SECTORS * BYTES_PER_SECTOR;
-        currentLocation += currentSector * BYTES_PER_SECTOR;
+        int currentLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
+        currentLocation += currentSector * (BYTES_PER_SECTOR + 1);
         currentLocation += currentBytePointer;
         return new UnsignedByte(diskData[currentLocation]);
     }
@@ -359,5 +389,72 @@ public class DiskDrive
         clearDRQ();
         fireInterrupt();
         return new UnsignedByte(0);
+    }
+
+    public void writeCurrentByte(UnsignedByte value) {
+        int currentLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
+        currentLocation += currentSector * (BYTES_PER_SECTOR + 1);
+        currentLocation += currentBytePointer;
+        diskData[currentLocation] = (byte) value.getShort();
+    }
+
+    public void writeDataMark() {
+        int markLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
+        markLocation += currentSector * (BYTES_PER_SECTOR + 1);
+        markLocation += BYTES_PER_SECTOR;
+        diskData[markLocation] = (byte) dataMark;
+    }
+
+    public void writeSector(UnsignedByte value) {
+        /* Write the data mark first */
+        writeDataMark();
+
+        /* Check to see if we can write more bytes on this sector */
+        if (currentBytePointer < BYTES_PER_SECTOR) {
+            writeCurrentByte(value);
+            currentBytePointer++;
+            return;
+        }
+
+        /* We've written the entire sector, set not busy, and interrupt */
+        currentBytePointer = 0;
+        inCommand = false;
+        currentCommand = -1;
+        setNotBusy();
+        clearDRQ();
+        fireInterrupt();
+    }
+
+    public void writeMultipleSectors(UnsignedByte value) {
+        /* Write the data mark first */
+        writeDataMark();
+
+        /* Check to see if we can write more bytes on this sector */
+        if (currentBytePointer < BYTES_PER_SECTOR) {
+            writeCurrentByte(value);
+            currentBytePointer++;
+            return;
+        }
+
+        /* Advance the sector counter if necessary */
+        if (currentSector < SECTORS) {
+            UnsignedByte dataMark = getCurrentByte();
+            if (!dataMark.isZero()) {
+                statusRegister.or(0x20);
+            }
+            currentSector++;
+            currentBytePointer = 0;
+            writeMultipleSectors(value);
+            return;
+        }
+
+        /* We've written the entire sector, set not busy, and interrupt */
+        currentSector--;
+        currentBytePointer = 0;
+        inCommand = false;
+        currentCommand = -1;
+        setNotBusy();
+        clearDRQ();
+        fireInterrupt();
     }
 }
