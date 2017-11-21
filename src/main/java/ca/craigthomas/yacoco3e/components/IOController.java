@@ -253,6 +253,10 @@ public class IOController
             case 0xFF4A:
                 return new UnsignedByte(disk[diskDriveSelect].getSector());
 
+            /* Disk Data Register */
+            case 0xFF4B:
+                return disk[diskDriveSelect].getDataRegister();
+
             /* IRQs Enabled Register */
             case 0xFF92:
                 return irqStatus;
@@ -1429,7 +1433,7 @@ public class IOController
             pia1FastTimer += ticks;
             if (pia1FastTimer >= TIMER_63_5_MICROS) {
                 if (!ccInterruptSet() && !pia1CRA.isMasked(0x80)) {
-                    cpu.interruptRequest();
+                    cpu.scheduleIRQ();
                 }
                 pia1CRA.or(0x80);
                 pia1FastTimer = 0;
@@ -1440,7 +1444,7 @@ public class IOController
             pia1SlowTimer += ticks;
             if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
                 if (!ccInterruptSet() && !pia1CRB.isMasked(0x80)) {
-                    cpu.interruptRequest();
+                    cpu.scheduleIRQ();
                 }
                 pia1CRB.or(0x80);
                 pia1SlowTimer = 0;
@@ -1453,10 +1457,10 @@ public class IOController
             timerValue.add(-1);
             if (timerValue.isZero()) {
                 if (irqEnabled && irqStatus.isMasked(0x20)) {
-                    cpu.interruptRequest();
+                    cpu.scheduleIRQ();
                 }
                 if (firqEnabled && firqStatus.isMasked(0x20)) {
-                    cpu.fastInterruptRequest();
+                    cpu.scheduleFIRQ();
                 }
                 timerValue.set(timerResetValue);
             }
@@ -1466,10 +1470,10 @@ public class IOController
         if (horizontalBorderTickValue >= TIMER_63_5_MICROS) {
             horizontalBorderTickValue = 0;
             if (irqEnabled && irqStatus.isMasked(0x10)) {
-                cpu.interruptRequest();
+                cpu.scheduleIRQ();
             }
             if (firqEnabled && firqStatus.isMasked(0x10)) {
-                cpu.fastInterruptRequest();
+                cpu.scheduleFIRQ();
             }
         }
 
@@ -1477,10 +1481,10 @@ public class IOController
         if (verticalBorderTickValue >= TIMER_16_6_MILLIS) {
             verticalBorderTickValue = 0;
             if (irqEnabled && irqStatus.isMasked(0x08)) {
-                cpu.interruptRequest();
+                cpu.scheduleIRQ();
             }
             if (firqEnabled && firqStatus.isMasked(0x08)) {
-                cpu.fastInterruptRequest();
+                cpu.scheduleFIRQ();
             }
         }
     }
@@ -1489,6 +1493,6 @@ public class IOController
      * Fires a non-maskable interrupt on the CPU.
      */
     public void nonMaskableInterrupt() {
-        cpu.nonMaskableInterruptRequest();
+        cpu.scheduleNMI();
     }
 }

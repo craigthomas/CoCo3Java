@@ -29,7 +29,10 @@ public class CPU extends Thread
     public final static UnsignedWord SWI2 = new UnsignedWord(0xFFF4);
     public final static UnsignedWord SWI = new UnsignedWord(0xFFFA);
 
-    public final static UnsignedWord PC_START = new UnsignedWord(0x0);
+    /* Interrupt request flags */
+    boolean fireIRQ;
+    boolean fireFIRQ;
+    boolean fireNMI;
 
     public CPU(IOController io) {
         this.io = io;
@@ -2868,6 +2871,22 @@ public class CPU extends Thread
         /* Increment timers if necessary */
         io.timerTick(operationTicks);
 
+        /* Fire interrupts if set */
+        if (fireIRQ) {
+            interruptRequest();
+            fireIRQ = false;
+        }
+
+        if (fireFIRQ) {
+            fastInterruptRequest();
+            fireFIRQ = false;
+        }
+
+        if (fireNMI) {
+            nonMaskableInterruptRequest();
+            fireNMI = false;
+        }
+
         /* Check to see if we should trace the output */
         if (trace) {
             System.out.println(opShortDesc + " : " + opLongDesc);
@@ -3699,6 +3718,27 @@ public class CPU extends Thread
         cc.or(d.isZero() ? IOController.CC_Z : 0);
         cc.or(d.isNegative() ? IOController.CC_N : 0);
         opLongDesc += ", D'=" + d;
+    }
+
+    /**
+     * Schedules an IRQ interrupt to occur.
+     */
+    public void scheduleIRQ() {
+        fireIRQ = true;
+    }
+
+    /**
+     * Schedules a fast interrupt to occur.
+     */
+    public void scheduleFIRQ() {
+        fireFIRQ = true;
+    }
+
+    /**
+     * Schedules a non-maskable interrupt to occur.
+     */
+    public void scheduleNMI() {
+        fireNMI = true;
     }
 
     /**

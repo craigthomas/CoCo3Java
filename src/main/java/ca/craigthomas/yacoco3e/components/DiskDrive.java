@@ -25,14 +25,23 @@ public class DiskDrive
 
     protected boolean haltEnabled;
 
+    protected int currentBytePointer;
+
     protected IOController io;
 
+    protected boolean inCommand;
+
+    protected int currentCommand;
+
     public DiskDrive(IOController io) {
-        diskData = new byte [TRACKS * SECTORS * BYTES_PER_SECTOR];
+        diskData = new byte [TRACKS * SECTORS * (BYTES_PER_SECTOR + 1)];
         motorOn = false;
         this.io = io;
         direction = -1;
         statusRegister = new UnsignedByte();
+        dataRegister = new UnsignedByte();
+        currentCommand = -1;
+        currentBytePointer = -1;
     }
 
     public int getTrack() {
@@ -67,6 +76,19 @@ public class DiskDrive
         haltEnabled = false;
     }
 
+    public UnsignedByte getDataRegister() {
+        if (inCommand) {
+            switch (currentCommand) {
+                case 0x08:
+                    return readSector();
+
+                case 0x09:
+                    return readMultipleSectors();
+            }
+        }
+        throw new RuntimeException("getDataRegister unrecognized command " + new UnsignedByte(currentCommand));
+    }
+
     /**
      * Returns the contents of the status register.
      *
@@ -82,6 +104,14 @@ public class DiskDrive
 
     public void setNotBusy() {
         statusRegister.and(~0x01);
+    }
+
+    public void setDRQ() {
+        statusRegister.or(0x02);
+    }
+
+    public void clearDRQ() {
+        statusRegister.and(~0x02);
     }
 
     public void fireInterrupt() {
@@ -166,7 +196,32 @@ public class DiskDrive
 
         /* Read single sector */
         if (intCommand == 0x08) {
+            currentBytePointer = 0;
+            currentCommand = intCommand;
+            inCommand = true;
+            setBusy();
+            setDRQ();
+            return;
+        }
 
+        /* Read multiple sectors */
+        if (intCommand == 0x09) {
+            currentBytePointer = 0;
+            currentCommand = intCommand;
+            inCommand = true;
+            setBusy();
+            setDRQ();
+            return;
+        }
+
+        /* Write single sector */
+        if (intCommand == 0x0A) {
+            currentBytePointer = 0;
+            currentCommand = intCommand;
+            inCommand = true;
+            setBusy();
+            setDRQ();
+            return;
         }
     }
 
@@ -230,5 +285,79 @@ public class DiskDrive
     public void stepOut(boolean update, boolean verify) {
         direction = -1;
         step(update, verify);
+    }
+
+    /**
+     * Reads the current byte of data on the disk.
+     *
+     * @return returns the current byte of data under the drive head
+     */
+    public UnsignedByte getCurrentByte() {
+        int currentLocation = currentTrack * SECTORS * BYTES_PER_SECTOR;
+        currentLocation += currentSector * BYTES_PER_SECTOR;
+        currentLocation += currentBytePointer;
+        return new UnsignedByte(diskData[currentLocation]);
+    }
+
+    /**
+     * Reads a single sector worth of bytes.
+     *
+     * @return the next byte in the sector
+     */
+    public UnsignedByte readSector() {
+        /* Check to see if we can read more bytes on this sector */
+        if (currentBytePointer < BYTES_PER_SECTOR) {
+            UnsignedByte result = getCurrentByte();
+            currentBytePointer++;
+            return result;
+        }
+
+        /* We've read the entire sector, set not busy, and interrupt */
+        UnsignedByte dataMark = getCurrentByte();
+        if (!dataMark.isZero()) {
+            statusRegister.or(0x20);
+        }
+        currentBytePointer = 0;
+        inCommand = false;
+        currentCommand = -1;
+        setNotBusy();
+        clearDRQ();
+        fireInterrupt();
+        return new UnsignedByte(0);
+    }
+
+    /**
+     * Reads multiple sectors. Will continue reading sectors sequentially until
+     * all of the sectors on the track have been read.
+     *
+     * @return the next byte in the sector
+     */
+    public UnsignedByte readMultipleSectors() {
+        /* Check to see if we've finished reading the current sector */
+        if (currentBytePointer < BYTES_PER_SECTOR) {
+            currentBytePointer++;
+            return getCurrentByte();
+        }
+
+        /* Advance the sector counter if necessary */
+        if (currentSector < SECTORS) {
+            UnsignedByte dataMark = getCurrentByte();
+            if (!dataMark.isZero()) {
+                statusRegister.or(0x20);
+            }
+            currentSector++;
+            currentBytePointer = 0;
+            return readMultipleSectors();
+        }
+
+        /* We've read all the sectors, set not busy, and interrupt */
+        currentSector--;
+        currentBytePointer = 0;
+        inCommand = false;
+        currentCommand = -1;
+        setNotBusy();
+        clearDRQ();
+        fireInterrupt();
+        return new UnsignedByte(0);
     }
 }
