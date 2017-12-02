@@ -8,22 +8,22 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 public class DiskDrive
 {
-    public static final int TRACKS = 35;
-    public static final int SECTORS = 18;
-    public static final int BYTES_PER_SECTOR = 256;
+    public static final int DEFAULT_NUM_TRACKS = 35;
+    public static final int DEFAULT_SECTORS_PER_TRACK = 18;
+    public static final int DEFAULT_BYTES_PER_SECTOR = 256;
 
     protected boolean motorOn;
 
+    protected Track [] tracks;
     protected int track;
     protected int currentTrack;
     protected int sector;
     protected int currentSector;
-    protected byte [] diskData;
     protected UnsignedByte dataRegisterOut;
     protected UnsignedByte dataRegisterIn;
     protected int direction;
     protected UnsignedByte statusRegister;
-    protected int dataMark;
+    protected UnsignedByte dataMark;
 
     protected boolean haltEnabled;
 
@@ -35,8 +35,79 @@ public class DiskDrive
 
     protected int currentCommand;
 
+    protected int bytesPerSector;
+
+    protected int sectorsPerTrack;
+
+    protected int tracksPerDisk;
+
+    public class Track {
+        Sector [] sectors;
+
+        public Track(int numSectors, int bytesPerSector) {
+            sectors = new Sector[numSectors];
+            for (int i=0; i < numSectors; i++) {
+                sectors[i] = new Sector(bytesPerSector);
+            }
+        }
+
+        public void write(int sectorNum, int byteNum, UnsignedByte value) {
+            sectors[sectorNum].writeByte(byteNum, value);
+        }
+
+        public UnsignedByte read(int sectorNum, int byteNum) {
+            return sectors[sectorNum].readByte(byteNum);
+        }
+
+        public UnsignedByte getDataMark(int sectorNum) {
+            return sectors[sectorNum].getDataMark();
+        }
+
+        public void setDataMark(int sectorNum, UnsignedByte value) {
+            sectors[sectorNum].setDataMark(value);
+        }
+    }
+
+    public class Sector {
+        byte [] data;
+        byte dataMark;
+        int size;
+
+        public Sector(int size) {
+            this.size = size;
+            data = new byte[size];
+            dataMark = 0;
+        }
+
+        public void writeByte(int byteNum, UnsignedByte value) {
+            data[byteNum] = (byte) value.getShort();
+        }
+
+        public UnsignedByte readByte(int byteNum) {
+            return new UnsignedByte(data[byteNum]);
+        }
+
+        public void setDataMark(UnsignedByte value) {
+            dataMark = (byte) value.getShort();
+        }
+
+        public UnsignedByte getDataMark() {
+            return new UnsignedByte(dataMark);
+        }
+    }
+
     public DiskDrive(IOController io) {
-        diskData = new byte [TRACKS * SECTORS * (BYTES_PER_SECTOR + 1)];
+        this(io, DEFAULT_NUM_TRACKS, DEFAULT_SECTORS_PER_TRACK, DEFAULT_BYTES_PER_SECTOR);
+    }
+
+    public DiskDrive(IOController io, int numTracks, int numSectors, int numBytesPerSector) {
+        tracks = new Track[numTracks];
+        for (int i=0; i < numTracks; i++) {
+            tracks[i] = new Track(numSectors, numBytesPerSector);
+        }
+        tracksPerDisk = numTracks;
+        sectorsPerTrack = numSectors;
+        bytesPerSector = numBytesPerSector;
         motorOn = false;
         this.io = io;
         direction = -1;
@@ -45,7 +116,7 @@ public class DiskDrive
         dataRegisterIn = new UnsignedByte();
         currentCommand = -1;
         currentBytePointer = -1;
-        dataMark = 0;
+        dataMark = new UnsignedByte();
     }
 
     public int getTrack() {
@@ -102,6 +173,9 @@ public class DiskDrive
 
                 case 0x09:
                     return readMultipleSectors();
+
+                case 0x0C:
+                    return readAddress();
             }
         }
         throw new RuntimeException("getDataRegister unrecognized command " + new UnsignedByte(currentCommand));
@@ -237,7 +311,7 @@ public class DiskDrive
             currentBytePointer = 0;
             currentCommand = intCommand;
             inCommand = true;
-            dataMark = command.isMasked(0x1) ? 1 : 0;
+            dataMark = new UnsignedByte(command.isMasked(0x1) ? 1 : 0);
             setBusy();
             setDRQ();
             return;
@@ -248,9 +322,37 @@ public class DiskDrive
             currentBytePointer = 0;
             currentCommand = intCommand;
             inCommand = true;
-            dataMark = command.isMasked(0x1) ? 1 : 0;
+            dataMark = new UnsignedByte(command.isMasked(0x1) ? 1 : 0);
             setBusy();
             setDRQ();
+            return;
+        }
+
+        /* Read address */
+        if (intCommand == 0x0C) {
+//            currentCommand = intCommand;
+//            inCommand = true;
+//            setBusy();
+//            setDRQ();
+            System.out.println("Unsupported disk command: read address");
+            return;
+        }
+
+        /* Read track */
+        if (intCommand == 0x0D) {
+            System.out.println("Unsupported disk command: read track");
+            return;
+        }
+
+        /* Write track */
+        if (intCommand == 0x0E) {
+            System.out.println("Unsupported disk command: write track");
+            return;
+        }
+
+        /* Force interrupt */
+        if (intCommand == 0x0F) {
+            System.out.println("Unsupported disk command: force interrupt");
             return;
         }
     }
@@ -318,35 +420,20 @@ public class DiskDrive
     }
 
     /**
-     * Reads the current byte of data on the disk.
-     *
-     * @return returns the current byte of data under the drive head
-     */
-    public UnsignedByte getCurrentByte() {
-        int currentLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
-        currentLocation += currentSector * (BYTES_PER_SECTOR + 1);
-        currentLocation += currentBytePointer;
-        return new UnsignedByte(diskData[currentLocation]);
-    }
-
-    /**
      * Reads a single sector worth of bytes.
      *
      * @return the next byte in the sector
      */
     public UnsignedByte readSector() {
         /* Check to see if we can read more bytes on this sector */
-        if (currentBytePointer < BYTES_PER_SECTOR) {
-            UnsignedByte result = getCurrentByte();
+        if (currentBytePointer < bytesPerSector) {
             currentBytePointer++;
-            return result;
+            return tracks[currentTrack].read(currentSector, currentBytePointer - 1);
         }
 
         /* We've read the entire sector, set not busy, and interrupt */
-        UnsignedByte dataMark = getCurrentByte();
-        if (!dataMark.isZero()) {
-            statusRegister.or(0x20);
-        }
+        UnsignedByte dataMark = tracks[currentTrack].getDataMark(currentSector);
+        statusRegister.or(dataMark.isZero() ? 0x0 : 0x20);
         currentBytePointer = 0;
         inCommand = false;
         currentCommand = -1;
@@ -364,17 +451,15 @@ public class DiskDrive
      */
     public UnsignedByte readMultipleSectors() {
         /* Check to see if we've finished reading the current sector */
-        if (currentBytePointer < BYTES_PER_SECTOR) {
+        if (currentBytePointer < bytesPerSector) {
             currentBytePointer++;
-            return getCurrentByte();
+            return tracks[currentTrack].read(currentSector, currentBytePointer - 1);
         }
 
         /* Advance the sector counter if necessary */
-        if (currentSector < SECTORS) {
-            UnsignedByte dataMark = getCurrentByte();
-            if (!dataMark.isZero()) {
-                statusRegister.or(0x20);
-            }
+        if (currentSector < sectorsPerTrack) {
+            UnsignedByte dataMark = tracks[currentTrack].getDataMark(currentSector);
+            statusRegister.or(dataMark.isZero() ? 0x0 : 0x20);
             currentSector++;
             currentBytePointer = 0;
             return readMultipleSectors();
@@ -391,27 +476,18 @@ public class DiskDrive
         return new UnsignedByte(0);
     }
 
-    public void writeCurrentByte(UnsignedByte value) {
-        int currentLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
-        currentLocation += currentSector * (BYTES_PER_SECTOR + 1);
-        currentLocation += currentBytePointer;
-        diskData[currentLocation] = (byte) value.getShort();
-    }
-
-    public void writeDataMark() {
-        int markLocation = currentTrack * SECTORS * (BYTES_PER_SECTOR + 1);
-        markLocation += currentSector * (BYTES_PER_SECTOR + 1);
-        markLocation += BYTES_PER_SECTOR;
-        diskData[markLocation] = (byte) dataMark;
-    }
-
+    /**
+     * Writes a byte of data to the current sector.
+     *
+     * @param value the byte value to write
+     */
     public void writeSector(UnsignedByte value) {
         /* Write the data mark first */
-        writeDataMark();
+        tracks[currentTrack].setDataMark(currentSector, dataMark);
 
         /* Check to see if we can write more bytes on this sector */
-        if (currentBytePointer < BYTES_PER_SECTOR) {
-            writeCurrentByte(value);
+        if (currentBytePointer < bytesPerSector) {
+            tracks[currentTrack].write(currentSector, currentBytePointer, value);
             currentBytePointer++;
             return;
         }
@@ -425,20 +501,25 @@ public class DiskDrive
         fireInterrupt();
     }
 
+    /**
+     * Writes a byte of data to the current sector.
+     *
+     * @param value the byte value to write
+     */
     public void writeMultipleSectors(UnsignedByte value) {
         /* Write the data mark first */
-        writeDataMark();
+        tracks[currentTrack].setDataMark(currentSector, dataMark);
 
         /* Check to see if we can write more bytes on this sector */
-        if (currentBytePointer < BYTES_PER_SECTOR) {
-            writeCurrentByte(value);
+        if (currentBytePointer < bytesPerSector) {
+            tracks[currentTrack].write(currentSector, currentBytePointer, value);
             currentBytePointer++;
             return;
         }
 
         /* Advance the sector counter if necessary */
-        if (currentSector < SECTORS) {
-            UnsignedByte dataMark = getCurrentByte();
+        if (currentSector < sectorsPerTrack) {
+            UnsignedByte dataMark = tracks[currentTrack].getDataMark(currentSector);
             if (!dataMark.isZero()) {
                 statusRegister.or(0x20);
             }
@@ -456,5 +537,9 @@ public class DiskDrive
         setNotBusy();
         clearDRQ();
         fireInterrupt();
+    }
+
+    public UnsignedByte readAddress() {
+        return null;
     }
 }
