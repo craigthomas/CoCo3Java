@@ -10,6 +10,8 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 public class DiskTrack
 {
     private DiskSector [] sectors;
+    private int currentSector;
+    private boolean readTrackFinished;
 
     public DiskTrack(int numSectors, boolean doubleDensity) {
         sectors = new DiskSector[numSectors];
@@ -18,12 +20,8 @@ public class DiskTrack
         }
     }
 
-    public void seekSector(int sectorNum) {
-        //sectors[sectorNum];
-    }
-
-    public void write(int sectorNum, UnsignedByte value) {
-        //sectors[sectorNum].writeByte(value);
+    public void write(int sector, UnsignedByte value) {
+        sectors[sector].writeData((byte) value.getShort());
     }
 
     /**
@@ -67,7 +65,61 @@ public class DiskTrack
         return sectors[sector].hasMoreBytes();
     }
 
+    /**
+     * Returns true if there are more bytes to be read from an ID field of a
+     * sector, false otherwise.
+     *
+     * @param sector the sector to read from
+     * @return true if there are more id bytes to be read
+     */
+    public boolean hasMoreIdBytes(int sector) {
+        return sectors[sector].hasMoreIdBytes();
+    }
+
+    public void writeDataMark(int sector, UnsignedByte mark) {
+        sectors[sector].writeDataMark((byte) mark.getShort());
+    }
+
+    /**
+     * Sets the current command to run on the sector.
+     *
+     * @param sector
+     * @param command
+     */
     public void setCommand(int sector, DiskCommand command) {
         sectors[sector].setCommand(command);
+    }
+
+    public void startReadTrack() {
+        currentSector = 0;
+        sectors[currentSector].setCommand(DiskCommand.READ_TRACK);
+        readTrackFinished = false;
+    }
+
+    public UnsignedByte readTrack() {
+        if (sectors[currentSector].readTrackFinished()) {
+            currentSector++;
+            if (currentSector >= sectors.length) {
+                readTrackFinished = true;
+                return new UnsignedByte(0);
+            }
+            sectors[currentSector].setCommand(DiskCommand.READ_TRACK);
+        }
+
+        UnsignedByte result = new UnsignedByte(sectors[currentSector].readTrack());
+        if (sectors[currentSector].readTrackFinished()) {
+            currentSector++;
+            if (currentSector >= sectors.length) {
+                readTrackFinished = true;
+            } else {
+                sectors[currentSector].setCommand(DiskCommand.READ_TRACK);
+            }
+        }
+
+        return result;
+    }
+
+    public boolean isReadTrackFinished() {
+        return readTrackFinished;
     }
 }
