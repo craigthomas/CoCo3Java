@@ -28,6 +28,8 @@ public class DiskTrack
     }
 
     public void writeTrack(UnsignedByte value) {
+        System.out.print("Writing " + value + " to sector " + currentSector);
+
         if (currentSector >= sectors.length) {
             writeTrackFinished = true;
             return;
@@ -179,5 +181,23 @@ public class DiskTrack
 
     public boolean isWriteTrackFinished() {
         return writeTrackFinished;
+    }
+
+    /**
+     * This function will return the logical sector number as recorded on the
+     * sector by the OS. It uses the sector number on the ID field of the sector
+     * to return the correct mapping. Will return -1 if the logical sector number
+     * did not exist anywhere in the collection of sectors.
+     *
+     * @param sector the logical sector number to search for
+     * @return the actual sector number where the logical sector is stored
+     */
+    public int getLogicalSector(int sector) {
+        for (int i = 0; i < sectors.length; i++) {
+            if (sector == sectors[i].getSectorId()) {
+                return i;
+            }
+        }
+        return -1;
     }
 }
