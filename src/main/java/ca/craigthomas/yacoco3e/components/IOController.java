@@ -90,6 +90,9 @@ public class IOController
     /* The number of ticks to pass in 63.5 microseconds */
     public static final int TIMER_63_5_MICROS = 56;
 
+    /* The number of ticks to pass before poking disks */
+    public static final int TIMER_DISK_COUNTER = 5000;
+
     /* The number of ticks to pass in 16.6 milliseconds */
     public static final int TIMER_16_6_MILLIS = 14833;
 
@@ -98,6 +101,8 @@ public class IOController
 
     /* The number of ticks that has passed for the timer */
     public int timerTickCounter;
+
+    public int diskTickCounter;
 
     public UnsignedWord timerResetValue;
 
@@ -195,6 +200,19 @@ public class IOController
             return memory.readByte(address);
         }
         return readIOByte(intAddress);
+    }
+
+    /**
+     * This function periodically updates the status of the disk drives
+     * so that they do not get stuck in a single command. This should be
+     * called periodically by the CPU to ensure the drives don't get
+     * stale in a read or write operation that the computer does not
+     * service (e.g. Read Address in Tandy Disk Basic 1.1).
+     */
+    public void pokeDisks() {
+        for (int i = 0; i < disk.length; i++) {
+            disk[i].tickUpdate();
+        }
     }
 
     /**
@@ -1429,6 +1447,7 @@ public class IOController
      * @param ticks the number of ticks to increment
      */
     public void timerTick(int ticks) {
+        diskTickCounter += ticks;
         timerTickCounter += ticks;
         horizontalBorderTickValue += ticks;
         verticalBorderTickValue += ticks;
@@ -1491,6 +1510,12 @@ public class IOController
             if (firqEnabled && firqStatus.isMasked(0x08)) {
                 cpu.scheduleFIRQ();
             }
+        }
+
+        /* Check to see if we should poke disks */
+        if (diskTickCounter >= TIMER_DISK_COUNTER) {
+            pokeDisks();
+            diskTickCounter = 0;
         }
     }
 

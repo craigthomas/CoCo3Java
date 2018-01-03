@@ -12,16 +12,64 @@ public class DiskTrack
     private DiskSector [] sectors;
     private int currentSector;
     private boolean readTrackFinished;
+    private boolean writeTrackFinished;
+    private boolean doubleDensity;
 
     public DiskTrack(int numSectors, boolean doubleDensity) {
         sectors = new DiskSector[numSectors];
         for (int i=0; i < numSectors; i++) {
             sectors[i] = new DiskSector(doubleDensity);
         }
+        this.doubleDensity = doubleDensity;
     }
 
     public void write(int sector, UnsignedByte value) {
         sectors[sector].writeData((byte) value.getShort());
+    }
+
+    public void writeTrack(UnsignedByte value) {
+        if (currentSector >= sectors.length) {
+            writeTrackFinished = true;
+            return;
+        }
+
+        if (sectors[currentSector].writeTrackFinished()) {
+            sectors[currentSector].setCommand(DiskCommand.NONE);
+            currentSector++;
+            if (currentSector < sectors.length) {
+                sectors[currentSector].setCommand(DiskCommand.WRITE_TRACK);
+            } else {
+                writeTrackFinished = true;
+                return;
+            }
+        }
+
+        /* Check to see if we have a byte that has a different interpretation */
+        byte byteValue = (byte) value.getShort();
+        if (doubleDensity) {
+            switch (byteValue) {
+                case (byte) 0xF5:
+                    sectors[currentSector].writeTrack((byte) 0xA1);
+                    /* TODO: Turn on CRC calculation */
+                    break;
+
+                case (byte) 0xF6:
+                    sectors[currentSector].writeTrack((byte) 0xC2);
+                    break;
+
+                case (byte) 0xF7:
+                    /* Below should be CRC byte 1, CRC byte 2 */
+                    sectors[currentSector].writeTrack((byte) 0x0);
+                    sectors[currentSector].writeTrack((byte) 0x0);
+                    break;
+
+                default:
+                    sectors[currentSector].writeTrack(byteValue);
+                    break;
+            }
+        } else {
+            sectors[currentSector].writeTrack(byteValue);
+        }
     }
 
     /**
@@ -96,6 +144,12 @@ public class DiskTrack
         readTrackFinished = false;
     }
 
+    public void startWriteTrack() {
+        currentSector = 0;
+        sectors[currentSector].setCommand(DiskCommand.WRITE_TRACK);
+        writeTrackFinished = false;
+    }
+
     public UnsignedByte readTrack() {
         if (sectors[currentSector].readTrackFinished()) {
             currentSector++;
@@ -121,5 +175,9 @@ public class DiskTrack
 
     public boolean isReadTrackFinished() {
         return readTrackFinished;
+    }
+
+    public boolean isWriteTrackFinished() {
+        return writeTrackFinished;
     }
 }

@@ -165,6 +165,7 @@ public class DiskSector
                 break;
 
             case READ_TRACK:
+            case WRITE_TRACK:
                 gap1.restore();
                 id.restore();
                 gap2.restore();
@@ -279,6 +280,54 @@ public class DiskSector
         }
 
         return 0;
+    }
+
+    public void writeTrack(byte value) {
+        if (currentField.equals(FIELD.GAP1) && gap1.hasMoreBytes()) {
+            gap1.write(value);
+            return;
+        } else {
+            currentField = FIELD.ID;
+        }
+
+        if (currentField.equals(FIELD.ID) && id.hasMoreBytes()) {
+            id.write(value);
+            return;
+        } else {
+            currentField = FIELD.GAP2;
+        }
+
+        if (currentField.equals(FIELD.GAP2) && gap2.hasMoreBytes()) {
+            gap2.write(value);
+            return;
+        } else {
+            currentField = FIELD.GAP3;
+        }
+
+        if (currentField.equals(FIELD.GAP3) && gap3.hasMoreBytes()) {
+            gap3.write(value);
+            return;
+        } else {
+            currentField = FIELD.DATA;
+        }
+
+        if (currentField.equals(FIELD.DATA) && data.hasMoreBytes()) {
+            data.write(value);
+            return;
+        } else {
+            currentField = FIELD.GAP4;
+        }
+
+        if (currentField.equals(FIELD.GAP4) && gap4.hasMoreBytes()) {
+            gap4.write(value);
+            return;
+        } else {
+            currentField = FIELD.NONE;
+        }
+    }
+
+    public boolean writeTrackFinished() {
+        return currentField.equals(FIELD.NONE);
     }
 
     public boolean readTrackFinished() {

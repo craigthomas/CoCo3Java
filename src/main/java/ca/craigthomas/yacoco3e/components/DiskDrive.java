@@ -6,6 +6,8 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
+import java.util.logging.Logger;
+
 public class DiskDrive
 {
     public static final int DEFAULT_NUM_TRACKS = 35;
@@ -37,6 +39,10 @@ public class DiskDrive
     protected int sectorsPerTrack;
 
     protected int tracksPerDisk;
+
+    /* A logger for the disk drive */
+    private final static Logger LOGGER = Logger.getLogger(DiskDrive.class.getName());
+
 
     public DiskDrive(IOController io) {
         this(io, DEFAULT_NUM_TRACKS, DEFAULT_SECTORS_PER_TRACK, true);
@@ -100,6 +106,10 @@ public class DiskDrive
             case WRITE_MULTIPLE_SECTORS:
                 writeMultipleSectors(value);
                 return;
+
+            case WRITE_TRACK:
+                writeTrack(value);
+                return;
         }
     }
 
@@ -112,13 +122,39 @@ public class DiskDrive
                 return readMultipleSectors();
 
             case READ_ADDRESS:
+                LOGGER.info("reading address");
                 return readAddress();
 
             case READ_TRACK:
+                LOGGER.info("reading track");
                 return readTrack();
 
             default:
                 throw new RuntimeException("getDataRegister unrecognized command " + currentCommand);
+        }
+    }
+
+    /**
+     * This function is used to advance the current disk drive operation
+     * periodically by the CPU. With most read and write commands, the
+     * disk drive will remain locked in a certain command until it
+     * exhausts the available data to read or write on disk. This function
+     * should be called periodically by the IO controller so that the
+     * disk does not remain stale within an operation when no read or
+     * write is forthcoming.
+     */
+    public void tickUpdate() {
+        switch (currentCommand) {
+            case READ_ADDRESS:
+                readSector();
+                break;
+
+            case NONE:
+                break;
+
+            default:
+                LOGGER.warning("doing nothing on tickUpdate with command " + currentCommand);
+                break;
         }
     }
 
@@ -148,6 +184,7 @@ public class DiskDrive
     }
 
     public void fireInterrupt() {
+        setNotBusy();
         io.nonMaskableInterrupt();
     }
 
@@ -165,147 +202,143 @@ public class DiskDrive
 
         /* Restore - seek track 0 */
         if (intCommand == 0x0) {
+            LOGGER.info("Restore");
             restore(verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Restore");
             return;
         }
 
         /* Seek - seek to track specified in track register */
         if (intCommand == 0x1) {
+            LOGGER.info("Seek");
             seek(verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Seek");
             return;
         }
 
         /* Step without Update - steps once in the last direction */
         if (intCommand == 0x2) {
+            LOGGER.info("Step (without update)");
             step(false, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step (without update)");
             return;
         }
 
         /* Step with Update - steps once in the last direction */
         if (intCommand == 0x3) {
+            LOGGER.info("Step (with update)");
             step(true, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step (with update)");
             return;
         }
 
         /* Step In without Update - steps once towards track 76 */
         if (intCommand == 0x4) {
+            LOGGER.info("Step in (without update)");
             stepIn(false, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step in (without update)");
             return;
         }
 
         /* Step In with Update - steps once towards track 76 */
         if (intCommand == 0x5) {
+            LOGGER.info("Step in (with update)");
             stepIn(true, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step in (with update)");
             return;
         }
 
         /* Step Out without Update - steps once towards track 0 */
         if (intCommand == 0x6) {
+            LOGGER.info("Step out (without update)");
             stepOut(false, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step out (without update)");
             return;
         }
 
         /* Step Out with Update - steps once towards track 0 */
         if (intCommand == 0x7) {
+            LOGGER.info("Step out (with update)");
             stepOut(true, verify);
             setNotBusy();
             fireInterrupt();
-            System.out.println("Step out (with update)");
             return;
         }
 
         /* Read single sector */
-        if (intCommand == 0x08) {
+        if (intCommand == 0x8) {
+            LOGGER.info("Read single sector - Track " + currentTrack + ", Sector " + currentSector);
             tracks[currentTrack].setCommand(currentSector, DiskCommand.READ_SECTOR);
             currentCommand = DiskCommand.READ_SECTOR;
-            setBusy();
             setDRQ();
-            System.out.println("Read single sector");
             return;
         }
 
         /* Read multiple sectors */
-        if (intCommand == 0x09) {
+        if (intCommand == 0x9) {
+            LOGGER.info("Read multiple sectors");
             currentCommand = DiskCommand.READ_MULTIPLE_SECTORS;
-            setBusy();
             setDRQ();
-            System.out.println("Read multiple sectors");
             return;
         }
 
         /* Write single sector */
-        if (intCommand == 0x0A) {
+        if (intCommand == 0xA) {
+            LOGGER.info("Write sector");
             tracks[currentTrack].setCommand(currentSector, DiskCommand.WRITE_SECTOR);
             currentCommand = DiskCommand.WRITE_SECTOR;
             dataMark = new UnsignedByte(command.isMasked(0x1) ? 0xF8 : 0xFB);
-            setBusy();
             setDRQ();
-            System.out.println("Write sector");
             return;
         }
 
         /* Write multiple sectors */
-        if (intCommand == 0x0B) {
+        if (intCommand == 0xB) {
+            LOGGER.info("Write multiple sectors");
             currentCommand = DiskCommand.WRITE_MULTIPLE_SECTORS;
             dataMark = new UnsignedByte(command.isMasked(0x1) ? 1 : 0);
-            setBusy();
             setDRQ();
-            System.out.println("Write multiple sectors");
-
             return;
         }
 
         /* Read address */
-        if (intCommand == 0x0C) {
+        if (intCommand == 0xC) {
+            LOGGER.info("Read address");
             tracks[currentTrack].setCommand(currentSector, DiskCommand.READ_ADDRESS);
             currentCommand = DiskCommand.READ_ADDRESS;
-            setBusy();
             setDRQ();
-            System.out.println("Read address");
-            return;
-        }
-
-        /* Read track */
-        if (intCommand == 0x0D) {
-            tracks[currentTrack].startReadTrack();
-            currentCommand = DiskCommand.READ_TRACK;
-            setBusy();
-            setDRQ();
-            System.out.println("Read track");
-            return;
-        }
-
-        /* Write track */
-        if (intCommand == 0x0E) {
-            System.out.println("Unsupported disk command: write track");
             return;
         }
 
         /* Force interrupt */
-        if (intCommand == 0x0F) {
-            System.out.println("Unsupported disk command: force interrupt");
+        if (intCommand == 0xD) {
+            LOGGER.info("Force interrupt");
+            fireInterrupt();
             return;
+        }
+
+        /* Read track */
+        if (intCommand == 0xE) {
+            LOGGER.info("Read track");
+            tracks[currentTrack].startReadTrack();
+            currentCommand = DiskCommand.READ_TRACK;
+            setDRQ();
+            return;
+        }
+
+        /* Write track */
+        if (intCommand == 0xF) {
+            LOGGER.info("Write track - Track " + currentTrack);
+            tracks[currentTrack].startWriteTrack();
+            currentCommand = DiskCommand.WRITE_TRACK;
+            setBusy();
         }
     }
 
@@ -515,10 +548,12 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
+            LOGGER.info("Last address byte read, setting not busy");
             return new UnsignedByte(0);
         }
 
         /* Read an ID byte */
+        LOGGER.info("Read address byte");
         return tracks[currentTrack].readAddress(currentSector);
     }
 
@@ -532,5 +567,16 @@ public class DiskDrive
         }
 
         return tracks[currentTrack].readTrack();
+    }
+
+    public void writeTrack(UnsignedByte value) {
+        if (tracks[currentTrack].isWriteTrackFinished()) {
+            currentCommand = DiskCommand.NONE;
+            setNotBusy();
+            clearDRQ();
+            fireInterrupt();
+        }
+
+        tracks[currentTrack].writeTrack(value);
     }
 }
