@@ -191,6 +191,14 @@ public class DiskDrive
         statusRegister.and(~0x10);
     }
 
+    public void setDataMarkNotFound() {
+        statusRegister.or(0x20);
+    }
+
+    public void clearDataMarkNotFound() {
+        statusRegister.and(~0x20);
+    }
+
     public void fireInterrupt() {
         setNotBusy();
         io.nonMaskableInterrupt();
@@ -208,6 +216,7 @@ public class DiskDrive
         /* Set busy flag on the status register */
         setBusy();
         clearRecordNotFound();
+        clearDataMarkNotFound();
 
         /* Restore - seek track 0 */
         if (intCommand == 0x0) {
@@ -286,7 +295,7 @@ public class DiskDrive
             int logicalSector = tracks[track].getLogicalSector(sector);
             LOGGER.info("Read single sector - Track " + track + ", Sector " + sector + ", Logical Sector " + logicalSector);
             currentTrack = track;
-            if (tracks[currentTrack].getLogicalSector(currentSector) == -1) {
+            if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
             } else {
@@ -428,8 +437,7 @@ public class DiskDrive
      */
     public UnsignedByte readSector() {
         /* Check to make sure the logical sector exists */
-        int logicalSector = tracks[currentTrack].getLogicalSector(currentSector);
-        if (logicalSector == -1) {
+        if (currentSector == -1) {
             setRecordNotFound();
             setNotBusy();
             clearDRQ();
@@ -439,8 +447,8 @@ public class DiskDrive
         }
 
         /* Check to see if there is a data address mark */
-        if (!tracks[currentTrack].dataAddressMarkFound(logicalSector)) {
-            statusRegister.or(0x20);
+        if (!tracks[currentTrack].dataAddressMarkFound(currentSector)) {
+            setDataMarkNotFound();
             currentCommand = DiskCommand.NONE;
             setNotBusy();
             clearDRQ();
@@ -450,7 +458,7 @@ public class DiskDrive
         }
 
         /* Check to see if we are ready to read more bytes */
-        if (!tracks[currentTrack].hasMoreBytes(logicalSector)) {
+        if (!tracks[currentTrack].hasMoreBytes(currentSector)) {
             inCommand = false;
             currentCommand = DiskCommand.NONE;
             setNotBusy();
@@ -461,8 +469,8 @@ public class DiskDrive
         }
 
         /* Read a byte */
-        System.out.println("Reading track " + currentTrack + ", sector " + logicalSector + " value " + tracks[currentTrack].read(logicalSector));
-        return tracks[currentTrack].read(logicalSector);
+        System.out.println("Reading track " + currentTrack + ", logical sector " + currentSector + " value " + tracks[currentTrack].read(currentSector));
+        return tracks[currentTrack].read(currentSector);
     }
 
     /**
