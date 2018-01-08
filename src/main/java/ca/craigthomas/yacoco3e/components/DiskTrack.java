@@ -28,8 +28,6 @@ public class DiskTrack
     }
 
     public void writeTrack(UnsignedByte value) {
-        System.out.print("Writing " + value + " to sector " + currentSector);
-
         if (currentSector >= sectors.length) {
             writeTrackFinished = true;
             return;

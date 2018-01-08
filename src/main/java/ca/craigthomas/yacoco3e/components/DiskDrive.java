@@ -122,11 +122,9 @@ public class DiskDrive
                 return readMultipleSectors();
 
             case READ_ADDRESS:
-                LOGGER.info("reading address");
                 return readAddress();
 
             case READ_TRACK:
-                LOGGER.info("reading track");
                 return readTrack();
 
             default:
@@ -146,14 +144,14 @@ public class DiskDrive
     public void tickUpdate() {
         switch (currentCommand) {
             case READ_ADDRESS:
-                readSector();
+                readAddress();
                 break;
 
             case NONE:
                 break;
 
             default:
-                LOGGER.warning("doing nothing on tickUpdate with command " + currentCommand);
+                //LOGGER.warning("doing nothing on tickUpdate with command " + currentCommand);
                 break;
         }
     }
@@ -453,7 +451,7 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            System.out.println("Read sector - no data address mark!");
+            System.out.println("Read sector " + currentSector + " - no data address mark!");
             return new UnsignedByte(0);
         }
 
@@ -469,6 +467,7 @@ public class DiskDrive
         }
 
         /* Read a byte */
+        /* TODO: fix this - reading the byte twice, but it still works? */
         System.out.println("Reading track " + currentTrack + ", logical sector " + currentSector + " value " + tracks[currentTrack].read(currentSector));
         return tracks[currentTrack].read(currentSector);
     }

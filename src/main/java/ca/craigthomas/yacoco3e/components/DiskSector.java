@@ -185,15 +185,12 @@ public class DiskSector
 
             case READ_SECTOR:
                 data.restorePastGap();
-                UnsignedByte temp = new UnsignedByte(data.readAt(3));
-                System.out.println("Reading data address mark - " + temp);
                 byte tempByte = data.readAt(3);
                 if (tempByte == (byte) 0xFB){
                     dataAddressMark = true;
                 } else {
                     dataAddressMark = false;
                 }
-                System.out.println("Data address mark found - " + dataAddressMark);
                 break;
 
             case WRITE_SECTOR:
@@ -308,7 +305,6 @@ public class DiskSector
     public void writeTrack(byte value) {
         if (currentField.equals(FIELD.INDEX) && index.hasMoreBytes() && index.isExpected(value)) {
             index.write(value);
-            System.out.println(" (index)");
             return;
         } else {
             currentField = FIELD.GAP1;
@@ -317,7 +313,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.GAP1) && gap1.hasMoreBytes() && gap1.isExpected(value)) {
             gap1.write(value);
-            System.out.println(" (gap1)");
             return;
         } else {
             currentField = FIELD.ID;
@@ -326,7 +321,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.ID) && id.hasMoreBytes()) {
             id.write(value);
-            System.out.println(" (id)");
             return;
         } else {
             currentField = FIELD.GAP2;
@@ -334,7 +328,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.GAP2) && gap2.hasMoreBytes() && gap2.isExpected(value)) {
             gap2.write(value);
-            System.out.println(" (gap2)");
             return;
         } else {
             currentField = FIELD.GAP3;
@@ -343,7 +336,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.GAP3) && gap3.hasMoreBytes() && gap3.isExpected(value)) {
             gap3.write(value);
-            System.out.println(" (gap3)");
             return;
         } else {
             currentField = FIELD.DATA;
@@ -352,7 +344,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.DATA) && data.hasMoreBytes()) {
             data.write(value);
-            System.out.println(" (data)");
             return;
         } else {
             currentField = FIELD.GAP4;
@@ -360,7 +351,6 @@ public class DiskSector
 
         if (currentField.equals(FIELD.GAP4) && gap4.hasMoreBytes() && gap4.isExpected(value)) {
             gap4.write(value);
-            System.out.println(" (gap4)");
             return;
         } else {
             currentField = FIELD.NONE;
