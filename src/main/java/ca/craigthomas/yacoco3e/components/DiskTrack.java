@@ -82,6 +82,10 @@ public class DiskTrack
         return new UnsignedByte(sectors[sector].readSector());
     }
 
+    public UnsignedByte readData(int sector) {
+        return new UnsignedByte(sectors[sector].readSectorData());
+    }
+
     /**
      * Reads the address of the specified sector.
      *
@@ -111,6 +115,10 @@ public class DiskTrack
      */
     public boolean hasMoreBytes(int sector) {
         return sectors[sector].hasMoreBytes();
+    }
+
+    public boolean hasMoreDataBytes(int sector) {
+        return sectors[sector].hasMoreDataBytes();
     }
 
     /**

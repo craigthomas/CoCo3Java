@@ -4,8 +4,6 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-
 public class DiskSector
 {
     private Field index;
@@ -23,6 +21,8 @@ public class DiskSector
     private boolean dataAddressMark;
 
     private FIELD currentField;
+
+    private int pointer;
 
     public enum FIELD {
         INDEX, GAP1, ID, GAP2, GAP3, DATA, GAP4, NONE
@@ -162,6 +162,7 @@ public class DiskSector
             data = new Field(130, 1, (short) -1);
             gap4 = new Field(10);
         }
+        pointer = 0;
         this.doubleDensity = doubleDensity;
         reset();
     }
@@ -170,6 +171,7 @@ public class DiskSector
         setCommand(DiskCommand.NONE);
         dataAddressMark = false;
         currentField = FIELD.GAP1;
+        pointer = 0;
     }
 
     public void setCommand(DiskCommand command) {
@@ -185,8 +187,9 @@ public class DiskSector
 
             case READ_SECTOR:
                 data.restorePastGap();
+                pointer = 0;
                 byte tempByte = data.readAt(3);
-                if (tempByte == (byte) 0xFB){
+                if (tempByte == (byte) 0xFB) {
                     dataAddressMark = true;
                 } else {
                     dataAddressMark = false;
@@ -248,12 +251,42 @@ public class DiskSector
         return data.read();
     }
 
+    public byte readSectorData() {
+        if (doubleDensity) {
+            if (pointer < 256) {
+                pointer++;
+                return data.read();
+            }
+        } else {
+            if (pointer < 128) {
+                pointer++;
+                return data.read();
+            }
+        }
+        return 0;
+    }
+
     public boolean hasMoreBytes() {
         return !command.equals(DiskCommand.NONE) && data.hasMoreBytes();
     }
 
     public boolean hasMoreIdBytes() {
         return !command.equals(DiskCommand.NONE) && id.hasMoreBytes();
+    }
+
+    public boolean hasMoreDataBytes() {
+        if (!command.equals(DiskCommand.NONE)) {
+            if (doubleDensity) {
+                if (pointer < 256) {
+                    return true;
+                }
+            } else {
+                if (pointer < 128) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public byte readTrack() {

@@ -456,7 +456,7 @@ public class DiskDrive
         }
 
         /* Check to see if we are ready to read more bytes */
-        if (!tracks[currentTrack].hasMoreBytes(currentSector)) {
+        if (!tracks[currentTrack].hasMoreDataBytes(currentSector)) {
             inCommand = false;
             currentCommand = DiskCommand.NONE;
             setNotBusy();
@@ -468,8 +468,9 @@ public class DiskDrive
 
         /* Read a byte */
         /* TODO: fix this - reading the byte twice, but it still works? */
-        System.out.println("Reading track " + currentTrack + ", logical sector " + currentSector + " value " + tracks[currentTrack].read(currentSector));
-        return tracks[currentTrack].read(currentSector);
+        UnsignedByte result = tracks[currentTrack].readData(currentSector);
+        System.out.println("Reading track " + currentTrack + ", logical sector " + currentSector + " value " + result);
+        return result;
     }
 
     /**
