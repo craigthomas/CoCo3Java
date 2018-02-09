@@ -23,8 +23,12 @@ public class DiskTrack
         this.doubleDensity = doubleDensity;
     }
 
-    public void write(int sector, UnsignedByte value) {
-        sectors[sector].writeData((byte) value.getShort());
+//    public void write(int sector, UnsignedByte value) {
+//        sectors[sector].writeData((byte) value.getShort());
+//    }
+
+    public void writeData(int sector, UnsignedByte value) {
+        sectors[sector].writeSectorData((byte) value.getShort());
     }
 
     public void writeTrack(UnsignedByte value) {
@@ -73,15 +77,11 @@ public class DiskTrack
     }
 
     /**
-     * Attempts to read a byte from the specified sector.
+     * Attempts to read a byte from the specified sector's data field.
      *
      * @param sector the sector to read
      * @return the byte at the current sector location
      */
-    public UnsignedByte read(int sector) {
-        return new UnsignedByte(sectors[sector].readSector());
-    }
-
     public UnsignedByte readData(int sector) {
         return new UnsignedByte(sectors[sector].readSectorData());
     }

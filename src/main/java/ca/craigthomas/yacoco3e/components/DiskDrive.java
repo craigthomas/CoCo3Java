@@ -16,7 +16,6 @@ public class DiskDrive
     protected boolean motorOn;
 
     protected DiskTrack [] tracks;
-    protected int track;
     protected int currentTrack;
     protected int sector;
     protected int currentSector;
@@ -66,11 +65,11 @@ public class DiskDrive
     }
 
     public int getTrack() {
-        return track;
+        return currentTrack;
     }
 
     public void setTrack(UnsignedByte track) {
-        this.track = track.getShort();
+        currentTrack = track.getShort();
     }
 
     public int getSector() {
@@ -147,7 +146,8 @@ public class DiskDrive
                 readAddress();
                 break;
 
-            case NONE:
+            case WRITE_SECTOR:
+//                writeSector(new UnsignedByte());
                 break;
 
             default:
@@ -218,7 +218,6 @@ public class DiskDrive
 
         /* Restore - seek track 0 */
         if (intCommand == 0x0) {
-            LOGGER.info("Restore");
             restore(verify);
             setNotBusy();
             fireInterrupt();
@@ -227,7 +226,6 @@ public class DiskDrive
 
         /* Seek - seek to track specified in track register */
         if (intCommand == 0x1) {
-            LOGGER.info("Seek");
             seek(verify);
             setNotBusy();
             fireInterrupt();
@@ -236,7 +234,6 @@ public class DiskDrive
 
         /* Step without Update - steps once in the last direction */
         if (intCommand == 0x2) {
-            LOGGER.info("Step (without update)");
             step(false, verify);
             setNotBusy();
             fireInterrupt();
@@ -245,7 +242,6 @@ public class DiskDrive
 
         /* Step with Update - steps once in the last direction */
         if (intCommand == 0x3) {
-            LOGGER.info("Step (with update)");
             step(true, verify);
             setNotBusy();
             fireInterrupt();
@@ -254,7 +250,6 @@ public class DiskDrive
 
         /* Step In without Update - steps once towards track 76 */
         if (intCommand == 0x4) {
-            LOGGER.info("Step in (without update)");
             stepIn(false, verify);
             setNotBusy();
             fireInterrupt();
@@ -263,7 +258,6 @@ public class DiskDrive
 
         /* Step In with Update - steps once towards track 76 */
         if (intCommand == 0x5) {
-            LOGGER.info("Step in (with update)");
             stepIn(true, verify);
             setNotBusy();
             fireInterrupt();
@@ -272,7 +266,6 @@ public class DiskDrive
 
         /* Step Out without Update - steps once towards track 0 */
         if (intCommand == 0x6) {
-            LOGGER.info("Step out (without update)");
             stepOut(false, verify);
             setNotBusy();
             fireInterrupt();
@@ -281,7 +274,6 @@ public class DiskDrive
 
         /* Step Out with Update - steps once towards track 0 */
         if (intCommand == 0x7) {
-            LOGGER.info("Step out (with update)");
             stepOut(true, verify);
             setNotBusy();
             fireInterrupt();
@@ -290,15 +282,14 @@ public class DiskDrive
 
         /* Read single sector */
         if (intCommand == 0x8) {
-            int logicalSector = tracks[track].getLogicalSector(sector);
-            LOGGER.info("Read single sector - Track " + track + ", Sector " + sector + ", Logical Sector " + logicalSector);
-            currentTrack = track;
+            int logicalSector = tracks[currentTrack].getLogicalSector(sector);
+            LOGGER.info("Read single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
             if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
             } else {
                 setDRQ();
-                tracks[track].setCommand(logicalSector, DiskCommand.READ_SECTOR);
+                tracks[currentTrack].setCommand(logicalSector, DiskCommand.READ_SECTOR);
                 currentCommand = DiskCommand.READ_SECTOR;
                 currentSector = logicalSector;
             }
@@ -315,11 +306,19 @@ public class DiskDrive
 
         /* Write single sector */
         if (intCommand == 0xA) {
-            LOGGER.info("Write sector - Track " + track + ", Sector " + sector);
-            tracks[track].setCommand(sector, DiskCommand.WRITE_SECTOR);
-            currentCommand = DiskCommand.WRITE_SECTOR;
-            dataMark = new UnsignedByte(command.isMasked(0x1) ? 0xF8 : 0xFB);
-            setDRQ();
+            int logicalSector = tracks[currentTrack].getLogicalSector(sector);
+            System.out.println("Write sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
+            if (logicalSector == -1) {
+                setNotBusy();
+                setRecordNotFound();
+            } else {
+                tracks[currentTrack].setCommand(logicalSector, DiskCommand.WRITE_SECTOR);
+                currentCommand = DiskCommand.WRITE_SECTOR;
+                dataMark = new UnsignedByte(command.isMasked(0x1) ? 0xF8 : 0xFB);
+                currentSector = logicalSector;
+                setDRQ();
+                System.out.println("Writing data mark " + dataMark);
+            }
             return;
         }
 
@@ -344,6 +343,7 @@ public class DiskDrive
         /* Force interrupt */
         if (intCommand == 0xD) {
             LOGGER.info("Force interrupt");
+            currentCommand = DiskCommand.NONE;
             fireInterrupt();
             return;
         }
@@ -440,7 +440,6 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            System.out.println("Read Sector - not found!");
             return new UnsignedByte(0);
         }
 
@@ -451,7 +450,6 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            System.out.println("Read sector " + currentSector + " - no data address mark!");
             return new UnsignedByte(0);
         }
 
@@ -462,14 +460,12 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            System.out.println("Read sector - no more bytes!");
             return new UnsignedByte(0);
         }
 
         /* Read a byte */
-        /* TODO: fix this - reading the byte twice, but it still works? */
         UnsignedByte result = tracks[currentTrack].readData(currentSector);
-        System.out.println("Reading track " + currentTrack + ", logical sector " + currentSector + " value " + result);
+        System.out.println("Read byte: " + result);
         return result;
     }
 
@@ -505,7 +501,7 @@ public class DiskDrive
         }
 
         /* Otherwise, return the next byte in the sector */
-        return tracks[currentTrack].read(currentSector);
+        return tracks[currentTrack].readData(currentSector);
     }
 
     /**
@@ -518,8 +514,9 @@ public class DiskDrive
         tracks[currentTrack].writeDataMark(currentSector, dataMark);
 
         /* Check to see if we can write more bytes on this sector */
-        if (tracks[currentTrack].hasMoreBytes(currentSector)) {
-            tracks[currentTrack].write(currentSector, value);
+        if (tracks[currentTrack].hasMoreDataBytes(currentSector)) {
+            tracks[currentTrack].writeData(currentSector, value);
+            System.out.println("Wrote byte " + value);
             return;
         }
 
@@ -541,7 +538,7 @@ public class DiskDrive
 
         /* Check to see if we can write more bytes on this sector */
         if (tracks[currentTrack].hasMoreBytes(currentSector)) {
-            tracks[currentTrack].write(currentSector, value);
+//            tracks[currentTrack].write(currentSector, value);
             return;
         }
 

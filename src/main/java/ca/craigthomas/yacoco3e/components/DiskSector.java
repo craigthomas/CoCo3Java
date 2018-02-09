@@ -73,10 +73,17 @@ public class DiskSector
             pointer = gapSize;
         }
 
+        /**
+         * Saves the current pointer position, and rewinds it back to zero.
+         */
         public void push() {
             oldPointer = pointer;
+            restore();
         }
 
+        /**
+         * Restores the pointer position to the previously pushed position.
+         */
         public void pop() {
             pointer = oldPointer;
         }
@@ -199,6 +206,7 @@ public class DiskSector
             case WRITE_SECTOR:
                 data.zeroFill();
                 data.restorePastGap();
+                pointer = 0;
                 break;
 
             case READ_TRACK:
@@ -216,9 +224,9 @@ public class DiskSector
         this.command = command;
     }
 
-    public void writeData(byte value) {
-        data.write(value);
-    }
+//    public void writeData(byte value) {
+//        data.write(value);
+//    }
 
     public void writeDataMark(byte mark) {
         data.push();
@@ -247,10 +255,6 @@ public class DiskSector
         return dataAddressMark;
     }
 
-    public byte readSector() {
-        return data.read();
-    }
-
     public byte readSectorData() {
         if (doubleDensity) {
             if (pointer < 256) {
@@ -264,6 +268,20 @@ public class DiskSector
             }
         }
         return 0;
+    }
+
+    public void writeSectorData(byte value) {
+        if (doubleDensity) {
+            if (pointer < 256) {
+                data.write(value);
+                pointer++;
+            }
+        } else {
+            if (pointer < 128) {
+                data.write(value);
+                pointer++;
+            }
+        }
     }
 
     public boolean hasMoreBytes() {
