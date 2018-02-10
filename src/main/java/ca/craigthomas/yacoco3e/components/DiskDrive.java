@@ -97,6 +97,8 @@ public class DiskDrive
     }
 
     public void setDataRegister(UnsignedByte value) {
+        dataRegisterIn.set(value);
+
         switch (currentCommand) {
             case WRITE_SECTOR:
                 writeSector(value);
@@ -283,7 +285,7 @@ public class DiskDrive
         /* Read single sector */
         if (intCommand == 0x8) {
             int logicalSector = tracks[currentTrack].getLogicalSector(sector);
-            LOGGER.info("Read single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
+            LOGGER.fine("Read single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
             if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
@@ -298,7 +300,7 @@ public class DiskDrive
 
         /* Read multiple sectors */
         if (intCommand == 0x9) {
-            LOGGER.info("Read multiple sectors");
+            LOGGER.fine("Read multiple sectors");
             currentCommand = DiskCommand.READ_MULTIPLE_SECTORS;
             setDRQ();
             return;
@@ -307,7 +309,7 @@ public class DiskDrive
         /* Write single sector */
         if (intCommand == 0xA) {
             int logicalSector = tracks[currentTrack].getLogicalSector(sector);
-            System.out.println("Write sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
+            LOGGER.fine("Write single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
             if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
@@ -317,14 +319,13 @@ public class DiskDrive
                 dataMark = new UnsignedByte(command.isMasked(0x1) ? 0xF8 : 0xFB);
                 currentSector = logicalSector;
                 setDRQ();
-                System.out.println("Writing data mark " + dataMark);
             }
             return;
         }
 
         /* Write multiple sectors */
         if (intCommand == 0xB) {
-            LOGGER.info("Write multiple sectors");
+            LOGGER.fine("Write multiple sectors");
             currentCommand = DiskCommand.WRITE_MULTIPLE_SECTORS;
             dataMark = new UnsignedByte(command.isMasked(0x1) ? 1 : 0);
             setDRQ();
@@ -333,7 +334,7 @@ public class DiskDrive
 
         /* Read address */
         if (intCommand == 0xC) {
-            LOGGER.info("Read address");
+            LOGGER.fine("Read address");
             tracks[currentTrack].setCommand(currentSector, DiskCommand.READ_ADDRESS);
             currentCommand = DiskCommand.READ_ADDRESS;
             setDRQ();
@@ -342,7 +343,7 @@ public class DiskDrive
 
         /* Force interrupt */
         if (intCommand == 0xD) {
-            LOGGER.info("Force interrupt");
+            LOGGER.fine("Force interrupt");
             currentCommand = DiskCommand.NONE;
             fireInterrupt();
             return;
@@ -350,7 +351,7 @@ public class DiskDrive
 
         /* Read track */
         if (intCommand == 0xE) {
-            LOGGER.info("Read track");
+            LOGGER.fine("Read track");
             tracks[currentTrack].startReadTrack();
             currentCommand = DiskCommand.READ_TRACK;
             setDRQ();
@@ -359,7 +360,7 @@ public class DiskDrive
 
         /* Write track */
         if (intCommand == 0xF) {
-            LOGGER.info("Write track - Track " + currentTrack);
+            LOGGER.fine("Write track - Track " + currentTrack);
             tracks[currentTrack].startWriteTrack();
             currentCommand = DiskCommand.WRITE_TRACK;
             setBusy();
@@ -465,7 +466,6 @@ public class DiskDrive
 
         /* Read a byte */
         UnsignedByte result = tracks[currentTrack].readData(currentSector);
-        System.out.println("Read byte: " + result);
         return result;
     }
 
@@ -516,7 +516,6 @@ public class DiskDrive
         /* Check to see if we can write more bytes on this sector */
         if (tracks[currentTrack].hasMoreDataBytes(currentSector)) {
             tracks[currentTrack].writeData(currentSector, value);
-            System.out.println("Wrote byte " + value);
             return;
         }
 
@@ -584,12 +583,10 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            LOGGER.info("Last address byte read, setting not busy");
             return new UnsignedByte(0);
         }
 
         /* Read an ID byte */
-        LOGGER.info("Read address byte");
         return tracks[currentTrack].readAddress(currentSector);
     }
 
