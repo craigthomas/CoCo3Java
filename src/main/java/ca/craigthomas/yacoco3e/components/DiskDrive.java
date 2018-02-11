@@ -10,39 +10,50 @@ import java.util.logging.Logger;
 
 public class DiskDrive
 {
+    // Default number of tracks on the disk
     public static final int DEFAULT_NUM_TRACKS = 35;
+    // Default number of sectors on each track
     public static final int DEFAULT_SECTORS_PER_TRACK = 18;
-
+    // Whether the drive motor is turned on
     protected boolean motorOn;
-
+    // The array of tracks on the disk
     protected DiskTrack [] tracks;
+    // The current track the disk is positioned on
     protected int currentTrack;
-    protected int sector;
+    // The current sector the disk is positioned on
     protected int currentSector;
+    // The value to output on the data register
     protected UnsignedByte dataRegisterOut;
+    // The value to set on the data register
     protected UnsignedByte dataRegisterIn;
+    // The direction the read / write head is moving
     protected int direction;
+    // The value of the status register
     protected UnsignedByte statusRegister;
+    // The data mark value to write to the disk
     protected UnsignedByte dataMark;
-
+    // Whether the disk drive can halt the CPU
     protected boolean haltEnabled;
-
+    // The byte the disk drive is currently pointing to
     protected int currentBytePointer;
-
+    // The IO controller associated with the disk drive
     protected IOController io;
-
-    protected boolean inCommand;
-
+    // The command being executed by the disk drive
     protected DiskCommand currentCommand;
-
+    // How many sectors per track exist on the disk
     protected int sectorsPerTrack;
-
+    // How many tracks exist on the disk
     protected int tracksPerDisk;
-
-    /* A logger for the disk drive */
+    // A logger for the class
     private final static Logger LOGGER = Logger.getLogger(DiskDrive.class.getName());
 
-
+    /**
+     * A convenience constructor that will set up a disk with the
+     * default values. It will have 35 tracks, 18 sectors per track, and will
+     * be double density (256 bytes per sector).
+     *
+     * @param io the IO controller for the disk drive
+     */
     public DiskDrive(IOController io) {
         this(io, DEFAULT_NUM_TRACKS, DEFAULT_SECTORS_PER_TRACK, true);
     }
@@ -64,26 +75,52 @@ public class DiskDrive
         currentBytePointer = -1;
     }
 
+    /**
+     * Returns the track the read/write head is positioned above.
+     *
+     * @return the current track number
+     */
     public int getTrack() {
         return currentTrack;
     }
 
+    /**
+     * Positions the read/write head above the specified track.
+     *
+     * @param track the track to move to
+     */
     public void setTrack(UnsignedByte track) {
         currentTrack = track.getShort();
     }
 
+    /**
+     * Returns the sector the disk read/write head is positioned above.
+     *
+     * @return the current sector
+     */
     public int getSector() {
-        return sector;
+        return currentSector;
     }
 
+    /**
+     * Sets the sector that the read/write head should be positioned above.
+     *
+     * @param sector the current sector we should move to
+     */
     public void setSector(UnsignedByte sector) {
-        this.sector = sector.getShort();
+        currentSector = sector.getShort();
     }
 
+    /**
+     * Turns the drive motor on.
+     */
     public void turnMotorOn() {
         motorOn = true;
     }
 
+    /**
+     * Turns the drive motor off.
+     */
     public void turnMotorOff() {
         motorOn = false;
     }
@@ -96,9 +133,14 @@ public class DiskDrive
         haltEnabled = false;
     }
 
+    /**
+     * Sets the contents of the data register. Depending on the command,
+     * may also write data to the disk.
+     *
+     * @param value the value to write to the data register
+     */
     public void setDataRegister(UnsignedByte value) {
         dataRegisterIn.set(value);
-
         switch (currentCommand) {
             case WRITE_SECTOR:
                 writeSector(value);
@@ -111,9 +153,18 @@ public class DiskDrive
             case WRITE_TRACK:
                 writeTrack(value);
                 return;
+
+            default:
+                break;
         }
     }
 
+    /**
+     * Returns the contents of the data register, based on the command that
+     * the disk drive is currently executing.
+     *
+     * @return the UnsignedByte of the data register
+     */
     public UnsignedByte getDataRegister() {
         switch (currentCommand) {
             case READ_SECTOR:
@@ -148,12 +199,7 @@ public class DiskDrive
                 readAddress();
                 break;
 
-            case WRITE_SECTOR:
-//                writeSector(new UnsignedByte());
-                break;
-
             default:
-                //LOGGER.warning("doing nothing on tickUpdate with command " + currentCommand);
                 break;
         }
     }
@@ -167,18 +213,30 @@ public class DiskDrive
         return statusRegister;
     }
 
+    /**
+     * Sets busy on the drive.
+     */
     public void setBusy() {
         statusRegister.or(0x01);
     }
 
+    /**
+     * Clears busy on the drive.
+     */
     public void setNotBusy() {
         statusRegister.and(~0x01);
     }
 
+    /**
+     * Turns on a DRQ for the drive.
+     */
     public void setDRQ() {
         statusRegister.or(0x02);
     }
 
+    /**
+     * Clears a DRQ for the drive.
+     */
     public void clearDRQ() {
         statusRegister.and(~0x02);
     }
@@ -284,8 +342,8 @@ public class DiskDrive
 
         /* Read single sector */
         if (intCommand == 0x8) {
-            int logicalSector = tracks[currentTrack].getLogicalSector(sector);
-            LOGGER.fine("Read single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
+            int logicalSector = tracks[currentTrack].getLogicalSector(currentSector);
+            LOGGER.fine("Read single sector - Track " + currentTrack + ", Sector " + currentSector + ", Logical Sector " + logicalSector);
             if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
@@ -308,8 +366,8 @@ public class DiskDrive
 
         /* Write single sector */
         if (intCommand == 0xA) {
-            int logicalSector = tracks[currentTrack].getLogicalSector(sector);
-            LOGGER.fine("Write single sector - Track " + currentTrack + ", Sector " + sector + ", Logical Sector " + logicalSector);
+            int logicalSector = tracks[currentTrack].getLogicalSector(currentSector);
+            LOGGER.fine("Write single sector - Track " + currentTrack + ", Sector " + currentSector + ", Logical Sector " + logicalSector);
             if (logicalSector == -1) {
                 setNotBusy();
                 setRecordNotFound();
@@ -368,7 +426,11 @@ public class DiskDrive
     }
 
     /**
-     * Seeks to track 0.
+     * Positions the drive read/write head to track 0. The verify
+     * flag will verify that the restore completed. Note however,
+     * that the verify will always be ignored.
+     *
+     * @param verify whether a verify should be run
      */
     public void restore(boolean verify) {
         currentTrack = 0;
@@ -377,7 +439,11 @@ public class DiskDrive
     }
 
     /**
-     * Seeks to the track specified in the data register.
+     * Seeks to the track specified in the data register. The verify
+     * flag will verify that the seek completed. Note however, that
+     * the verify will always be ignored.
+     *
+     * @param verify whether a verify should be run
      */
     public void seek(boolean verify) {
         int trackToSeek = dataRegisterIn.getShort();
@@ -456,7 +522,6 @@ public class DiskDrive
 
         /* Check to see if we are ready to read more bytes */
         if (!tracks[currentTrack].hasMoreDataBytes(currentSector)) {
-            inCommand = false;
             currentCommand = DiskCommand.NONE;
             setNotBusy();
             clearDRQ();
@@ -572,7 +637,9 @@ public class DiskDrive
      *   CRC 2
      *
      *  The bytes are read one at a time, with each call to readAddress
-     *  returning the next byte in the sequence.
+     *  returning the next byte in the sequence. If there are no more
+     *  bytes to read, will clear the command, set not busy, clear any
+     *  DRQs and fire an interrupt.
      *
      * @return the byte to output
      */
@@ -590,6 +657,13 @@ public class DiskDrive
         return tracks[currentTrack].readAddress(currentSector);
     }
 
+    /**
+     * Returns the next byte that is read from the track. If the read is
+     * finished, will reset the current command, set not busy on the
+     * disk, clear any DRQs that are set, and will fire an interrupt.
+     *
+     * @return the next byte read from the track
+     */
     public UnsignedByte readTrack() {
         if (tracks[currentTrack].isReadTrackFinished()) {
             currentCommand = DiskCommand.NONE;
@@ -602,12 +676,20 @@ public class DiskDrive
         return tracks[currentTrack].readTrack();
     }
 
+    /**
+     * Writes an UnsignedByte to the current track. If the write is finished,
+     * will reset the current command, set not busy on the disk, clear any
+     * DRQs that are set, and will fire an interrupt.
+     *
+     * @param value the value to write to the track
+     */
     public void writeTrack(UnsignedByte value) {
         if (tracks[currentTrack].isWriteTrackFinished()) {
             currentCommand = DiskCommand.NONE;
             setNotBusy();
             clearDRQ();
             fireInterrupt();
+            return;
         }
 
         tracks[currentTrack].writeTrack(value);
