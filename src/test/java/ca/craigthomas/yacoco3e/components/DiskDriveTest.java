@@ -16,7 +16,6 @@ import static org.mockito.Mockito.verify;
 
 public class DiskDriveTest
 {
-
     private Memory memory;
     private RegisterSet regs;
     private Keyboard keyboard;
@@ -155,5 +154,95 @@ public class DiskDriveTest
         drive.setDataRegister(new UnsignedByte(0x19));
         drive.seek(true);
         assertEquals(0x19, drive.getTrack());
+    }
+
+    @Test
+    public void testStepWorksCorrectly() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.direction = -1;
+        drive.step(true, true);
+        assertEquals(16, drive.getTrack());
+    }
+
+    @Test
+    public void testStepInWorksCorrectly() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.stepIn(true, true);
+        assertEquals(18, drive.getTrack());
+    }
+
+    @Test
+    public void testStepOutWorksCorrectly() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.stepOut(true, true);
+        assertEquals(16, drive.getTrack());
+    }
+
+    @Test
+    public void testExecuteCommandRestore() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.executeCommand(new UnsignedByte(0));
+        assertEquals(0, drive.getTrack());
+        assertEquals(new UnsignedByte(0x0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandSeekNoVerify() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.setDataRegister(new UnsignedByte(1));
+        drive.executeCommand(new UnsignedByte(0x10));
+        assertEquals(1, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepWithoutUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.direction = 1;
+        drive.setDataRegister(new UnsignedByte(1));
+        drive.executeCommand(new UnsignedByte(0x20));
+        assertEquals(18, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepWithUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.direction = 1;
+        drive.executeCommand(new UnsignedByte(0x30));
+        assertEquals(18, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepInWithUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.executeCommand(new UnsignedByte(0x40));
+        assertEquals(18, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepInWithoutUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.executeCommand(new UnsignedByte(0x50));
+        assertEquals(18, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepOutWithUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.executeCommand(new UnsignedByte(0x60));
+        assertEquals(16, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandStepOutWithoutUpdate() {
+        drive.setTrack(new UnsignedByte(17));
+        drive.executeCommand(new UnsignedByte(0x70));
+        assertEquals(16, drive.getTrack());
+        assertEquals(new UnsignedByte(0), drive.getStatusRegister());
     }
 }

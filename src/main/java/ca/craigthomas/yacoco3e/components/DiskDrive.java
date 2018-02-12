@@ -305,7 +305,7 @@ public class DiskDrive
             return;
         }
 
-        /* Seek - seek to track specified in track register */
+        /* Seek - seek to track specified in the data register */
         if (intCommand == 0x1) {
             seek(verify);
             setNotBusy();
@@ -468,14 +468,12 @@ public class DiskDrive
      */
     public void seek(boolean verify) {
         int trackToSeek = dataRegisterIn.getShort();
-        while (currentTrack > trackToSeek) {
+        if (currentTrack > trackToSeek) {
             direction = -1;
-            currentTrack--;
         }
 
-        while (currentTrack < trackToSeek) {
+        if (currentTrack < trackToSeek) {
             direction = 1;
-            currentTrack++;
         }
 
         setTrack(dataRegisterIn);
