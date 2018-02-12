@@ -125,10 +125,16 @@ public class DiskDrive
         motorOn = false;
     }
 
+    /**
+     * Enables the disk drive to halt the CPU.
+     */
     public void enableHalt() {
         haltEnabled = true;
     }
 
+    /**
+     * Disables the disk drive to halt the CPU.
+     */
     public void disableHalt() {
         haltEnabled = false;
     }
@@ -241,22 +247,37 @@ public class DiskDrive
         statusRegister.and(~0x02);
     }
 
+    /**
+     * Sets that a record lookup was not found.
+     */
     public void setRecordNotFound() {
         statusRegister.or(0x10);
     }
 
+    /**
+     * Clears that a record lookup was not found.
+     */
     public void clearRecordNotFound() {
         statusRegister.and(~0x10);
     }
 
+    /**
+     * Sets that a data mark was not found.
+     */
     public void setDataMarkNotFound() {
         statusRegister.or(0x20);
     }
 
+    /**
+     * Clears that a data mark was not found.
+     */
     public void clearDataMarkNotFound() {
         statusRegister.and(~0x20);
     }
 
+    /**
+     * Fires an NMI on the IO (which will forward it to the CPU).
+     */
     public void fireInterrupt() {
         setNotBusy();
         io.nonMaskableInterrupt();
