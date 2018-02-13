@@ -245,4 +245,54 @@ public class DiskDriveTest
         assertEquals(16, drive.getTrack());
         assertEquals(new UnsignedByte(0), drive.getStatusRegister());
     }
+
+    @Test
+    public void testExecuteCommandReadSingleSectorBadSectorNumber() {
+        drive.currentSector = 99;
+        drive.executeCommand(new UnsignedByte(0x80));
+        assertEquals(new UnsignedByte(0x10), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandReadSingleSector() {
+        drive.executeCommand(new UnsignedByte(0x80));
+        assertEquals(new UnsignedByte(0x3), drive.getStatusRegister());
+        assertEquals(DiskCommand.READ_SECTOR, drive.currentCommand);
+    }
+
+    @Test
+    public void testExecuteCommandWriteSingleSectorBadSectorNumber() {
+        drive.currentSector = 99;
+        drive.executeCommand(new UnsignedByte(0xA0));
+        assertEquals(new UnsignedByte(0x10), drive.getStatusRegister());
+    }
+
+    @Test
+    public void testExecuteCommandWriteSingleSector() {
+        drive.executeCommand(new UnsignedByte(0xA0));
+        assertEquals(new UnsignedByte(0x3), drive.getStatusRegister());
+        assertEquals(DiskCommand.WRITE_SECTOR, drive.currentCommand);
+        assertEquals(new UnsignedByte(0xFB), drive.dataMark);
+    }
+
+    @Test
+    public void testExecuteCommandReadAddress() {
+        drive.executeCommand(new UnsignedByte(0xC0));
+        assertEquals(new UnsignedByte(0x3), drive.getStatusRegister());
+        assertEquals(DiskCommand.READ_ADDRESS, drive.currentCommand);
+    }
+
+    @Test
+    public void testExecuteCommandReadTrack() {
+        drive.executeCommand(new UnsignedByte(0xE0));
+        assertEquals(new UnsignedByte(0x3), drive.getStatusRegister());
+        assertEquals(DiskCommand.READ_TRACK, drive.currentCommand);
+    }
+
+    @Test
+    public void testExecuteCommandWriteTrack() {
+        drive.executeCommand(new UnsignedByte(0xF0));
+        assertEquals(new UnsignedByte(0x1), drive.getStatusRegister());
+        assertEquals(DiskCommand.WRITE_TRACK, drive.currentCommand);
+    }
 }

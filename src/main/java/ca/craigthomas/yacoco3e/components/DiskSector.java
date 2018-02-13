@@ -4,6 +4,8 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.common.Field;
+
 public class DiskSector
 {
     private Field index;
@@ -26,129 +28,6 @@ public class DiskSector
 
     public enum FIELD {
         INDEX, GAP1, ID, GAP2, GAP3, DATA, GAP4, NONE
-    }
-
-    public class Field {
-        private byte [] data;
-        private int gapSize;
-        private int pointer;
-        private int oldPointer;
-        private int usedSize;
-        private short expected;
-
-        public Field(int size) {
-            this(size, 0, (short) -1);
-        }
-
-        /**
-         * A constructor for a field that will generate a field with
-         * the specified size, and no gap.
-         *
-         * @param size the size of the field to create
-         */
-        public Field(int size, short expected) {
-            this(size, 0, expected);
-        }
-
-        public Field(int size, int gap, short expected) {
-            gapSize = gap;
-            data = new byte [size + gap];
-            usedSize = -1;
-            this.expected = expected;
-            restore();
-        }
-
-        /**
-         * Moves the pointer to the beginning of the field, starting
-         * at any gap.
-         */
-        public void restore() {
-            pointer = 0;
-        }
-
-        /**
-         * Moves the pointer so that it is past the gap.
-         */
-        public void restorePastGap() {
-            pointer = gapSize;
-        }
-
-        /**
-         * Saves the current pointer position, and rewinds it back to zero.
-         */
-        public void push() {
-            oldPointer = pointer;
-            restore();
-        }
-
-        /**
-         * Restores the pointer position to the previously pushed position.
-         */
-        public void pop() {
-            pointer = oldPointer;
-        }
-
-        /**
-         * Reads the current byte of data pointed to by the pointer.
-         *
-         * @return the current byte
-         */
-        public byte read() {
-            byte result = data[pointer];
-            pointer++;
-            return result;
-        }
-
-        /**
-         * Writes a byte of data pointed to by the pointer.
-         *
-         * @param value the byte to write
-         */
-        public void write(byte value) {
-            data[pointer] = value;
-            pointer++;
-        }
-
-        /**
-         * Returns true if there is space for more bytes in this field.
-         *
-         * @return true if more bytes can be read or written
-         */
-        public boolean hasMoreBytes() {
-            if (usedSize != -1 && pointer >= usedSize) {
-                return false;
-            }
-
-            return pointer < data.length;
-        }
-
-        /**
-         * Advances the field pointer by 1.
-         */
-        public void next() {
-            pointer++;
-        }
-
-        /**
-         * Fills the data portion with zeros.
-         */
-        public void zeroFill() {
-            for (int i=0; i < data.length; i++) {
-                data[i] = 0;
-            }
-        }
-
-        public boolean isExpected(byte value) {
-            return (expected == -1) || (value == expected);
-        }
-
-        public void setFilled() {
-            usedSize = pointer;
-        }
-
-        public byte readAt(int location) {
-            return data[location];
-        }
     }
 
     public DiskSector(boolean doubleDensity) {
