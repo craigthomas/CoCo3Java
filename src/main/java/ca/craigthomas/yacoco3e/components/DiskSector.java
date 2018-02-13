@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2018 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -8,24 +8,35 @@ import ca.craigthomas.yacoco3e.common.Field;
 
 public class DiskSector
 {
+    // Contains the index pulse information
     private Field index;
+    // The gap between index and id
     private Field gap1;
+    // The id information for the sector
     private Field id;
+    // The gap between the id and the data
     private Field gap2;
+    // The data on the sector
     private Field data;
+    // The gap between the data and the final gap
     private Field gap3;
+    // The final gap on the drive
     private Field gap4;
-
+    // Whether the sector should be double density
     private boolean doubleDensity;
-
+    // The command being run on the sector
     private DiskCommand command;
-
+    // Whether the data address mark was found
     private boolean dataAddressMark;
-
+    // The field the sector read/write head is currently pointing to
     private FIELD currentField;
-
+    // The byte the read/write head is currently pointing to
     private int pointer;
 
+    /**
+     * Stores information about which field the read/write head is
+     * pointing to.
+     */
     public enum FIELD {
         INDEX, GAP1, ID, GAP2, GAP3, DATA, GAP4, NONE
     }
@@ -53,6 +64,11 @@ public class DiskSector
         reset();
     }
 
+    /**
+     * Resets any operation currently running on the sector. Will position
+     * the field to the first gap, and will set the data address mark to
+     * false.
+     */
     public void reset() {
         setCommand(DiskCommand.NONE);
         dataAddressMark = false;
@@ -60,6 +76,11 @@ public class DiskSector
         pointer = 0;
     }
 
+    /**
+     * Sets the command that the sector is currently running.
+     *
+     * @param command the command to run on the field
+     */
     public void setCommand(DiskCommand command) {
         switch (command) {
             case NONE:
@@ -74,7 +95,7 @@ public class DiskSector
             case READ_SECTOR:
                 data.restorePastGap();
                 pointer = 0;
-                byte tempByte = data.readAt(3);
+                byte tempByte = data.readAt(doubleDensity ? 3 : 0);
                 if (tempByte == (byte) 0xFB) {
                     dataAddressMark = true;
                 } else {

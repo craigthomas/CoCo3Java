@@ -97,4 +97,22 @@ public class FieldTest
         field = new Field(2, 0, (short) 0x22);
         assertTrue(field.isExpected((byte) 0x22));
     }
+
+    @Test
+    public void testIsExpectedAlwaysReturnsTrueWhenNotSet() {
+        field = new Field(2);
+        assertTrue(field.isExpected((byte) 0x22));
+    }
+
+    @Test
+    public void testPopWorks() {
+        field = new Field(2);
+        field.write((byte) 0x11);
+        field.write((byte) 0x22);
+        field.restore();
+        field.read();
+        field.push();
+        field.pop();
+        assertEquals(0x22, field.read());
+    }
 }
