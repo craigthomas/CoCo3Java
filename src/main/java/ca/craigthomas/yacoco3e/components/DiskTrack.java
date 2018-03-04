@@ -7,12 +7,20 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
+/**
+ * Represents a track on a disk.
+ */
 public class DiskTrack
 {
-    private DiskSector [] sectors;
+    // The sectors on the track
+    protected DiskSector [] sectors;
+    // The sector the drive read/write head is positioned above
     private int currentSector;
-    private boolean readTrackFinished;
-    private boolean writeTrackFinished;
+    // Whether the read track operation is finished
+    protected boolean readTrackFinished;
+    // Whether the write track operation is finished
+    protected boolean writeTrackFinished;
+    // If the disk is double density
     private boolean doubleDensity;
 
     public DiskTrack(int numSectors, boolean doubleDensity) {
@@ -23,12 +31,30 @@ public class DiskTrack
         this.doubleDensity = doubleDensity;
     }
 
-//    public void write(int sector, UnsignedByte value) {
-//        sectors[sector].writeData((byte) value.getShort());
-//    }
-
+    /**
+     * Writes a single byte to the specified sector on the track.
+     * The sector must have the WRITE_SECTOR command applied to it
+     * before the start of a write operation (subsequent writes do
+     * not have to set the write command).
+     *
+     * @param sector the sector number to write to
+     * @param value the value to write to the sector
+     */
     public void writeData(int sector, UnsignedByte value) {
         sectors[sector].writeSectorData((byte) value.getShort());
+    }
+
+    /**
+     * Reads a single byte from the specified sector on the track.
+     * The sector must have the READ_SECTOR command applied to it
+     * before the start of a read operation (subsequent reads do not
+     * have to set the read command)
+     *
+     * @param sector the sector to read
+     * @return the byte at the current sector location
+     */
+    public UnsignedByte readData(int sector) {
+        return new UnsignedByte(sectors[sector].readSectorData());
     }
 
     public void writeTrack(UnsignedByte value) {
@@ -77,16 +103,6 @@ public class DiskTrack
     }
 
     /**
-     * Attempts to read a byte from the specified sector's data field.
-     *
-     * @param sector the sector to read
-     * @return the byte at the current sector location
-     */
-    public UnsignedByte readData(int sector) {
-        return new UnsignedByte(sectors[sector].readSectorData());
-    }
-
-    /**
      * Reads the address of the specified sector.
      *
      * @param sector the sector read from
@@ -117,6 +133,13 @@ public class DiskTrack
         return sectors[sector].hasMoreBytes();
     }
 
+    /**
+     * Returns true if there are more data bytes to be read from a data field
+     * of a sector, false otherwise.
+     *
+     * @param sector the sector to read
+     * @return true if there are more data bytes
+     */
     public boolean hasMoreDataBytes(int sector) {
         return sectors[sector].hasMoreDataBytes();
     }
@@ -132,6 +155,12 @@ public class DiskTrack
         return sectors[sector].hasMoreIdBytes();
     }
 
+    /**
+     * Writes a data mark value to the disk.
+     *
+     * @param sector the sector number to write to
+     * @param mark the value of the mark
+     */
     public void writeDataMark(int sector, UnsignedByte mark) {
         sectors[sector].writeDataMark((byte) mark.getShort());
     }
@@ -139,19 +168,25 @@ public class DiskTrack
     /**
      * Sets the current command to run on the sector.
      *
-     * @param sector
-     * @param command
+     * @param sector the sector to operate on
+     * @param command the command to run
      */
     public void setCommand(int sector, DiskCommand command) {
         sectors[sector].setCommand(command);
     }
 
+    /**
+     * Starts a read track operation.
+     */
     public void startReadTrack() {
         currentSector = 0;
         sectors[currentSector].setCommand(DiskCommand.READ_TRACK);
         readTrackFinished = false;
     }
 
+    /**
+     * Starts a write track operation.
+     */
     public void startWriteTrack() {
         currentSector = 0;
         sectors[currentSector].setCommand(DiskCommand.WRITE_TRACK);
@@ -181,10 +216,22 @@ public class DiskTrack
         return result;
     }
 
+    /**
+     * Returns true if the read track operation is finished (no
+     * more bytes to read), or false otherwise.
+     *
+     * @return returns true if read track is finished
+     */
     public boolean isReadTrackFinished() {
         return readTrackFinished;
     }
 
+    /**
+     * Returns true if the write track operation is finished (no
+     * more bytes to write), or false otherwise.
+     *
+     * @return returns true if the write track is finished
+     */
     public boolean isWriteTrackFinished() {
         return writeTrackFinished;
     }

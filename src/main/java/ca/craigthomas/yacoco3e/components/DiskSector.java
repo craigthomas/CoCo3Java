@@ -77,6 +77,15 @@ public class DiskSector
     }
 
     /**
+     * Returns the currently executing command.
+     *
+     * @return the command that is executing
+     */
+    public DiskCommand getCommand() {
+        return command;
+    }
+
+    /**
      * Sets the command that the sector is currently running.
      *
      * @param command the command to run on the field
@@ -96,11 +105,7 @@ public class DiskSector
                 data.restorePastGap();
                 pointer = 0;
                 byte tempByte = data.readAt(doubleDensity ? 3 : 0);
-                if (tempByte == (byte) 0xFB) {
-                    dataAddressMark = true;
-                } else {
-                    dataAddressMark = false;
-                }
+                dataAddressMark = tempByte == (byte) 0xFB;
                 break;
 
             case WRITE_SECTOR:
