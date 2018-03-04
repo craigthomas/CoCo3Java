@@ -189,10 +189,6 @@ public class DiskSector
         }
     }
 
-    public boolean hasMoreBytes() {
-        return !command.equals(DiskCommand.NONE) && data.hasMoreBytes();
-    }
-
     public boolean hasMoreIdBytes() {
         return !command.equals(DiskCommand.NONE) && id.hasMoreBytes();
     }

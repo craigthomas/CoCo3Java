@@ -86,7 +86,7 @@ public class DiskSectorTest
     public void testHasMoreBytesTrueWhenInCommandAndSpace() {
         sector = new DiskSector(true);
         sector.setCommand(DiskCommand.WRITE_SECTOR);
-        assertTrue(sector.hasMoreBytes());
+        assertTrue(sector.hasMoreDataBytes());
     }
 
     @Test

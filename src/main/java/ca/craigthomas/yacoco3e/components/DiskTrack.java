@@ -15,7 +15,7 @@ public class DiskTrack
     // The sectors on the track
     protected DiskSector [] sectors;
     // The sector the drive read/write head is positioned above
-    private int currentSector;
+    protected int currentSector;
     // Whether the read track operation is finished
     protected boolean readTrackFinished;
     // Whether the write track operation is finished
@@ -57,51 +57,6 @@ public class DiskTrack
         return new UnsignedByte(sectors[sector].readSectorData());
     }
 
-    public void writeTrack(UnsignedByte value) {
-        if (currentSector >= sectors.length) {
-            writeTrackFinished = true;
-            return;
-        }
-
-        if (sectors[currentSector].writeTrackFinished()) {
-            sectors[currentSector].setCommand(DiskCommand.NONE);
-            currentSector++;
-            if (currentSector < sectors.length) {
-                sectors[currentSector].setCommand(DiskCommand.WRITE_TRACK);
-            } else {
-                writeTrackFinished = true;
-                return;
-            }
-        }
-
-        /* Check to see if we have a byte that has a different interpretation */
-        byte byteValue = (byte) value.getShort();
-        if (doubleDensity) {
-            switch (byteValue) {
-                case (byte) 0xF5:
-                    sectors[currentSector].writeTrack((byte) 0xA1);
-                    /* TODO: Turn on CRC calculation */
-                    break;
-
-                case (byte) 0xF6:
-                    sectors[currentSector].writeTrack((byte) 0xC2);
-                    break;
-
-                case (byte) 0xF7:
-                    /* Below should be CRC byte 1, CRC byte 2 */
-                    sectors[currentSector].writeTrack((byte) 0x0);
-                    sectors[currentSector].writeTrack((byte) 0x0);
-                    break;
-
-                default:
-                    sectors[currentSector].writeTrack(byteValue);
-                    break;
-            }
-        } else {
-            sectors[currentSector].writeTrack(byteValue);
-        }
-    }
-
     /**
      * Reads the address of the specified sector.
      *
@@ -120,17 +75,6 @@ public class DiskTrack
      */
     public boolean dataAddressMarkFound(int sector) {
         return sectors[sector].dataAddressMarkFound();
-    }
-
-    /**
-     * Returns true if there are more bytes to be read from a data field of a
-     * sector, false otherwise.
-     *
-     * @param sector the sector to read from
-     * @return true if there are more data bytes to be read
-     */
-    public boolean hasMoreBytes(int sector) {
-        return sectors[sector].hasMoreBytes();
     }
 
     /**
@@ -193,6 +137,12 @@ public class DiskTrack
         writeTrackFinished = false;
     }
 
+    /**
+     * Reads a byte from a track. The function keeps track of the
+     * current sector that is currently being read from.
+     *
+     * @return the next byte from the track
+     */
     public UnsignedByte readTrack() {
         if (sectors[currentSector].readTrackFinished()) {
             currentSector++;
@@ -214,6 +164,59 @@ public class DiskTrack
         }
 
         return result;
+    }
+
+    /**
+     * Writes a byte to a track. Will keep track of successive sectors
+     * that it is writing to.
+     *
+     * @param value the value to write to the track
+     */
+    public void writeTrack(UnsignedByte value) {
+        /* Check to see if no more sectors */
+        if (currentSector >= sectors.length) {
+            writeTrackFinished = true;
+            return;
+        }
+
+        /* Check to see if we are done with the current sector */
+        if (sectors[currentSector].writeTrackFinished()) {
+            sectors[currentSector].setCommand(DiskCommand.NONE);
+            currentSector++;
+            if (currentSector < sectors.length) {
+                sectors[currentSector].setCommand(DiskCommand.WRITE_TRACK);
+            } else {
+                writeTrackFinished = true;
+                return;
+            }
+        }
+
+        /* Check to see if we have a byte that has a different interpretation */
+        byte byteValue = (byte) value.getShort();
+        if (doubleDensity) {
+            switch (byteValue) {
+                case (byte) 0xF5:
+                    sectors[currentSector].writeTrack((byte) 0xA1);
+                    /* TODO: Turn on CRC calculation */
+                    break;
+
+                case (byte) 0xF6:
+                    sectors[currentSector].writeTrack((byte) 0xC2);
+                    break;
+
+                case (byte) 0xF7:
+                    /* Below should be CRC byte 1, CRC byte 2 */
+                    sectors[currentSector].writeTrack((byte) 0x0);
+                    sectors[currentSector].writeTrack((byte) 0x0);
+                    break;
+
+                default:
+                    sectors[currentSector].writeTrack(byteValue);
+                    break;
+            }
+        } else {
+            sectors[currentSector].writeTrack(byteValue);
+        }
     }
 
     /**

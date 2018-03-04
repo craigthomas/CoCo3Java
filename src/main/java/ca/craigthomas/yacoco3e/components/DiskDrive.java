@@ -549,8 +549,7 @@ public class DiskDrive
         }
 
         /* Read a byte */
-        UnsignedByte result = tracks[currentTrack].readData(currentSector);
-        return result;
+        return tracks[currentTrack].readData(currentSector);
     }
 
     /**
@@ -571,7 +570,7 @@ public class DiskDrive
         }
 
         /* Check to see if we are ready to read more bytes from this sector */
-        if (!tracks[currentTrack].hasMoreBytes(currentSector)) {
+        if (!tracks[currentTrack].hasMoreDataBytes(currentSector)) {
             tracks[currentTrack].setCommand(currentSector, DiskCommand.NONE);
             currentSector++;
             if (currentSector >= sectorsPerTrack) {
@@ -620,7 +619,7 @@ public class DiskDrive
         tracks[currentTrack].writeDataMark(currentSector, dataMark);
 
         /* Check to see if we can write more bytes on this sector */
-        if (tracks[currentTrack].hasMoreBytes(currentSector)) {
+        if (tracks[currentTrack].hasMoreDataBytes(currentSector)) {
 //            tracks[currentTrack].write(currentSector, value);
             return;
         }
