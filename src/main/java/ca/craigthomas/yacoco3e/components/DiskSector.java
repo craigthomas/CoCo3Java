@@ -29,7 +29,7 @@ public class DiskSector
     // Whether the data address mark was found
     private boolean dataAddressMark;
     // The field the sector read/write head is currently pointing to
-    private FIELD currentField;
+    protected FIELD currentField;
     // The byte the read/write head is currently pointing to
     private int pointer;
 

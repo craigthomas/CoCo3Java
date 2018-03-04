@@ -81,6 +81,4 @@ public class DiskTrackTest
         track.writeTrack(new UnsignedByte());
         assertTrue(track.isWriteTrackFinished());
     }
-
-
 }
