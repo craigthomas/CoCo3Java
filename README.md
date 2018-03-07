@@ -107,7 +107,24 @@ as usual in the emulator window.
 
 Once you have performed a `CSAVE` or `CSAVEM`, you must then flush the contents
 of the tape buffer to the actual file. You can to that by clicking the menu item
-*Cassette*, *Flush Buffer to File*. 
+*Cassette*, *Flush Buffer to File*.
+
+
+## Disk Drives
+
+The emulator has built-in support for disk drive systems, however, it requires
+a Disk Basic ROM (1.0 or 1.1) to be loaded on emulator startup with the `--diskbas`
+switch:
+
+```bash
+java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --diskbas /path/to/disk/basic/rom
+```
+
+Four virtual disk drives are available by default (drive numbers 0-4). While all 
+disk commands work (e.g. `DSKINI0`, `SAVE`, `DIR`, etc.), saving the actual contents
+of a disk as a disk file (`.DSK` or `.DMK`) is not yet supported (nor is loading a
+disk file from the host computer).
+
 
 ## Keyboard
 
@@ -154,10 +171,11 @@ Below are a list of items that are currently working:
 - SAM TY Bits (`$FFDE`, `$FFDF`) 
 - Cassette tape interface
 - IRQ Interrupts (both PIA and GIME)
+- Disk drive sub-system
 
 Yet to be implemented:
 
-- Disk interface
+- Disk GUI interface and saving (.DSK and .DMK images)
 - Menu system
 - Semigraphcs Modes `SG6`, `SG8`, `SG12`, `SG24`
 - Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`

@@ -6,7 +6,6 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -279,7 +278,7 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMETimerInterruptFiresCorrectly() {
+    public void testGIMETimerInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
@@ -292,12 +291,13 @@ public class IOControllerTest
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x20);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
-    public void testGIMETimerFastInterruptFiresCorrectly() {
+    public void testGIMETimerFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
@@ -310,12 +310,13 @@ public class IOControllerTest
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x20);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
-    public void testGIMEHorizontalBorderInterruptFiresCorrectly() {
+    public void testGIMEHorizontalBorderInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
@@ -326,11 +327,12 @@ public class IOControllerTest
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x10);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
-    public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() {
+    public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
@@ -341,11 +343,12 @@ public class IOControllerTest
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x10);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
-    public void testGIMEVerticalBorderInterruptFiresCorrectly() {
+    public void testGIMEVerticalBorderInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
@@ -356,11 +359,12 @@ public class IOControllerTest
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x8);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
     @Test
-    public void testGIMEVerticalBorderFastInterruptFiresCorrectly() {
+    public void testGIMEVerticalBorderFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
@@ -371,6 +375,7 @@ public class IOControllerTest
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x8);
         io.timerTick(1);
+        cpu.executeInstruction();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
