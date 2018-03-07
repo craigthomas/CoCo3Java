@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2018 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -150,10 +150,6 @@ public class DiskDrive
         switch (currentCommand) {
             case WRITE_SECTOR:
                 writeSector(value);
-                return;
-
-            case WRITE_MULTIPLE_SECTORS:
-                writeMultipleSectors(value);
                 return;
 
             case WRITE_TRACK:
@@ -404,10 +400,7 @@ public class DiskDrive
 
         /* Write multiple sectors */
         if (intCommand == 0xB) {
-            LOGGER.fine("Write multiple sectors");
-            currentCommand = DiskCommand.WRITE_MULTIPLE_SECTORS;
-            dataMark = new UnsignedByte(command.isMasked(0x1) ? 1 : 0);
-            setDRQ();
+            LOGGER.warning("Writing multiple sectors not supported");
             return;
         }
 
@@ -607,41 +600,6 @@ public class DiskDrive
         setNotBusy();
         clearDRQ();
         fireInterrupt();
-    }
-
-    /**
-     * Writes a byte of data to the current sector.
-     *
-     * @param value the byte value to write
-     */
-    public void writeMultipleSectors(UnsignedByte value) {
-        /* Write the data mark */
-        tracks[currentTrack].writeDataMark(currentSector, dataMark);
-
-        /* Check to see if we can write more bytes on this sector */
-        if (tracks[currentTrack].hasMoreDataBytes(currentSector)) {
-//            tracks[currentTrack].write(currentSector, value);
-            return;
-        }
-
-        /* Otherwise, advance the sector counter */
-        tracks[currentTrack].setCommand(currentSector, DiskCommand.NONE);
-        currentSector++;
-
-        /* Check to see if we are past the maximum number of sectors */
-        if (currentSector >= sectorsPerTrack) {
-            currentSector--;
-            tracks[currentTrack].setCommand(currentSector, DiskCommand.NONE);
-            currentCommand = DiskCommand.NONE;
-            setNotBusy();
-            clearDRQ();
-            fireInterrupt();
-            return;
-        }
-
-        /* Prep the new sector */
-        tracks[currentTrack].setCommand(currentSector, DiskCommand.WRITE_SECTOR);
-        writeMultipleSectors(value);
     }
 
     /**

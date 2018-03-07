@@ -129,10 +129,13 @@ public class DiskSector
         this.command = command;
     }
 
-//    public void writeData(byte value) {
-//        data.write(value);
-//    }
-
+    /**
+     * Writes a data mark to the disk. The data mark written depends on the
+     * density value of the disk. Double density disks will have a padding of
+     * three $A1 values before the mark.
+     *
+     * @param mark the mark to write
+     */
     public void writeDataMark(byte mark) {
         data.push();
         if (doubleDensity) {
@@ -156,25 +159,42 @@ public class DiskSector
         return id.read();
     }
 
+    /**
+     * Returns true if there was a data address mark that was found, false
+     * otherwise.
+     *
+     * @return true if the data address mark was found
+     */
     public boolean dataAddressMarkFound() {
         return dataAddressMark;
     }
 
+    /**
+     * Reads a single byte from a sector.
+     *
+     * @return a single byte read from a sector
+     */
     public byte readSectorData() {
-        if (doubleDensity) {
-            if (pointer < 256) {
-                pointer++;
-                return data.read();
-            }
-        } else {
-            if (pointer < 128) {
-                pointer++;
-                return data.read();
-            }
+        if (doubleDensity && pointer < 256) {
+            pointer++;
+            return data.read();
         }
+
+        // Single density read
+        if (pointer < 128) {
+            pointer++;
+            return data.read();
+        }
+
+        // Bad read
         return 0;
     }
 
+    /**
+     * Writes a single value to a sector.
+     *
+     * @param value the value to write
+     */
     public void writeSectorData(byte value) {
         if (doubleDensity) {
             if (pointer < 256) {
@@ -189,25 +209,42 @@ public class DiskSector
         }
     }
 
+    /**
+     * Returns true if the ID field of the disk has more bytes to be
+     * read, and there is a disk command currently running.
+     *
+     * @return true if there are more ID bytes to read
+     */
     public boolean hasMoreIdBytes() {
         return !command.equals(DiskCommand.NONE) && id.hasMoreBytes();
     }
 
+    /**
+     * Returns true if there is a running command, and the data field
+     * still has bytes that can be read.
+     *
+     * @return true if there are more data bytes to read
+     */
     public boolean hasMoreDataBytes() {
         if (!command.equals(DiskCommand.NONE)) {
-            if (doubleDensity) {
-                if (pointer < 256) {
-                    return true;
-                }
-            } else {
-                if (pointer < 128) {
-                    return true;
-                }
+            if (doubleDensity && pointer < 256) {
+                return true;
+            }
+
+            // Single density read
+            if (pointer < 128) {
+                return true;
             }
         }
         return false;
     }
 
+    /**
+     * Reads a full track of data from the drive. The value read depends on
+     * where in the track the drive is reading from.
+     *
+     * @return the next byte read from the track
+     */
     public byte readTrack() {
         if (currentField.equals(FIELD.INDEX) && index.hasMoreBytes()) {
             return index.read();
@@ -254,6 +291,10 @@ public class DiskSector
         return 0;
     }
 
+    /**
+     * Writes a full track of data from the drive. Where the value is
+     * written depends on where the drive head is positioned.
+     */
     public void writeTrack(byte value) {
         if (currentField.equals(FIELD.INDEX) && index.hasMoreBytes() && index.isExpected(value)) {
             index.write(value);
@@ -303,17 +344,26 @@ public class DiskSector
 
         if (currentField.equals(FIELD.GAP4) && gap4.hasMoreBytes() && gap4.isExpected(value)) {
             gap4.write(value);
-            return;
         } else {
             currentField = FIELD.NONE;
             gap4.setFilled();
         }
     }
 
+    /**
+     * Indicates that the write track operation is complete.
+     *
+     * @return true if write track is complete, false otherwise
+     */
     public boolean writeTrackFinished() {
         return currentField.equals(FIELD.NONE);
     }
 
+    /**
+     * Indicates that the read track operation is complete.
+     *
+     * @return true if the read track is complete, false otherwise
+     */
     public boolean readTrackFinished() {
         return currentField.equals(FIELD.NONE);
     }
