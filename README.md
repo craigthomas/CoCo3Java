@@ -3,7 +3,7 @@
 
 [![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
-[![Dependency Status](https://www.versioneye.com/user/projects/59728e360fb24f0022bae9d9/badge.svg?style=flat)](https://www.versioneye.com/user/projects/59728e360fb24f0022bae9d9)
+[![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge)](https://dependencyci.com/github/craigthomas/CoCo3Java)
 
 ## What Is It?
 
