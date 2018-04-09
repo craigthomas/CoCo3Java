@@ -167,6 +167,10 @@ public class IOController
         screen.setIOController(this);
     }
 
+    public void loadVirtualDisk(int diskDriveNum, VirtualDisk virtualDisk) {
+        disk[diskDriveNum].loadFromVirtualDisk(virtualDisk);
+    }
+
     /**
      * Creates a back-reference to the CPU.
      *

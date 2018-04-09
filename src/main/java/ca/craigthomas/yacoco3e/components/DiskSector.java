@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.common.Field;
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 public class DiskSector
 {
@@ -297,6 +298,7 @@ public class DiskSector
      */
     public void writeTrack(byte value) {
         if (currentField.equals(FIELD.INDEX) && index.hasMoreBytes() && index.isExpected(value)) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to index");
             index.write(value);
             return;
         } else {
@@ -305,6 +307,7 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.GAP1) && gap1.hasMoreBytes() && gap1.isExpected(value)) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to gap1");
             gap1.write(value);
             return;
         } else {
@@ -313,6 +316,8 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.ID) && id.hasMoreBytes()) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to id");
+
             id.write(value);
             return;
         } else {
@@ -320,6 +325,8 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.GAP2) && gap2.hasMoreBytes() && gap2.isExpected(value)) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to gap2");
+
             gap2.write(value);
             return;
         } else {
@@ -328,6 +335,8 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.GAP3) && gap3.hasMoreBytes() && gap3.isExpected(value)) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to gap3");
+
             gap3.write(value);
             return;
         } else {
@@ -336,6 +345,8 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.DATA) && data.hasMoreBytes()) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to data");
+
             data.write(value);
             return;
         } else {
@@ -343,6 +354,8 @@ public class DiskSector
         }
 
         if (currentField.equals(FIELD.GAP4) && gap4.hasMoreBytes() && gap4.isExpected(value)) {
+            System.out.println("wrote " + new UnsignedByte(value) + " to gap4");
+
             gap4.write(value);
         } else {
             currentField = FIELD.NONE;

@@ -5,13 +5,9 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.common.IO;
+import ca.craigthomas.yacoco3e.datatypes.JV1Disk;
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
-import ca.craigthomas.yacoco3e.listeners.FlushCassetteMenuItemActionListener;
-import ca.craigthomas.yacoco3e.listeners.OpenCassetteMenuItemActionListener;
-import ca.craigthomas.yacoco3e.listeners.QuitMenuItemActionListener;
-import ca.craigthomas.yacoco3e.listeners.RecordCassetteMenuItemActionListener;
+import ca.craigthomas.yacoco3e.listeners.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -127,6 +123,16 @@ public class Emulator
         cassetteMenu.add(openCassetteItem);
 
         menuBar.add(cassetteMenu);
+
+        // Cassette menu
+        JMenu diskMenu = new JMenu("Disk Drives");
+        diskMenu.setMnemonic(KeyEvent.VK_D);
+
+        JMenuItem newDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_N);
+        newDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(this));
+        diskMenu.add(newDiskMenuItem);
+
+        menuBar.add(diskMenu);
         attachCanvas();
     }
 
@@ -221,6 +227,33 @@ public class Emulator
             if (!cassette.openFile(fileChooser.getSelectedFile().toString())) {
                 JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
                         JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public void openVirtualDiskFileDialog() {
+        JFileChooser fileChooser = new JFileChooser();
+        FileFilter filter1 = new FileNameExtensionFilter("DSK Files (*.dsk)", "dsk");
+        FileFilter filter2 = new FileNameExtensionFilter("DMK Files (*.dmk)", "dmk");
+        FileFilter filter3 = new FileNameExtensionFilter("JV1 Files (*.jv1)", "jv1");
+        fileChooser.setCurrentDirectory(new java.io.File("."));
+        fileChooser.setDialogTitle("Open Virtual Disk File");
+        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setFileFilter(filter1);
+        fileChooser.setFileFilter(filter2);
+        fileChooser.setFileFilter(filter3);
+        if (fileChooser.showOpenDialog(container) == JFileChooser.APPROVE_OPTION) {
+            JV1Disk jv1Disk = new JV1Disk();
+            if (jv1Disk.isCorrectFormat(fileChooser.getSelectedFile())) {
+                boolean loaded = jv1Disk.loadFile(fileChooser.getSelectedFile().toString());
+                if (!loaded) {
+                    JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    ioController.loadVirtualDisk(0, jv1Disk);
+                    JOptionPane.showMessageDialog(container, "Loaded file [" + fileChooser.getSelectedFile().toString() + ".", "File Open Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
             }
         }
     }

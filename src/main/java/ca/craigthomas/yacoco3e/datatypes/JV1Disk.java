@@ -10,6 +10,7 @@ import ca.craigthomas.yacoco3e.components.DiskTrack;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 public class JV1Disk implements VirtualDisk
 {
@@ -17,6 +18,8 @@ public class JV1Disk implements VirtualDisk
     private byte [] data;
     // A pointer into the raw file data
     private int pointer;
+    // A logger for the class
+    private final static Logger LOGGER = Logger.getLogger(DiskDrive.class.getName());
 
     public JV1Disk() {
         pointer = 0;
@@ -58,8 +61,11 @@ public class JV1Disk implements VirtualDisk
 
         // Write out each track
         for (int trackNum = 0; trackNum < DiskDrive.DEFAULT_NUM_TRACKS; trackNum++) {
+            // Tell the track that a write operation is starting
+            tracks[trackNum].startWriteTrack();
+
             for (int sectorNum = 0; sectorNum < DiskDrive.DEFAULT_SECTORS_PER_TRACK; sectorNum++) {
-                tracks[trackNum].startWriteTrack();
+                System.out.println("Writing track " + trackNum + ", sector " + sectorNum);
 
                 // Write out the index pulse if sector 0
                 if (sectorNum == 0) {
@@ -89,7 +95,7 @@ public class JV1Disk implements VirtualDisk
                 tracks[trackNum].writeTrack(new UnsignedByte(sectorNum));
 
                 // Length of sector
-                tracks[trackNum].writeTrack(new UnsignedByte(256));
+                tracks[trackNum].writeTrack(new UnsignedByte(255));
 
                 // CRC 1 and 2
                 tracks[trackNum].writeTrack(new UnsignedByte(0x00));
@@ -117,10 +123,19 @@ public class JV1Disk implements VirtualDisk
                     pointer++;
                 }
 
+                // Write out CRC 1 and 2
+                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
+                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
+
                 // Write out the gap
                 for (int j = 0; j < 24; j++) {
                     tracks[trackNum].writeTrack(new UnsignedByte(0x4E));
                 }
+            }
+
+            System.out.println("Write track " + trackNum + " finished: " + tracks[trackNum].isWriteTrackFinished());
+            if (!tracks[trackNum].isWriteTrackFinished()) {
+                LOGGER.severe("Write track was not finished!");
             }
         }
         pointer = 0;
