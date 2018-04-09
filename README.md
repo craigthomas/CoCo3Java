@@ -1,6 +1,7 @@
 # Yet Another Color Computer 3 Emulator
 
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/a3b711b6ac904cb5aeba9f0dc9821b61)](https://app.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&utm_medium=referral&utm_content=craigthomas/CoCo3Java&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge)](https://dependencyci.com/github/craigthomas/CoCo3Java)
