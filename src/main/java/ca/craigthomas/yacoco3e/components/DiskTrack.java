@@ -256,4 +256,8 @@ public class DiskTrack
         }
         return -1;
     }
+
+    public void writeSectorId(int sector, UnsignedByte value) {
+        sectors[sector].writeId((byte) value.getShort());
+    }
 }

@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.datatypes;
 
 import ca.craigthomas.yacoco3e.common.IO;
+import ca.craigthomas.yacoco3e.components.DiskCommand;
 import ca.craigthomas.yacoco3e.components.DiskDrive;
 import ca.craigthomas.yacoco3e.components.DiskTrack;
 
@@ -61,81 +62,49 @@ public class JV1Disk implements VirtualDisk
 
         // Write out each track
         for (int trackNum = 0; trackNum < DiskDrive.DEFAULT_NUM_TRACKS; trackNum++) {
-            // Tell the track that a write operation is starting
-            tracks[trackNum].startWriteTrack();
-
             for (int sectorNum = 0; sectorNum < DiskDrive.DEFAULT_SECTORS_PER_TRACK; sectorNum++) {
                 System.out.println("Writing track " + trackNum + ", sector " + sectorNum);
-
-                // Write out the index pulse if sector 0
-                if (sectorNum == 0) {
-                    for (int j = 0; j < 60; j++) {
-                        tracks[trackNum].writeTrack(new UnsignedByte(0x4E));
-                    }
-                }
-
-                // Write out the gap
-                for (int j = 0; j < 12; j++) {
-                    tracks[trackNum].writeTrack(new UnsignedByte(0x00));
-                }
+                tracks[trackNum].setCommand(sectorNum, DiskCommand.LOAD_VIRTUAL_DISK);
 
                 // Write out the sector ID
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xFE));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0xFE));
 
                 // Track Number
-                tracks[trackNum].writeTrack(new UnsignedByte(trackNum));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(trackNum));
 
                 // Side number
-                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0x00));
 
                 // Sector number
-                tracks[trackNum].writeTrack(new UnsignedByte(sectorNum));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(sectorNum + 1));
 
                 // Length of sector
-                tracks[trackNum].writeTrack(new UnsignedByte(255));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(255));
 
                 // CRC 1 and 2
-                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
-                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
-
-                // Write out the gap
-                for (int j = 0; j < 22; j++) {
-                    tracks[trackNum].writeTrack(new UnsignedByte(0x4E));
-                }
-
-                // Write out the gap
-                for (int j = 0; j < 12; j++) {
-                    tracks[trackNum].writeTrack(new UnsignedByte(0x00));
-                }
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0x00));
+                tracks[trackNum].writeSectorId(sectorNum, new UnsignedByte(0x00));
 
                 // Write out sector data
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xA1));
-                tracks[trackNum].writeTrack(new UnsignedByte(0xFB));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0xA1));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0xFB));
 
                 // Write out raw data
                 for (int j = 0; j < 256; j++) {
-                    tracks[trackNum].writeTrack(new UnsignedByte(data[pointer]));
+                    tracks[trackNum].writeData(sectorNum, new UnsignedByte(data[pointer]));
                     pointer++;
                 }
 
                 // Write out CRC 1 and 2
-                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
-                tracks[trackNum].writeTrack(new UnsignedByte(0x00));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0x00));
+                tracks[trackNum].writeData(sectorNum, new UnsignedByte(0x00));
 
-                // Write out the gap
-                for (int j = 0; j < 24; j++) {
-                    tracks[trackNum].writeTrack(new UnsignedByte(0x4E));
-                }
-            }
-
-            System.out.println("Write track " + trackNum + " finished: " + tracks[trackNum].isWriteTrackFinished());
-            if (!tracks[trackNum].isWriteTrackFinished()) {
-                LOGGER.severe("Write track was not finished!");
+                tracks[trackNum].setCommand(sectorNum, DiskCommand.NONE);
             }
         }
         pointer = 0;
