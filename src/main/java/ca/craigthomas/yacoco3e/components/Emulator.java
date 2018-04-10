@@ -124,13 +124,41 @@ public class Emulator
 
         menuBar.add(cassetteMenu);
 
-        // Cassette menu
+        // Disk drive menu
         JMenu diskMenu = new JMenu("Disk Drives");
         diskMenu.setMnemonic(KeyEvent.VK_D);
 
-        JMenuItem newDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_N);
-        newDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(this));
-        diskMenu.add(newDiskMenuItem);
+        // Drive 0
+        JMenu drive0MenuItem = new JMenu("Drive 0");
+        drive0MenuItem.setMnemonic(KeyEvent.VK_0);
+        JMenuItem drive0LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
+        drive0LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(0,this));
+        drive0MenuItem.add(drive0LoadDiskMenuItem);
+        diskMenu.add(drive0MenuItem);
+
+        // Drive 1
+        JMenu drive1MenuItem = new JMenu("Drive 1");
+        drive1MenuItem.setMnemonic(KeyEvent.VK_1);
+        JMenuItem drive1LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
+        drive1LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(1,this));
+        drive1MenuItem.add(drive1LoadDiskMenuItem);
+        diskMenu.add(drive1MenuItem);
+
+        // Drive 2
+        JMenu drive2MenuItem = new JMenu("Drive 2");
+        drive2MenuItem.setMnemonic(KeyEvent.VK_2);
+        JMenuItem drive2LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
+        drive2LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(2,this));
+        drive2MenuItem.add(drive2LoadDiskMenuItem);
+        diskMenu.add(drive2MenuItem);
+
+        // Drive 3
+        JMenu drive3MenuItem = new JMenu("Drive 3");
+        drive3MenuItem.setMnemonic(KeyEvent.VK_3);
+        JMenuItem drive3LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
+        drive3LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(3,this));
+        drive3MenuItem.add(drive3LoadDiskMenuItem);
+        diskMenu.add(drive3MenuItem);
 
         menuBar.add(diskMenu);
         attachCanvas();
@@ -231,17 +259,18 @@ public class Emulator
         }
     }
 
-    public void openVirtualDiskFileDialog() {
+    /**
+     * Loads a virtual disk into the specified drive.
+     *
+     * @param driveNum the drive number to load
+     */
+    public void openVirtualDiskFileDialog(int driveNum) {
         JFileChooser fileChooser = new JFileChooser();
         FileFilter filter1 = new FileNameExtensionFilter("DSK Files (*.dsk)", "dsk");
-        FileFilter filter2 = new FileNameExtensionFilter("DMK Files (*.dmk)", "dmk");
-        FileFilter filter3 = new FileNameExtensionFilter("JV1 Files (*.jv1)", "jv1");
         fileChooser.setCurrentDirectory(new java.io.File("."));
         fileChooser.setDialogTitle("Open Virtual Disk File");
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(filter1);
-        fileChooser.setFileFilter(filter2);
-        fileChooser.setFileFilter(filter3);
         if (fileChooser.showOpenDialog(container) == JFileChooser.APPROVE_OPTION) {
             JV1Disk jv1Disk = new JV1Disk();
             if (jv1Disk.isCorrectFormat(fileChooser.getSelectedFile())) {
@@ -250,9 +279,8 @@ public class Emulator
                     JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
                             JOptionPane.ERROR_MESSAGE);
                 } else {
-                    ioController.loadVirtualDisk(0, jv1Disk);
-                    JOptionPane.showMessageDialog(container, "Loaded file [" + fileChooser.getSelectedFile().toString() + ".", "File Open Success",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    ioController.loadVirtualDisk(driveNum, jv1Disk);
+                    LOGGER.info("Drive " + driveNum + ": loaded file [" + fileChooser.getSelectedFile().toString());
                 }
             }
         }

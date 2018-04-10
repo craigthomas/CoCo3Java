@@ -37,14 +37,6 @@ public interface VirtualDisk
     DiskTrack[] readTracks();
 
     /**
-     * Writes the current contents of the disk to the specified File
-     * using the format specified by the interface.
-     *
-     * @param diskFile the File where disk contents should be written
-     */
-    void writeTracks(File diskFile);
-
-    /**
      * Returns the total number of tracks on the virtual disk.
      *
      * @return the total number of tracks on the disk

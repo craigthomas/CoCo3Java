@@ -4,7 +4,6 @@
  */
 package ca.craigthomas.yacoco3e.listeners;
 
-import ca.craigthomas.yacoco3e.components.Cassette;
 import ca.craigthomas.yacoco3e.components.Emulator;
 
 import java.awt.event.ActionEvent;
@@ -15,15 +14,19 @@ import java.awt.event.ActionListener;
  */
 public class LoadVirtualDiskMenuItemActionListener implements ActionListener
 {
+    // The main emulator class
     private Emulator emulator;
+    // The drive number to apply the loaded disk to
+    private int drive;
 
-    public LoadVirtualDiskMenuItemActionListener(Emulator emulator) {
+    public LoadVirtualDiskMenuItemActionListener(int drive, Emulator emulator) {
         super();
         this.emulator = emulator;
+        this.drive = drive;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        emulator.openVirtualDiskFileDialog();
+        emulator.openVirtualDiskFileDialog(drive);
     }
 }

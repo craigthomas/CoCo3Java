@@ -5,7 +5,6 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.common.Field;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 public class DiskSector
 {
