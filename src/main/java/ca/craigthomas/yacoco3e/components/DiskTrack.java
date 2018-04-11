@@ -32,6 +32,15 @@ public class DiskTrack
     }
 
     /**
+     * Returns the number of sectors on the track.
+     *
+     * @return the number of sectors on the track
+     */
+    public int getNumberOfSectors() {
+        return sectors.length;
+    }
+
+    /**
      * Writes a single byte to the specified sector on the track.
      * The sector must have the WRITE_SECTOR command applied to it
      * before the start of a write operation (subsequent writes do

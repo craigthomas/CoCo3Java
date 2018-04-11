@@ -7,6 +7,7 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.JV1Disk;
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
+import ca.craigthomas.yacoco3e.datatypes.VirtualDisk;
 import ca.craigthomas.yacoco3e.listeners.*;
 
 import javax.swing.*;
@@ -134,6 +135,10 @@ public class Emulator
         JMenuItem drive0LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
         drive0LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(0,this));
         drive0MenuItem.add(drive0LoadDiskMenuItem);
+
+        JMenuItem drive0SaveDiskMenuItem = new JMenuItem("Save Virtual Disk", KeyEvent.VK_S);
+        drive0SaveDiskMenuItem.addActionListener(new SaveVirtualDiskMenuItemActionListener(0,this));
+        drive0MenuItem.add(drive0SaveDiskMenuItem);
         diskMenu.add(drive0MenuItem);
 
         // Drive 1
@@ -142,6 +147,10 @@ public class Emulator
         JMenuItem drive1LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
         drive1LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(1,this));
         drive1MenuItem.add(drive1LoadDiskMenuItem);
+
+        JMenuItem drive1SaveDiskMenuItem = new JMenuItem("Save Virtual Disk", KeyEvent.VK_S);
+        drive1SaveDiskMenuItem.addActionListener(new SaveVirtualDiskMenuItemActionListener(1,this));
+        drive1MenuItem.add(drive1SaveDiskMenuItem);
         diskMenu.add(drive1MenuItem);
 
         // Drive 2
@@ -150,6 +159,10 @@ public class Emulator
         JMenuItem drive2LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
         drive2LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(2,this));
         drive2MenuItem.add(drive2LoadDiskMenuItem);
+
+        JMenuItem drive2SaveDiskMenuItem = new JMenuItem("Save Virtual Disk", KeyEvent.VK_S);
+        drive2SaveDiskMenuItem.addActionListener(new SaveVirtualDiskMenuItemActionListener(2,this));
+        drive2MenuItem.add(drive2SaveDiskMenuItem);
         diskMenu.add(drive2MenuItem);
 
         // Drive 3
@@ -158,6 +171,10 @@ public class Emulator
         JMenuItem drive3LoadDiskMenuItem = new JMenuItem("Load Virtual Disk", KeyEvent.VK_L);
         drive3LoadDiskMenuItem.addActionListener(new LoadVirtualDiskMenuItemActionListener(3,this));
         drive3MenuItem.add(drive3LoadDiskMenuItem);
+
+        JMenuItem drive3SaveDiskMenuItem = new JMenuItem("Save Virtual Disk", KeyEvent.VK_S);
+        drive3SaveDiskMenuItem.addActionListener(new SaveVirtualDiskMenuItemActionListener(3,this));
+        drive3MenuItem.add(drive3SaveDiskMenuItem);
         diskMenu.add(drive3MenuItem);
 
         menuBar.add(diskMenu);
@@ -280,8 +297,28 @@ public class Emulator
                             JOptionPane.ERROR_MESSAGE);
                 } else {
                     ioController.loadVirtualDisk(driveNum, jv1Disk);
-                    LOGGER.info("Drive " + driveNum + ": loaded file [" + fileChooser.getSelectedFile().toString());
+                    LOGGER.info("Drive " + driveNum + ": loaded file [" + fileChooser.getSelectedFile().toString() + "]");
                 }
+            }
+        }
+    }
+
+    /**
+     * Saves the contents of the disk to a file on the hard drive.
+     */
+    public void saveVirtualDiskFileDialog(int drive) {
+        JFileChooser fileChooser = new JFileChooser();
+        FileFilter filter1 = new FileNameExtensionFilter("DSK Files (*.dsk)", "dsk");
+        fileChooser.setCurrentDirectory(new java.io.File("."));
+        fileChooser.setDialogTitle("Save to Virtual Disk File");
+        fileChooser.setAcceptAllFileFilterUsed(true);
+        fileChooser.setFileFilter(filter1);
+        if (fileChooser.showSaveDialog(container) == JFileChooser.APPROVE_OPTION) {
+            VirtualDisk virtualDisk = new JV1Disk();
+            ioController.saveVirtualDisk(drive, virtualDisk);
+            if (!VirtualDisk.saveToFile(fileChooser.getSelectedFile().toString(), virtualDisk)) {
+                JOptionPane.showMessageDialog(container, "Error saving file.", "File Save Problem",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

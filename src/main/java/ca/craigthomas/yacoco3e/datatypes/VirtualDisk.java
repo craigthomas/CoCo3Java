@@ -4,9 +4,11 @@
  */
 package ca.craigthomas.yacoco3e.datatypes;
 
+import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.components.DiskTrack;
 
 import java.io.File;
+import java.io.OutputStream;
 
 public interface VirtualDisk
 {
@@ -37,6 +39,22 @@ public interface VirtualDisk
     DiskTrack[] readTracks();
 
     /**
+     * Loads the specified tracks into the virtual disk container.
+     *
+     * @param tracks the tracks to load
+     * @return true if the load succeeded, false otherwise
+     */
+    boolean loadFromDrive(DiskTrack [] tracks);
+
+    /**
+     * Returns the raw byte array representation of the contents in the
+     * drive.
+     *
+     * @return the byte array representation of the drive contents
+     */
+    byte[] getRawBytes();
+
+    /**
      * Returns the total number of tracks on the virtual disk.
      *
      * @return the total number of tracks on the disk
@@ -49,4 +67,19 @@ public interface VirtualDisk
      * @return the total number of sectors per track
      */
     int sectorsPerTrack();
+
+    /**
+     * Saves the contents of a virtual disk to a file.
+     *
+     * @param filename the filename to save to
+     * @param virtualDisk the virtual disk to save
+     * @return true if the save succeeded, false otherwise
+     */
+    static boolean saveToFile(String filename, VirtualDisk virtualDisk) {
+        OutputStream stream = IO.openOutputStream(filename);
+        if (stream == null) return false;
+        boolean flag = IO.flushToStream(stream, virtualDisk.getRawBytes());
+        IO.closeStream(stream);
+        return flag;
+    }
 }

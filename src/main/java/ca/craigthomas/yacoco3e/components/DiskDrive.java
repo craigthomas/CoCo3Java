@@ -95,6 +95,16 @@ public class DiskDrive
     }
 
     /**
+     * Converts the contents of a drive into a virtual disk container.
+     *
+     * @return a VirtualDisk with the data
+     */
+    public VirtualDisk convertToVirtualDisk(VirtualDisk disk) {
+        disk.loadFromDrive(tracks);
+        return disk;
+    }
+
+    /**
      * Returns the track the read/write head is positioned above.
      *
      * @return the current track number

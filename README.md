@@ -124,7 +124,7 @@ java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --diskbas /path/to
 Four virtual disk drives are available by default (drive numbers 0-3).
 
 
-### Loading a Disk Image
+#### Loading a Disk Image
 
 The emulator currently supports reading `JV1` style disk images from the host
 computer. To load a disk image, click on the menu item *Disk Drives*,
@@ -135,6 +135,16 @@ from. You can then use the disk associated with the drive you selected.
 For example, `DIR 3` will list the directory contents of the disk in
 drive 3, while `LOADM"2:EDTASM.BIN` will load the Edtasm binary from
 drive 2.
+
+#### Saving a Disk Image
+
+The emulator currently support writing `JV1` style disk images to the
+host computer. To save a disk image, click on the menu item *Disk Drives*,
+select the drive number you want (*Drive 0*, *Drive 1*, *Drive 2*, or
+*Drive 3*), and then select *Save Virtual Disk*. You will be prompted to
+select a location on your computer where the disk file will be saved to.
+Once entered, the contents of the drive will be saved to the virtual disk
+file, and can be loaded from the host computer in a future session.
 
 
 ## Keyboard
