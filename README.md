@@ -193,14 +193,14 @@ Below are a list of items that are currently working:
 - Cassette tape interface
 - IRQ Interrupts (both PIA and GIME)
 - Disk drive sub-system
-- Disk GUI interface for loading disks
+- Disk GUI interface for loading virtual disks
+- Disk GUI interface for saving virtual disks
 - `JV1` style virtual disk drive support
 
 Yet to be implemented:
 
 - `JV3` style virtual disk drive support
 - `DMK` style virtual disk drive support
-- Saving disk contents to the hard drive
 - Semigraphcs Modes `SG6`, `SG8`, `SG12`, `SG24`
 - Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`
 - High resolution text modes (40, 64, 80 columns)
