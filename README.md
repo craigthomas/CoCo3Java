@@ -121,10 +121,30 @@ switch:
 java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --diskbas /path/to/disk/basic/rom
 ```
 
-Four virtual disk drives are available by default (drive numbers 0-4). While all 
-disk commands work (e.g. `DSKINI0`, `SAVE`, `DIR`, etc.), saving the actual contents
-of a disk as a disk file (`.DSK` or `.DMK`) is not yet supported (nor is loading a
-disk file from the host computer).
+Four virtual disk drives are available by default (drive numbers 0-3).
+
+
+#### Loading a Disk Image
+
+The emulator currently supports reading `JV1` style disk images from the host
+computer. To load a disk image, click on the menu item *Disk Drives*,
+select the drive number you want (*Drive 0*, *Drive 1*, *Drive 2*, or
+*Drive 3*), and then select *Load Virtual Disk*. You will be prompted to
+select a location on your computer where the disk file will be loaded
+from. You can then use the disk associated with the drive you selected.
+For example, `DIR 3` will list the directory contents of the disk in
+drive 3, while `LOADM"2:EDTASM.BIN` will load the Edtasm binary from
+drive 2.
+
+#### Saving a Disk Image
+
+The emulator currently support writing `JV1` style disk images to the
+host computer. To save a disk image, click on the menu item *Disk Drives*,
+select the drive number you want (*Drive 0*, *Drive 1*, *Drive 2*, or
+*Drive 3*), and then select *Save Virtual Disk*. You will be prompted to
+select a location on your computer where the disk file will be saved to.
+Once entered, the contents of the drive will be saved to the virtual disk
+file, and can be loaded from the host computer in a future session.
 
 
 ## Keyboard
@@ -173,11 +193,14 @@ Below are a list of items that are currently working:
 - Cassette tape interface
 - IRQ Interrupts (both PIA and GIME)
 - Disk drive sub-system
+- Disk GUI interface for loading virtual disks
+- Disk GUI interface for saving virtual disks
+- `JV1` style virtual disk drive support
 
 Yet to be implemented:
 
-- Disk GUI interface and saving (.DSK and .DMK images)
-- Menu system
+- `JV3` style virtual disk drive support
+- `DMK` style virtual disk drive support
 - Semigraphcs Modes `SG6`, `SG8`, `SG12`, `SG24`
 - Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`
 - High resolution text modes (40, 64, 80 columns)

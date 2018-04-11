@@ -124,6 +124,11 @@ public class DiskSector
                 data.restore();
                 gap4.restore();
                 currentField = FIELD.INDEX;
+
+            case LOAD_VIRTUAL_DISK:
+                id.restore();
+                data.restore();
+                break;
         }
 
         this.command = command;
@@ -317,6 +322,7 @@ public class DiskSector
             return;
         } else {
             currentField = FIELD.GAP2;
+            id.setFilled();
         }
 
         if (currentField.equals(FIELD.GAP2) && gap2.hasMoreBytes() && gap2.isExpected(value)) {
@@ -340,6 +346,7 @@ public class DiskSector
             return;
         } else {
             currentField = FIELD.GAP4;
+            data.setFilled();
         }
 
         if (currentField.equals(FIELD.GAP4) && gap4.hasMoreBytes() && gap4.isExpected(value)) {
@@ -379,5 +386,9 @@ public class DiskSector
         } else {
             return id.readAt(3);
         }
+    }
+
+    public void writeId(byte value) {
+        id.write(value);
     }
 }

@@ -168,6 +168,28 @@ public class IOController
     }
 
     /**
+     * Loads the drive with the contents of the virtual disk.
+     *
+     * @param diskDriveNum the disk drive number to load into
+     * @param virtualDisk the virtual disk contents to load
+     */
+    public void loadVirtualDisk(int diskDriveNum, VirtualDisk virtualDisk) {
+        disk[diskDriveNum].loadFromVirtualDisk(virtualDisk);
+    }
+
+    /**
+     * Saves the data in the selected drive number to the virtual disk interface
+     * specified.
+     *
+     * @param diskDriveNum the drive number to save
+     * @param virtualDisk the virtual disk image to save into
+     * @return the virtual disk with the drive contents
+     */
+    public VirtualDisk saveVirtualDisk(int diskDriveNum, VirtualDisk virtualDisk) {
+        return disk[diskDriveNum].convertToVirtualDisk(virtualDisk);
+    }
+
+    /**
      * Creates a back-reference to the CPU.
      *
      * @param cpu the CPU the io controller controls

@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
+import ca.craigthomas.yacoco3e.datatypes.VirtualDisk;
 
 import java.util.logging.Logger;
 
@@ -73,6 +74,34 @@ public class DiskDrive
         dataRegisterIn = new UnsignedByte();
         currentCommand = DiskCommand.NONE;
         currentBytePointer = -1;
+    }
+
+    /**
+     * Loads a set of virtual disk tracks into the disk drive.
+     *
+     * @param disk the virtual disk to load from
+     */
+    public void loadFromVirtualDisk(VirtualDisk disk) {
+        tracks = disk.readTracks();
+        tracksPerDisk = disk.tracksPerDisk();
+        sectorsPerTrack = disk.sectorsPerTrack();
+        motorOn = false;
+        direction = -1;
+        statusRegister = new UnsignedByte();
+        dataRegisterOut = new UnsignedByte();
+        dataRegisterIn = new UnsignedByte();
+        currentCommand = DiskCommand.NONE;
+        currentBytePointer = -1;
+    }
+
+    /**
+     * Converts the contents of a drive into a virtual disk container.
+     *
+     * @return a VirtualDisk with the data
+     */
+    public VirtualDisk convertToVirtualDisk(VirtualDisk disk) {
+        disk.loadFromDrive(tracks);
+        return disk;
     }
 
     /**
