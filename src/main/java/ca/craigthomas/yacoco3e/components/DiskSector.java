@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.common.Field;
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 public class DiskSector
 {
@@ -204,6 +205,7 @@ public class DiskSector
     public void writeSectorData(byte value) {
         if (doubleDensity) {
             if (pointer < 256) {
+                System.out.println("Actually wrote to data " + new UnsignedByte(value));
                 data.write(value);
                 pointer++;
             }

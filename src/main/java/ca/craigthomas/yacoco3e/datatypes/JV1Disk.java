@@ -91,6 +91,7 @@ public class JV1Disk implements VirtualDisk
 
                 // Write out raw data
                 for (int j = 0; j < 256; j++) {
+                    System.out.println("Writing to track " + trackNum + " sector " + sectorNum + " byte " + new UnsignedByte(data[pointer]));
                     tracks[trackNum].writeData(sectorNum, new UnsignedByte(data[pointer]));
                     pointer++;
                 }
