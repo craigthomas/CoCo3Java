@@ -6,14 +6,14 @@ package ca.craigthomas.yacoco3e.datatypes;
 
 import java.awt.*;
 
-public class SG6ScreenMode extends ScreenMode
+public class SG8ScreenMode extends ScreenMode
 {
     // The foreground color
     private int foreColor;
     // The background color
     private int backColor;
 
-    public SG6ScreenMode(int scale) {
+    public SG8ScreenMode(int scale) {
         this.scale = scale;
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
@@ -37,8 +37,8 @@ public class SG6ScreenMode extends ScreenMode
         );
 
         int memoryPointer = memoryOffset;
-        for (int y = 0; y < 16; y++) {
-            for (int x = 0; x < 32; x++) {
+        for (int y = 0; y < 128; y++) {
+            for (int x = 0; x < 16; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
                 drawCharacter(value, x, y);
                 memoryPointer++;
@@ -49,7 +49,7 @@ public class SG6ScreenMode extends ScreenMode
     }
 
     /**
-     * Draws an SG6 block. Blocks are of width by height in size and
+     * Draws an SG4 block. Blocks are of width by height in size and
      * have a foreground color.
      *
      * @param col the column to draw the block in
@@ -66,16 +66,12 @@ public class SG6ScreenMode extends ScreenMode
 
     /**
      * Draw a Semi Graphics 6 character on the screen at the specified
-     * column and row. Each character is 8 x 12 in size. The character
-     * cell is further broken down into 6 subcells of 4 x 4 blocks each
+     * column and row. Each character is 8 x 6 in size. The character
+     * cell is further broken down into 2 subcells of 4 x 3 blocks each
      * in the following configuration:
      *
      *    +----+----+
      *    |  A |  B |
-     *    +----+----+
-     *    |  C |  D |
-     *    +----+----+
-     *    |  E |  F |
      *    +----+----+
      *
      * @param value the value of the byte to write
@@ -85,36 +81,19 @@ public class SG6ScreenMode extends ScreenMode
     private void drawCharacter(UnsignedByte value, int col, int row) {
         /* Translated position in pixels */
         int x = 32 + (col * 8);
-        int y = 24 + (row * 12);
+        int y = 24 + (row * 6);
 
         /* Background colors */
         int back = backColor;
+        int color = (value.getShort() & 0x70) >> 4;
 
-        int color = (value.getShort() & 0xC0) >> 6;
-
-        /* Subcell A */
-        int on = value.isMasked(0x20) ? 1 : 0;
+        /* Subcell B */
+        int on = value.isMasked(0x8) ? 1 : 0;
         drawBlock(x, y, on == 1 ? color : back);
 
         /* Subcell B */
-        on = value.isMasked(0x10) ? 1 : 0;
-        drawBlock(x + BLOCK_WIDTH, y, on == 1 ? color : back);
-
-        /* Subcell C */
-        on = value.isMasked(0x8) ? 1 : 0;
-        drawBlock(x, y + BLOCK_HEIGHT, on == 1 ? color : back);
-
-        /* Subcell D */
         on = value.isMasked(0x4) ? 1 : 0;
-        drawBlock(x + BLOCK_WIDTH, y + BLOCK_HEIGHT, on == 1 ? color : back);
-
-        /* Subcell E */
-        on = value.isMasked(0x2) ? 1 : 0;
-        drawBlock(x, y + (BLOCK_HEIGHT * 2), on == 1 ? color : back);
-
-        /* Subcell F */
-        on = value.isMasked(0x1) ? 1 : 0;
-        drawBlock(x + BLOCK_WIDTH, y + (BLOCK_HEIGHT * 2), on == 1 ? color : back);
+        drawBlock(x + BLOCK_WIDTH, y, on == 1 ? color : back);
     }
 
     /* Semi-graphics color constants */
@@ -127,9 +106,9 @@ public class SG6ScreenMode extends ScreenMode
 
     /* Block definitions */
     private static final int BLOCK_WIDTH = 4;
-    private static final int BLOCK_HEIGHT = 4;
+    private static final int BLOCK_HEIGHT = 3;
 
-    /* Color definitions for semi-graphics 4 mode */
+    /* Color definitions for semi-graphics 8 mode */
     private final Color colors[] = {
             new Color(40, 224, 40, 255),   /* Green */
             new Color(240, 240, 112, 255), /* Yellow */

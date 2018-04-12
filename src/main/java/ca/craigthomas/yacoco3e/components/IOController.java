@@ -855,7 +855,7 @@ public class IOController
                 }
 
                 if (samControlBits.equals(new UnsignedByte(0x2))) {
-                    // SG8
+                    screen.setMode(ScreenMode.Mode.SG8, 0);
                 }
 
                 if (samControlBits.equals(new UnsignedByte(0x4))) {
