@@ -51,6 +51,10 @@ public class IOController
     protected UnsignedByte pia2DRB;
     protected UnsignedByte pia2CRB;
 
+    /* Video mode related functions */
+    protected UnsignedByte vdgOperatingMode;
+    protected UnsignedByte samControlBits;
+
     /* Condition Code - Carry */
     public static final short CC_C = 0x01;
 
@@ -165,6 +169,9 @@ public class IOController
         }
 
         screen.setIOController(this);
+
+        samControlBits = new UnsignedByte();
+        vdgOperatingMode = new UnsignedByte();
     }
 
     /**
@@ -276,6 +283,9 @@ public class IOController
             /* PIA 2 Control Register A */
             case 0xFF21:
                 return pia2CRA;
+
+            /* VDG Operating Mode */
+
 
             /* PIA 2 Control Register B */
             case 0xFF23:
@@ -450,6 +460,12 @@ public class IOController
                     cassette.motorOff();
                 }
                 pia2CRA = value.copy();
+                break;
+
+            /* VDG Operating Mode */
+            case 0xFF22:
+                vdgOperatingMode = value.copy();
+                updateVideoMode();
                 break;
 
             /* PIA 2 Control Register B */
@@ -664,6 +680,42 @@ public class IOController
                 memory.setTaskPAR(7, value);
                 break;
 
+            /* SAM - Video Display - V0 - Clear */
+            case 0xFFC0:
+                samControlBits.and(~0x1);
+                updateVideoMode();
+                break;
+
+            /* SAM - Video Display - V0 - Set */
+            case 0xFFC1:
+                samControlBits.or(0x1);
+                updateVideoMode();
+                break;
+
+            /* SAM - Video Display - V1 - Clear */
+            case 0xFFC2:
+                samControlBits.and(~0x2);
+                updateVideoMode();
+                break;
+
+            /* SAM - Video Display - V1 - Set */
+            case 0xFFC3:
+                samControlBits.or(0x2);
+                updateVideoMode();
+                break;
+
+            /* SAM - Video Display - V2 - Clear */
+            case 0xFFC4:
+                samControlBits.and(~0x4);
+                updateVideoMode();
+                break;
+
+            /* SAM - Video Display - V2 - Set */
+            case 0xFFC5:
+                samControlBits.or(0x4);
+                updateVideoMode();
+                break;
+
             /* SAM - Display Offset Register - Bit 0 - Clear */
             case 0xFFC6:
                 samDisplayOffsetRegister.and(~0x01);
@@ -789,6 +841,32 @@ public class IOController
             screen.setMemoryOffset(newOffset);
         }
     }
+
+    public void updateVideoMode() {
+        // Semigraphics text checks
+        if (!vdgOperatingMode.isMasked(0x80)) {
+            if (vdgOperatingMode.isMasked(0x10)) {
+                if (samControlBits.equals(new UnsignedByte())) {
+                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                }
+            } else {
+                if (samControlBits.equals(new UnsignedByte())) {
+                    screen.setMode(ScreenMode.Mode.SG4, 0);
+                }
+
+                if (samControlBits.equals(new UnsignedByte(0x2))) {
+                    // SG8
+                }
+
+                if (samControlBits.equals(new UnsignedByte(0x4))) {
+                    // SG12
+                }
+            }
+        } else {
+
+        }
+    }
+
     /**
      * Writes an UnsignedWord to the specified memory address.
      *
