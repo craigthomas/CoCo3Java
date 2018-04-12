@@ -105,7 +105,7 @@ public class SG6ScreenMode extends ScreenMode
         drawBlock(x, y + (BLOCK_HEIGHT * 2), on == 1 ? color : back);
 
         /* Lower Right Bit */
-        on = value.isMasked(0x4) ? 1 : 0;
+        on = value.isMasked(0x1) ? 1 : 0;
         drawBlock(x + BLOCK_WIDTH, y + (BLOCK_HEIGHT * 2), on == 1 ? color : back);
     }
 
