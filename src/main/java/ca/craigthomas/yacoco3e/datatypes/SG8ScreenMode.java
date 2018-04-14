@@ -37,10 +37,11 @@ public class SG8ScreenMode extends ScreenMode
         );
 
         int memoryPointer = memoryOffset;
-        for (int y = 0; y < 128; y++) {
-            for (int x = 0; x < 16; x++) {
+
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 32; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
-                drawCharacter(value, x, y);
+                drawCharacter(value, x, y, y % 4);
                 memoryPointer++;
             }
         }
@@ -78,21 +79,23 @@ public class SG8ScreenMode extends ScreenMode
      * @param col the column to write at
      * @param row the row to write at
      */
-    private void drawCharacter(UnsignedByte value, int col, int row) {
+    private void drawCharacter(UnsignedByte value, int col, int row, int rowMod) {
         /* Translated position in pixels */
         int x = 32 + (col * 8);
-        int y = 24 + (row * 6);
+        int y = 24 + (row * 3);
 
         /* Background colors */
-        int back = backColor;
+        int back = BLACK;
         int color = (value.getShort() & 0x70) >> 4;
 
         /* Subcell B */
-        int on = value.isMasked(0x8) ? 1 : 0;
+        int mask = rowMod == 0 || rowMod == 1 ? 0x8 : 0x2;
+        int on = value.isMasked(mask) ? 1 : 0;
         drawBlock(x, y, on == 1 ? color : back);
 
         /* Subcell B */
-        on = value.isMasked(0x4) ? 1 : 0;
+        mask = rowMod == 0 || rowMod == 1 ? 0x4 : 0x1;
+        on = value.isMasked(mask) ? 1 : 0;
         drawBlock(x + BLOCK_WIDTH, y, on == 1 ? color : back);
     }
 
