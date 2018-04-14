@@ -847,7 +847,7 @@ public class IOController
         if (!vdgOperatingMode.isMasked(0x80)) {
             if (vdgOperatingMode.isMasked(0x10)) {
                 if (samControlBits.equals(new UnsignedByte())) {
-                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 0 : 1);
                 }
             } else {
                 if (samControlBits.equals(new UnsignedByte())) {

@@ -12,11 +12,14 @@ public class SG6ScreenMode extends ScreenMode
     private int foreColor;
     // The background color
     private int backColor;
+    // The color set to use
+    private int colorSet;
 
-    public SG6ScreenMode(int scale) {
+    public SG6ScreenMode(int scale, int colorSet) {
         this.scale = scale;
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
+        this.colorSet = colorSet;
         foreColor = GREEN;
         backColor = BLACK;
         createBackBuffer();
@@ -88,9 +91,12 @@ public class SG6ScreenMode extends ScreenMode
         int y = 24 + (row * 12);
 
         /* Background colors */
-        int back = backColor;
+        int back = BLACK;
 
         int color = (value.getShort() & 0xC0) >> 6;
+        if (colorSet == 1) {
+            color = color + 4;
+        }
 
         /* Subcell A */
         int on = value.isMasked(0x20) ? 1 : 0;

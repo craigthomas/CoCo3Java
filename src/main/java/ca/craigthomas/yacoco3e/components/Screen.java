@@ -47,7 +47,7 @@ public class Screen
                 break;
 
             case SG6:
-                this.screenMode = new SG6ScreenMode(scale);
+                this.screenMode = new SG6ScreenMode(scale, colorSet);
                 break;
 
             case SG8:
