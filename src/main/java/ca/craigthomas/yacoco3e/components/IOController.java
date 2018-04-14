@@ -861,6 +861,10 @@ public class IOController
                 if (samControlBits.equals(new UnsignedByte(0x4))) {
                     screen.setMode(ScreenMode.Mode.SG12, 0);
                 }
+
+                if (samControlBits.equals(new UnsignedByte(0x6))) {
+                    screen.setMode(ScreenMode.Mode.SG24, 0);
+                }
             }
         } else {
 
