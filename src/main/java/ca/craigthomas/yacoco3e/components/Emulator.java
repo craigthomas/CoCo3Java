@@ -219,6 +219,12 @@ public class Emulator
      */
     private void refreshScreen()
     {
+        // Check to see if the resolution of the screen changed
+        if (screen.getResolutionChanged()) {
+            attachCanvas();
+            screen.clearResolutionChanged();
+        }
+
         Graphics2D graphics = (Graphics2D) canvas.getBufferStrategy().getDrawGraphics();
         graphics.drawImage(screen.getBackBuffer(), null, 0, 0);
         graphics.dispose();
