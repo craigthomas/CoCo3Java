@@ -53,6 +53,10 @@ public class Screen
             case SG8:
                 this.screenMode = new SG8ScreenMode(scale);
                 break;
+
+            case SG12:
+                this.screenMode = new SG12ScreenMode(scale);
+                break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
         this.screenMode.setIOController(io);

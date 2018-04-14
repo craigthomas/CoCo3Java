@@ -859,7 +859,7 @@ public class IOController
                 }
 
                 if (samControlBits.equals(new UnsignedByte(0x4))) {
-                    // SG12
+                    screen.setMode(ScreenMode.Mode.SG12, 0);
                 }
             }
         } else {
