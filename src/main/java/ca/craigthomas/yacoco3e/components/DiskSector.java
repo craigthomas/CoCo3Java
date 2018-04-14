@@ -127,7 +127,8 @@ public class DiskSector
 
             case LOAD_VIRTUAL_DISK:
                 id.restore();
-                data.restore();
+                data.restorePastGap();
+                pointer = 0;
                 break;
         }
 
