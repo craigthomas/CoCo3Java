@@ -205,7 +205,6 @@ public class DiskSector
     public void writeSectorData(byte value) {
         if (doubleDensity) {
             if (pointer < 256) {
-                System.out.println("Actually wrote to data " + new UnsignedByte(value));
                 data.write(value);
                 pointer++;
             }
