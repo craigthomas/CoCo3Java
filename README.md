@@ -181,7 +181,7 @@ Below are a list of items that are currently working:
 - Can run a Super Extended Color Basic ROM
 - 6809 CPU full instruction set
 - 512K physical memory
-- Semigraphics Mode `SG4`
+- Semigraphics Mode `SG4`, `SG6`, `SG8`, `SG12`, `SG24`
 - Keyboard
 - ROM/RAM Mapping  
 - MMU Task PARs (`$FFA8` - `$FFAF`)
@@ -190,6 +190,8 @@ Below are a list of items that are currently working:
 - INIT 1 Register (`$FF91`)
 - SAM Display Offset Registers (`$FFC6` - `$FFD3`)
 - SAM TY Bits (`$FFDE`, `$FFDF`) 
+- SAM Mode Registers (`$FFC0` - `$FFC5`)
+- VDG Register (`$FF22`)
 - Cassette tape interface
 - IRQ Interrupts (both PIA and GIME)
 - Disk drive sub-system
@@ -201,12 +203,9 @@ Yet to be implemented:
 
 - `JV3` style virtual disk drive support
 - `DMK` style virtual disk drive support
-- Semigraphcs Modes `SG6`, `SG8`, `SG12`, `SG24`
 - Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`
 - High resolution text modes (40, 64, 80 columns)
 - High resolution graphic modes (192, 200, 255 x 64, 80, 128, 160, 256, 320, 512, 640)  
-- VDG Register (`$FF22`)
-- SAM Mode Register (`$FFC0` - `$FFC5`)
 - Video Resolution Register (`$FF99`)
 - Border Color Register (`$FF9A`)
 - Vertical Scroll Register (`$FF9C`)
