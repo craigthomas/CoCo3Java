@@ -68,6 +68,10 @@ public class Screen
             case G1C:
                 this.screenMode = new G1CScreenMode(scale, colorSet);
                 break;
+
+            case G1R:
+                this.screenMode = new G1RScreenMode(scale, colorSet);
+                break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
         this.screenMode.setIOController(io);

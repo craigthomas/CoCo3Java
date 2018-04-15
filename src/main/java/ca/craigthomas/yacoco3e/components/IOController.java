@@ -868,8 +868,14 @@ public class IOController
                 }
             }
         } else {
-            if (!vdgOperatingMode.isMasked(0x70) && samControlBits.equals(new UnsignedByte(0x1))) {
+            int vdgBytes = vdgOperatingMode.getShort() & 0x70;
+            if (vdgBytes == 0x00 && samControlBits.equals(new UnsignedByte(0x1))) {
                 screen.setMode(ScreenMode.Mode.G1C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x10 && samControlBits.equals(new UnsignedByte(0x1))) {
+                screen.setMode(ScreenMode.Mode.G1R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
             }
         }
     }
