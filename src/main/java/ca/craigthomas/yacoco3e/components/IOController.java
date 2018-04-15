@@ -285,7 +285,8 @@ public class IOController
                 return pia2CRA;
 
             /* VDG Operating Mode */
-
+            case 0xFF22:
+                return vdgOperatingMode;
 
             /* PIA 2 Control Register B */
             case 0xFF23:
@@ -847,7 +848,7 @@ public class IOController
         if (!vdgOperatingMode.isMasked(0x80)) {
             if (vdgOperatingMode.isMasked(0x10)) {
                 if (samControlBits.equals(new UnsignedByte())) {
-                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 0 : 1);
+                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
                 }
             } else {
                 if (samControlBits.equals(new UnsignedByte())) {
@@ -867,7 +868,9 @@ public class IOController
                 }
             }
         } else {
-
+            if (!vdgOperatingMode.isMasked(0x70) && samControlBits.equals(new UnsignedByte(0x1))) {
+                screen.setMode(ScreenMode.Mode.G1C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+            }
         }
     }
 

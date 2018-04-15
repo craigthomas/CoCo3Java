@@ -23,12 +23,15 @@ public class Screen
     private int scale;
     // The current mode
     private ScreenMode.Mode currentMode;
+    // The saved color set
+    private int colorSet;
 
     public Screen(int scale) {
         this.scale = scale;
         resolutionChanged = false;
         currentMode = ScreenMode.Mode.SG6;
-        setMode(ScreenMode.Mode.SG4, 0);
+        colorSet = 0;
+        setMode(ScreenMode.Mode.SG4, colorSet);
     }
 
     /**
@@ -37,7 +40,7 @@ public class Screen
      * @param mode the video mode to set
      */
     public void setMode(ScreenMode.Mode mode, int colorSet) {
-        if (currentMode.equals(mode)) {
+        if (currentMode.equals(mode) && colorSet == this.colorSet) {
             return;
         }
 
@@ -61,9 +64,14 @@ public class Screen
             case SG24:
                 this.screenMode = new SG24ScreenMode(scale);
                 break;
+
+            case G1C:
+                this.screenMode = new G1CScreenMode(scale, colorSet);
+                break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
         this.screenMode.setIOController(io);
+        this.colorSet = colorSet;
         resolutionChanged = true;
         currentMode = mode;
     }
