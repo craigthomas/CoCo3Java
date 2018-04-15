@@ -25,7 +25,7 @@ public abstract class ScreenMode
     protected IOController io;
 
     public enum Mode {
-        SG4, SG6, SG8, SG12, SG24, G1C, G1R
+        SG4, SG6, SG8, SG12, SG24, G1C, G1R, G2C, G2R, G3C, G3R, G6C, G6R
     }
 
     /**

@@ -877,6 +877,30 @@ public class IOController
                 screen.setMode(ScreenMode.Mode.G1R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
                 return;
             }
+            if (vdgBytes == 0x20 && samControlBits.equals(new UnsignedByte(0x2))) {
+                screen.setMode(ScreenMode.Mode.G2C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x30 && samControlBits.equals(new UnsignedByte(0x3))) {
+                screen.setMode(ScreenMode.Mode.G2R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x40 && samControlBits.equals(new UnsignedByte(0x4))) {
+                screen.setMode(ScreenMode.Mode.G3C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x50 && samControlBits.equals(new UnsignedByte(0x5))) {
+                screen.setMode(ScreenMode.Mode.G3R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x60 && samControlBits.equals(new UnsignedByte(0x6))) {
+                screen.setMode(ScreenMode.Mode.G6C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x70 && samControlBits.equals(new UnsignedByte(0x6))) {
+                screen.setMode(ScreenMode.Mode.G6R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
         }
     }
 
