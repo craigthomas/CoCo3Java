@@ -76,6 +76,10 @@ public class Screen
             case G2C:
                 this.screenMode = new G2CScreenMode(scale, colorSet);
                 break;
+
+            case G2R:
+                this.screenMode = new G2RScreenMode(scale, colorSet);
+                break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
         this.screenMode.setIOController(io);
