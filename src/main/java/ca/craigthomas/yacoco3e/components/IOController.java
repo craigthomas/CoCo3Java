@@ -285,7 +285,8 @@ public class IOController
                 return pia2CRA;
 
             /* VDG Operating Mode */
-
+            case 0xFF22:
+                return vdgOperatingMode;
 
             /* PIA 2 Control Register B */
             case 0xFF23:
@@ -847,7 +848,7 @@ public class IOController
         if (!vdgOperatingMode.isMasked(0x80)) {
             if (vdgOperatingMode.isMasked(0x10)) {
                 if (samControlBits.equals(new UnsignedByte())) {
-                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 0 : 1);
+                    screen.setMode(ScreenMode.Mode.SG6, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
                 }
             } else {
                 if (samControlBits.equals(new UnsignedByte())) {
@@ -867,7 +868,39 @@ public class IOController
                 }
             }
         } else {
-
+            int vdgBytes = vdgOperatingMode.getShort() & 0x70;
+            if (vdgBytes == 0x00 && samControlBits.equals(new UnsignedByte(0x1))) {
+                screen.setMode(ScreenMode.Mode.G1C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x10 && samControlBits.equals(new UnsignedByte(0x1))) {
+                screen.setMode(ScreenMode.Mode.G1R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x20 && samControlBits.equals(new UnsignedByte(0x2))) {
+                screen.setMode(ScreenMode.Mode.G2C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x30 && samControlBits.equals(new UnsignedByte(0x3))) {
+                screen.setMode(ScreenMode.Mode.G2R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x40 && samControlBits.equals(new UnsignedByte(0x4))) {
+                screen.setMode(ScreenMode.Mode.G3C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x50 && samControlBits.equals(new UnsignedByte(0x5))) {
+                screen.setMode(ScreenMode.Mode.G3R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x60 && samControlBits.equals(new UnsignedByte(0x6))) {
+                screen.setMode(ScreenMode.Mode.G6C, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
+            if (vdgBytes == 0x70 && samControlBits.equals(new UnsignedByte(0x6))) {
+                screen.setMode(ScreenMode.Mode.G6R, vdgOperatingMode.isMasked(0x8) ? 1 : 0);
+                return;
+            }
         }
     }
 
