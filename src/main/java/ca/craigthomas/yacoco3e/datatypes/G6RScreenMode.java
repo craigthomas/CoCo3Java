@@ -6,14 +6,14 @@ package ca.craigthomas.yacoco3e.datatypes;
 
 import java.awt.*;
 
-public class G2RScreenMode extends ScreenMode
+public class G6RScreenMode extends ScreenMode
 {
     // The background color
     private int backColor;
     // The color mode to apply
     private int colorMode;
 
-    public G2RScreenMode(int scale, int colorMode) {
+    public G6RScreenMode(int scale, int colorMode) {
         this.scale = scale;
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
@@ -34,8 +34,8 @@ public class G2RScreenMode extends ScreenMode
 
         int memoryPointer = memoryOffset;
 
-        for (int y = 0; y < 96; y++) {
-            for (int x = 0; x < 16; x++) {
+        for (int y = 0; y < 192; y++) {
+            for (int x = 0; x < 32; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
                 drawCharacter(value, x, y);
                 memoryPointer++;
@@ -55,7 +55,7 @@ public class G2RScreenMode extends ScreenMode
 
     private void drawCharacter(UnsignedByte value, int col, int row) {
         /* Translated position in pixels */
-        int x = 32 + (col * (PIXELS_PER_BIT * BLOCK_WIDTH));
+        int x = 32 + (col * (BLOCKS_PER_BYTE * BLOCK_WIDTH));
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Pixel 1 */
@@ -108,11 +108,11 @@ public class G2RScreenMode extends ScreenMode
     private static final int SCREEN_HEIGHT = 240;
 
     /* Block definitions */
-    private static final int BLOCK_WIDTH = 2;
-    private static final int BLOCK_HEIGHT = 2;
-    private static final int PIXELS_PER_BIT = 8;
+    private static final int BLOCK_WIDTH = 1;
+    private static final int BLOCK_HEIGHT = 1;
+    private static final int BLOCKS_PER_BYTE = 8;
 
-    /* Color definitions for graphics G2R mode */
+    /* Color definitions for graphics G3R mode */
     private final Color colors[] = {
             new Color(0, 0, 0, 255),        /* Black */
             new Color(40, 224, 40, 255),    /* Green */

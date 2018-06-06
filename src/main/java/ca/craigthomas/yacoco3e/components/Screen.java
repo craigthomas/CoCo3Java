@@ -44,6 +44,7 @@ public class Screen
             return;
         }
 
+        System.out.println("Set screen mode " + mode);
         switch (mode) {
             case SG4:
                 this.screenMode = new SG4ScreenMode(scale);
@@ -79,6 +80,22 @@ public class Screen
 
             case G2R:
                 this.screenMode = new G2RScreenMode(scale, colorSet);
+                break;
+
+            case G3C:
+                this.screenMode = new G3CScreenMode(scale, colorSet);
+                break;
+
+            case G3R:
+                this.screenMode = new G3RScreenMode(scale, colorSet);
+                break;
+
+            case G6C:
+                this.screenMode = new G6CScreenMode(scale, colorSet);
+                break;
+
+            case G6R:
+                this.screenMode = new G6RScreenMode(scale, colorSet);
                 break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
