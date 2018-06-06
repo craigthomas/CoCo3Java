@@ -8,6 +8,31 @@ import java.awt.*;
 
 public class SG12ScreenMode extends ScreenMode
 {
+    /* Semi-graphics color constants */
+    private static final int GREEN = 0;
+    private static final int BLACK = 8;
+
+    /* Screen size for semi-graphics 4 mode */
+    private static final int SCREEN_WIDTH = 320;
+    private static final int SCREEN_HEIGHT = 240;
+
+    /* Block definitions */
+    private static final int BLOCK_WIDTH = 4;
+    private static final int BLOCK_HEIGHT = 2;
+
+    /* Color definitions for semi-graphics 12 mode */
+    private final Color colors[] = {
+            new Color(40, 224, 40, 255),   /* Green */
+            new Color(240, 240, 112, 255), /* Yellow */
+            new Color(32, 32, 216, 255),   /* Blue */
+            new Color(168, 32, 32, 255),   /* Red */
+            new Color(240, 240, 240, 255), /* White */
+            new Color(40, 168, 168, 255),  /* Cyan */
+            new Color(211, 97, 250, 255),  /* Magenta */
+            new Color(240, 136, 40, 255),  /* Orange */
+            new Color(0, 0, 0, 255)        /* Black */
+    };
+
     // The foreground color
     private int foreColor;
     // The background color
@@ -98,29 +123,4 @@ public class SG12ScreenMode extends ScreenMode
         on = value.isMasked(mask) ? 1 : 0;
         drawBlock(x + BLOCK_WIDTH, y, on == 1 ? color : back);
     }
-
-    /* Semi-graphics color constants */
-    private static final int GREEN = 0;
-    private static final int BLACK = 8;
-
-    /* Screen size for semi-graphics 4 mode */
-    private static final int SCREEN_WIDTH = 320;
-    private static final int SCREEN_HEIGHT = 240;
-
-    /* Block definitions */
-    private static final int BLOCK_WIDTH = 4;
-    private static final int BLOCK_HEIGHT = 2;
-
-    /* Color definitions for semi-graphics 12 mode */
-    private final Color colors[] = {
-            new Color(40, 224, 40, 255),   /* Green */
-            new Color(240, 240, 112, 255), /* Yellow */
-            new Color(32, 32, 216, 255),   /* Blue */
-            new Color(168, 32, 32, 255),   /* Red */
-            new Color(240, 240, 240, 255), /* White */
-            new Color(40, 168, 168, 255),  /* Cyan */
-            new Color(211, 97, 250, 255),  /* Magenta */
-            new Color(240, 136, 40, 255),  /* Orange */
-            new Color(0, 0, 0, 255)        /* Black */
-    };
 }

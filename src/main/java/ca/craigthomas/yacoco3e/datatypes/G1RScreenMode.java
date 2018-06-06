@@ -8,6 +8,26 @@ import java.awt.*;
 
 public class G1RScreenMode extends ScreenMode
 {
+    /* Semi-graphics color constants */
+    private static final int GREEN = 0;
+    private static final int WHITE = 3;
+
+    /* Screen size for the mode */
+    private static final int SCREEN_WIDTH = 320;
+    private static final int SCREEN_HEIGHT = 240;
+
+    /* Block definitions */
+    private static final int BLOCK_WIDTH = 2;
+    private static final int BLOCK_HEIGHT = 3;
+
+    /* Color definitions for graphics G1C mode */
+    private final Color colors[] = {
+            new Color(0, 0, 0, 255),        /* Black */
+            new Color(40, 224, 40, 255),    /* Green */
+            new Color(0, 0, 0, 255),        /* Black */
+            new Color(240, 240, 240, 255),  /* White */
+    };
+
     // The background color
     private int backColor;
     // The color mode to apply
@@ -98,24 +118,4 @@ public class G1RScreenMode extends ScreenMode
         color |= (colorMode << 1);
         drawBlock(x + (BLOCK_WIDTH * 7), y, color);
     }
-
-    /* Semi-graphics color constants */
-    private static final int GREEN = 0;
-    private static final int WHITE = 3;
-
-    /* Screen size for the mode */
-    private static final int SCREEN_WIDTH = 320;
-    private static final int SCREEN_HEIGHT = 240;
-
-    /* Block definitions */
-    private static final int BLOCK_WIDTH = 2;
-    private static final int BLOCK_HEIGHT = 3;
-
-    /* Color definitions for graphics G1C mode */
-    private final Color colors[] = {
-            new Color(0, 0, 0, 255),        /* Black */
-            new Color(40, 224, 40, 255),    /* Green */
-            new Color(0, 0, 0, 255),        /* Black */
-            new Color(240, 240, 240, 255),  /* White */
-    };
 }
