@@ -185,6 +185,11 @@ public class Cassette
      * @param newByte the byte to interpret
      */
     public void byteInput(UnsignedByte newByte) {
+        /* Make sure we are set to record */
+        if (mode != Mode.RECORD) {
+            return;
+        }
+
         float voltage = 0.0f;
 
         /* Interpret the voltage based on bit value set */
