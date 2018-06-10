@@ -244,6 +244,7 @@ public class CassetteTest
     public void testByteInputRecordsCorrectByte() {
         cassette.inputBuffer = new byte[2];
         cassette.rewind();
+        cassette.record();
         cassette.motorOn();
 
         /* Record the pattern F0 */
@@ -367,6 +368,7 @@ public class CassetteTest
     public void testByteInputShortPulsesIgnored() {
         cassette.inputBuffer = new byte[2];
         cassette.rewind();
+        cassette.record();
         cassette.motorOn();
 
         /* Record the pattern F0 */
