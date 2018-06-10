@@ -6,12 +6,7 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
-import org.apache.commons.io.*;
-
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.nio.ByteOrder;
-import java.util.logging.Logger;
 
 import static ca.craigthomas.yacoco3e.common.IO.loadStream;
 

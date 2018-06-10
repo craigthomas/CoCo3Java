@@ -44,6 +44,7 @@ public class Screen
             return;
         }
 
+        System.out.println("Set screen mode " + mode);
         switch (mode) {
             case SG4:
                 this.screenMode = new SG4ScreenMode(scale);

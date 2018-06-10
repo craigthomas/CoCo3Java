@@ -16,26 +16,19 @@ import static org.mockito.Mockito.verify;
 
 public class DiskDriveTest
 {
-    private Memory memory;
-    private RegisterSet regs;
-    private Keyboard keyboard;
-    private Screen screen;
-    private Cassette cassette;
-    private IOController io;
     private IOController ioSpy;
-    private CPU cpu;
     private DiskDrive drive;
 
     @Before
-    public void setUp() throws IllegalIndexedPostbyteException{
-        memory = new Memory();
-        regs = new RegisterSet();
-        keyboard = new Keyboard();
-        screen = new Screen(1);
-        cassette = new Cassette();
-        io = new IOController(memory, regs, keyboard, screen, cassette);
+    public void setUp() {
+        Memory memory = new Memory();
+        RegisterSet regs = new RegisterSet();
+        Keyboard keyboard = new Keyboard();
+        Screen screen = new Screen(1);
+        Cassette cassette = new Cassette();
+        IOController io = new IOController(memory, regs, keyboard, screen, cassette);
         ioSpy = spy(io);
-        cpu = new CPU(io);
+        CPU cpu = new CPU(io);
         ioSpy.setCPU(cpu);
         drive = new DiskDrive(ioSpy);
     }

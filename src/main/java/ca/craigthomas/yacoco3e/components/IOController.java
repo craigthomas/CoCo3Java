@@ -348,9 +348,10 @@ public class IOController
             case 0xFFFE:
             case 0xFFFF:
                 return memory.readROMByte(address);
-        }
 
-        return memory.readByte(new UnsignedWord(address));
+            default:
+                return memory.readByte(new UnsignedWord(address));
+        }
     }
 
     /**
@@ -1241,9 +1242,10 @@ public class IOController
                 regs.incrementPC();
                 result = readWord(nWord);
                 return new MemoryResult(3, result);
-        }
 
-        throw new IllegalIndexedPostbyteException(postByte);
+            default:
+                throw new IllegalIndexedPostbyteException(postByte);
+        }
     }
 
     /**
@@ -1307,9 +1309,10 @@ public class IOController
 
             case CC:
                 return regs.getCC();
-        }
 
-        return null;
+            default:
+                return null;
+        }
     }
 
     /**
@@ -1561,8 +1564,8 @@ public class IOController
     public void reset() {
         /* Reset Condition Code register */
         regs.setCC(new UnsignedByte(0));
-        regs.cc.or(IOController.CC_I);
-        regs.cc.or(IOController.CC_F);
+        regs.getCC().or(IOController.CC_I);
+        regs.getCC().or(IOController.CC_F);
 
         /* Disable MMU */
         memory.disableMMU();
