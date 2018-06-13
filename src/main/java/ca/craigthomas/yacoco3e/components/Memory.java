@@ -6,12 +6,7 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
-import org.apache.commons.io.*;
-
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.nio.ByteOrder;
-import java.util.logging.Logger;
 
 import static ca.craigthomas.yacoco3e.common.IO.loadStream;
 
@@ -36,10 +31,10 @@ public class Memory
     protected short [] executivePAR;
     protected short [] taskPAR;
     protected short [] defaultPAR;
-    boolean executiveParEnabled;
-    boolean mmuEnabled;
-    boolean allRAMMode;
-    UnsignedByte romMode;
+    protected boolean executiveParEnabled;
+    protected boolean mmuEnabled;
+    protected boolean allRAMMode;
+    protected UnsignedByte romMode;
 
     protected static final int TOTAL_PAGES = 0x3F;
 
@@ -333,7 +328,7 @@ public class Memory
         return new UnsignedByte(readPhysicalByte(address));
     }
 
-    boolean loadROM(byte[] streamData) {
+    public boolean loadROM(byte[] streamData) {
         int byteCounter = 0;
         if (streamData != null) {
             for (byte data : streamData) {
@@ -345,7 +340,7 @@ public class Memory
         return false;
     }
 
-    boolean loadCartROM(byte[] streamData) {
+    public boolean loadCartROM(byte[] streamData) {
         int byteCounter = 0;
         if (streamData != null) {
             for (byte data : streamData) {
@@ -363,7 +358,7 @@ public class Memory
      * @param stream The open stream to read from
      * @param offset The memory location to start loading the file into
      */
-    boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
+    public boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
         byte[] data = loadStream(stream);
         UnsignedWord currentOffset = offset.copy();
 

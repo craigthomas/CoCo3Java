@@ -24,7 +24,6 @@ public class Emulator
 {
     /* The main emulator components */
     private Screen screen;
-    private Memory memory;
     private Keyboard keyboard;
     private CPU cpu;
     private IOController ioController;
@@ -41,7 +40,7 @@ public class Emulator
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
 
     public Emulator(int scaleFactor, String romFile, boolean trace, String cassetteFile, String diskBasicROM) {
-        memory = new Memory();
+        Memory memory = new Memory();
         keyboard = new Keyboard();
         screen = new Screen(scaleFactor);
         cassette = new Cassette();
@@ -114,7 +113,7 @@ public class Emulator
         cassetteMenu.add(newCassetteItem);
 
         JMenuItem flushItem = new JMenuItem("Flush Buffer to File", KeyEvent.VK_F);
-        flushItem.addActionListener(new FlushCassetteMenuItemActionListener(this, cassette));
+        flushItem.addActionListener(new FlushCassetteMenuItemActionListener(cassette));
         cassetteMenu.add(flushItem);
 
         cassetteMenu.addSeparator();
@@ -255,7 +254,7 @@ public class Emulator
     public void openCassetteFileDialog() {
         JFileChooser fileChooser = new JFileChooser();
         FileFilter filter1 = new FileNameExtensionFilter("Cassette Files (*.cas)", "cas");
-        fileChooser.setCurrentDirectory(new java.io.File("."));
+        fileChooser.setCurrentDirectory(new File("."));
         fileChooser.setDialogTitle("Open Cassette File");
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(filter1);

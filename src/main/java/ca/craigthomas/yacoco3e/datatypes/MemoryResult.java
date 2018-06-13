@@ -11,10 +11,10 @@ package ca.craigthomas.yacoco3e.datatypes;
 public class MemoryResult
 {
     /* The number of bytes that were read */
-    int bytesConsumed;
+    private int bytesConsumed;
 
     /* The result of the memory operation */
-    UnsignedWord result;
+    private UnsignedWord result;
 
     public MemoryResult() {
         this(0, new UnsignedWord());

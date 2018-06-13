@@ -19,18 +19,10 @@ import static org.mockito.Mockito.verify;
 
 public class CPUIntegrationTest
 {
-    private Screen screen;
-
-    private CPU cpu;
     private CPU cpuSpy;
 
-    private Memory memory;
     private Memory memorySpy;
 
-    private Cassette cassette;
-    private Cassette cassetteSpy;
-
-    private IOController io;
     private IOController ioSpy;
 
     private RegisterSet registerSet;
@@ -43,22 +35,22 @@ public class CPUIntegrationTest
     private UnsignedWord expectedExtendedWord;
 
     @Before
-    public void setUp() throws IllegalIndexedPostbyteException {
-        memory = new Memory();
+    public void setUp() {
+        Memory memory = new Memory();
         memorySpy = spy(memory);
 
         registerSet = new RegisterSet();
         registerSetSpy = spy(registerSet);
 
-        cassette = new Cassette();
-        cassetteSpy = spy(cassette);
+        Cassette cassette = new Cassette();
+        Cassette cassetteSpy = spy(cassette);
 
-        screen = new Screen(1);
+        Screen screen = new Screen(1);
 
-        io = new IOController(memorySpy, registerSetSpy, new Keyboard(), screen, cassetteSpy);
+        IOController io = new IOController(memorySpy, registerSetSpy, new Keyboard(), screen, cassetteSpy);
         ioSpy = spy(io);
 
-        cpu = new CPU(ioSpy);
+        CPU cpu = new CPU(ioSpy);
         cpuSpy = spy(cpu);
 
         ioSpy.setDP(new UnsignedByte(0xA0));

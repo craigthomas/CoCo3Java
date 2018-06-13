@@ -14,15 +14,15 @@ import java.util.function.Function;
 public class CPU extends Thread
 {
     /* CPU Internal Variables */
-    String opShortDesc;
-    String opLongDesc;
-    IOController io;
+    private String opShortDesc;
+    private String opLongDesc;
+    private IOController io;
 
     /* Whether the CPU should be in a running state */
-    boolean alive;
+    private boolean alive;
 
     /* Whether trace output should occur */
-    boolean trace;
+    private boolean trace;
 
     /* Software Interrupt Vectors */
     public final static UnsignedWord SWI3 = new UnsignedWord(0xFFF2);
@@ -30,9 +30,9 @@ public class CPU extends Thread
     public final static UnsignedWord SWI = new UnsignedWord(0xFFFA);
 
     /* Interrupt request flags */
-    boolean fireIRQ;
-    boolean fireFIRQ;
-    boolean fireNMI;
+    private boolean fireIRQ;
+    private boolean fireFIRQ;
+    private boolean fireNMI;
 
     public CPU(IOController io) {
         this.io = io;
@@ -65,7 +65,7 @@ public class CPU extends Thread
      *
      * @return the number of ticks taken up by the instruction
      */
-    int executeInstruction() throws IllegalIndexedPostbyteException {
+    public int executeInstruction() throws IllegalIndexedPostbyteException {
         int operationTicks = 0;
         MemoryResult memoryResult = new MemoryResult();
         UnsignedByte operand = io.readByte(io.getWordRegister(Register.PC));
@@ -73,8 +73,8 @@ public class CPU extends Thread
             System.out.print("PC " + io.getWordRegister(Register.PC) + ", operand " + operand + " : ");
         }
         io.incrementPC();
-        int bytes = 0;
-        UnsignedWord tempWord = new UnsignedWord();
+        int bytes;
+        UnsignedWord tempWord;
         UnsignedByte a;
         UnsignedByte b;
         opShortDesc = "";

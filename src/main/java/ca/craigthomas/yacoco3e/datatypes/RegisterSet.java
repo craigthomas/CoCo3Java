@@ -11,15 +11,15 @@ package ca.craigthomas.yacoco3e.datatypes;
  */
 public class RegisterSet
 {
-    UnsignedByte a;
-    UnsignedByte b;
-    UnsignedByte dp;
-    public UnsignedByte cc;
-    UnsignedWord pc;
-    UnsignedWord x;
-    UnsignedWord y;
-    UnsignedWord s;
-    UnsignedWord u;
+    private UnsignedByte a;
+    private UnsignedByte b;
+    private UnsignedByte dp;
+    private UnsignedByte cc;
+    private UnsignedWord pc;
+    private UnsignedWord x;
+    private UnsignedWord y;
+    private UnsignedWord s;
+    private UnsignedWord u;
 
     public RegisterSet() {
         cc = new UnsignedByte();

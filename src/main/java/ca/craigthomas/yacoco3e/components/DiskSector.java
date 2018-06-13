@@ -124,11 +124,15 @@ public class DiskSector
                 data.restore();
                 gap4.restore();
                 currentField = FIELD.INDEX;
+                break;
 
             case LOAD_VIRTUAL_DISK:
                 id.restore();
                 data.restorePastGap();
                 pointer = 0;
+                break;
+
+            default:
                 break;
         }
 
