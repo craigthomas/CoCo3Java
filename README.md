@@ -182,6 +182,7 @@ Below are a list of items that are currently working:
 - 6809 CPU full instruction set
 - 512K physical memory
 - Semigraphics Mode `SG4`, `SG6`, `SG8`, `SG12`, `SG24`
+- Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`
 - Keyboard
 - ROM/RAM Mapping  
 - MMU Task PARs (`$FFA8` - `$FFAF`)
@@ -203,7 +204,6 @@ Yet to be implemented:
 
 - `JV3` style virtual disk drive support
 - `DMK` style virtual disk drive support
-- Graphics Modes `G1C`, `G1R`, `G2C`, `G2R`, `G3C`, `G3R`, `G6C`, `G6R`
 - High resolution text modes (40, 64, 80 columns)
 - High resolution graphic modes (192, 200, 255 x 64, 80, 128, 160, 256, 320, 512, 640)  
 - Video Resolution Register (`$FF99`)
