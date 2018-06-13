@@ -5,7 +5,6 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -352,6 +351,9 @@ public class Keyboard extends KeyAdapter
             case KeyEvent.VK_AT:
                 column0.or(0x01);
                 break;
+
+            default:
+                break;
         }
     }
 
@@ -638,6 +640,9 @@ public class Keyboard extends KeyAdapter
             /* @ */
             case KeyEvent.VK_AT:
                 column0.and(~0x01);
+                break;
+
+            default:
                 break;
         }
     }

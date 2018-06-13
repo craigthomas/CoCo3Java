@@ -1035,8 +1035,10 @@ public class IOController
 
             case 0x3:
                 return Register.S;
+
+            default:
+                return Register.UNKNOWN;
         }
-        return Register.UNKNOWN;
     }
 
     /**

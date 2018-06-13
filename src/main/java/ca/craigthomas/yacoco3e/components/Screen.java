@@ -97,6 +97,9 @@ public class Screen
             case G6R:
                 this.screenMode = new G6RScreenMode(scale, colorSet);
                 break;
+
+            default:
+                break;
         }
         this.screenMode.setMemoryOffset(memoryOffset);
         this.screenMode.setIOController(io);

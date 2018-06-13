@@ -131,6 +131,9 @@ public class DiskSector
                 data.restorePastGap();
                 pointer = 0;
                 break;
+
+            default:
+                break;
         }
 
         this.command = command;

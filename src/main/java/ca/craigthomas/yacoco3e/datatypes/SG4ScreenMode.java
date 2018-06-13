@@ -13,6 +13,31 @@ public class SG4ScreenMode extends ScreenMode
     // The background color
     private int backColor;
 
+    /* Semi-graphics color constants */
+    private static final int GREEN = 0;
+    private static final int BLACK = 8;
+
+    /* Screen size for semi-graphics 4 mode */
+    private static final int WIDTH = 320;
+    private static final int HEIGHT = 240;
+
+    /* Block definitions */
+    private static final int BLOCK_WIDTH = 4;
+    private static final int BLOCK_HEIGHT = 6;
+
+    /* Color definitions for semi-graphics 4 mode */
+    private final Color colors[] = {
+            new Color(40, 224, 40, 255),   /* Green */
+            new Color(240, 240, 112, 255), /* Yellow */
+            new Color(32, 32, 216, 255),   /* Blue */
+            new Color(168, 32, 32, 255),   /* Red */
+            new Color(240, 240, 240, 255), /* White */
+            new Color(40, 168, 168, 255),  /* Cyan */
+            new Color(211, 97, 250, 255),  /* Magenta */
+            new Color(240, 136, 40, 255),  /* Orange */
+            new Color(0, 0, 0, 255)        /* Black */
+    };
+
     public SG4ScreenMode(int scale) {
         this.scale = scale;
         this.width = WIDTH;
@@ -137,31 +162,6 @@ public class SG4ScreenMode extends ScreenMode
             }
         }
     }
-
-    /* Semi-graphics color constants */
-    private static final int GREEN = 0;
-    private static final int BLACK = 8;
-
-    /* Screen size for semi-graphics 4 mode */
-    private static final int WIDTH = 320;
-    private static final int HEIGHT = 240;
-
-    /* Block definitions */
-    private static final int BLOCK_WIDTH = 4;
-    private static final int BLOCK_HEIGHT = 6;
-
-    /* Color definitions for semi-graphics 4 mode */
-    private final Color colors[] = {
-            new Color(40, 224, 40, 255),   /* Green */
-            new Color(240, 240, 112, 255), /* Yellow */
-            new Color(32, 32, 216, 255),   /* Blue */
-            new Color(168, 32, 32, 255),   /* Red */
-            new Color(240, 240, 240, 255), /* White */
-            new Color(40, 168, 168, 255),  /* Cyan */
-            new Color(211, 97, 250, 255),  /* Magenta */
-            new Color(240, 136, 40, 255),  /* Orange */
-            new Color(0, 0, 0, 255)        /* Black */
-    };
 
     private final int SG4_CHARACTERS [][][] = {
             {

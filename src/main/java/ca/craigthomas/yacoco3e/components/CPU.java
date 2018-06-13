@@ -14,15 +14,15 @@ import java.util.function.Function;
 public class CPU extends Thread
 {
     /* CPU Internal Variables */
-    String opShortDesc;
-    String opLongDesc;
-    IOController io;
+    private String opShortDesc;
+    private String opLongDesc;
+    private IOController io;
 
     /* Whether the CPU should be in a running state */
-    boolean alive;
+    private boolean alive;
 
     /* Whether trace output should occur */
-    boolean trace;
+    private boolean trace;
 
     /* Software Interrupt Vectors */
     public final static UnsignedWord SWI3 = new UnsignedWord(0xFFF2);
