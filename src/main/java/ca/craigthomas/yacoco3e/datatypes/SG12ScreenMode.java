@@ -63,10 +63,10 @@ public class SG12ScreenMode extends ScreenMode
 
         int memoryPointer = memoryOffset;
 
-        for (int y = 0; y < 128; y++) {
+        for (int y = 0; y < 96; y++) {
             for (int x = 0; x < 32; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
-                drawCharacter(value, x, y, y % 6);
+                drawCharacter(value, x, y, y % 5);
                 memoryPointer++;
             }
         }
@@ -106,8 +106,8 @@ public class SG12ScreenMode extends ScreenMode
      */
     private void drawCharacter(UnsignedByte value, int col, int row, int rowMod) {
         /* Translated position in pixels */
-        int x = 32 + (col * 8);
-        int y = 24 + (row * 2);
+        int x = 32 + (col * (BLOCK_WIDTH * 2));
+        int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Background colors */
         int back = BLACK;

@@ -108,6 +108,10 @@ public class Screen
         currentMode = mode;
     }
 
+    public ScreenMode.Mode getMode() {
+        return currentMode;
+    }
+
     /**
      * Sets an IO controller.
      *
@@ -130,12 +134,12 @@ public class Screen
     }
 
     /**
-     * Returns true if the memory offset of the backbuffer has changed.
+     * Returns the area in physical memory where the screen should draw from.
      *
-     * @return true if the memory offset window has changed
+     * @return the offset in physical memory where the screen should draw from
      */
     public int getMemoryOffset() {
-        return screenMode.getMemoryOffset();
+        return memoryOffset;
     }
 
     /**
