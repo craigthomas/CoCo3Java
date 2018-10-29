@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/34856186055249429f2b80c9d286fc8d)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
-[![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge)](https://dependencyci.com/github/craigthomas/CoCo3Java)
+[![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge?style=flat)](https://dependencyci.com/github/craigthomas/CoCo3Java)
 
 ## What Is It?
 
