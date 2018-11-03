@@ -8,29 +8,34 @@ import java.awt.*;
 
 public class G6RScreenMode extends ScreenMode
 {
-    /* Semi-graphics color constants */
-    private static final int GREEN = 1;
-    private static final int WHITE = 3;
-
     /* Screen size for the mode */
     private static final int SCREEN_WIDTH = 320;
     private static final int SCREEN_HEIGHT = 240;
 
     /* Block definitions */
-    private static final int BLOCK_WIDTH = 1;
+    private static final int BLOCK_WIDTH = 2;
     private static final int BLOCK_HEIGHT = 1;
     private static final int BLOCKS_PER_BYTE = 8;
 
     /* Color definitions for graphics G3R mode */
-    private final Color colors[] = {
-            new Color(0, 0, 0, 255),        /* Black */
-            new Color(40, 224, 40, 255),    /* Green */
-            new Color(0, 0, 0, 255),        /* Black */
-            new Color(240, 240, 240, 255),  /* White */
+    private final Color colors[][] = {
+            {
+                // Color Mode 0
+                new Color(0, 0, 0, 255),        /* Black */
+                new Color(40, 224, 40, 255),    /* Green */
+                new Color(240, 136, 40, 255),   /* Orange Artifact */
+                new Color(32, 32, 216, 255),    /* Blue Artifact */
+            }, {
+                // Color Mode 1
+                new Color(0, 0, 0, 255),        /* Black */
+                new Color(32, 32, 216, 255),    /* Blue Artifact */
+                new Color(255, 60, 32, 255),   /* Orange Artifact */
+                new Color(240, 240, 240, 255),  /* White */
+            }
     };
 
-    // The background color
-    private int backColor;
+    private final Color background = new Color(240, 240, 240, 255);
+
     // The color mode to apply
     private int colorMode;
 
@@ -39,18 +44,13 @@ public class G6RScreenMode extends ScreenMode
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
         this.colorMode = colorMode;
-        if (colorMode == 0) {
-            backColor = GREEN;
-        } else {
-            backColor = WHITE;
-        }
         createBackBuffer();
     }
 
     @Override
     public void refreshScreen() {
         Graphics2D graphics = backBuffer.createGraphics();
-        graphics.setColor(colors[backColor]);
+        graphics.setColor(background);
         graphics.fillRect(0, 0, width * scale, height * scale);
 
         int memoryPointer = memoryOffset;
@@ -69,54 +69,30 @@ public class G6RScreenMode extends ScreenMode
     private void drawBlock(int col, int row, int color) {
         for (int x = col; x < col + BLOCK_WIDTH; x++) {
             for (int y = row; y < row + BLOCK_HEIGHT; y++) {
-                drawPixel(x, y, colors[color]);
+                drawPixel(x, y, colors[colorMode][color]);
             }
         }
     }
 
     private void drawCharacter(UnsignedByte value, int col, int row) {
         /* Translated position in pixels */
-        int x = 32 + (col * (BLOCKS_PER_BYTE * BLOCK_WIDTH));
+        int x = 32 + (col * 8);
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Pixel 1 */
-        int color = (value.getShort() & 0x80) >> 7;
-        color |= (colorMode == 1) ? 1 : 0;
+        int color = (value.getShort() & 0xC0) >> 6;
         drawBlock(x, y, color);
 
         /* Pixel 2 */
-        color = (value.getShort() & 0x40) >> 6;
-        color |= (colorMode == 1) ? 1 : 0;
+        color = (value.getShort() & 0x30) >> 4;
         drawBlock(x + BLOCK_WIDTH, y, color);
 
         /* Pixel 3 */
-        color = (value.getShort() & 0x20) >> 5;
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (2 * BLOCK_WIDTH), y, color);
+        color = (value.getShort() & 0xC) >> 2;
+        drawBlock(x + (BLOCK_WIDTH * 2), y, color);
 
         /* Pixel 4 */
-        color = (value.getShort() & 0x10) >> 4;
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (3 * BLOCK_WIDTH), y, color);
-
-        /* Pixel 5 */
-        color = (value.getShort() & 0x8) >> 3;
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (4 * BLOCK_WIDTH), y, color);
-
-        /* Pixel 6 */
-        color = (value.getShort() & 0x4) >> 2;
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (5 * BLOCK_WIDTH), y, color);
-
-        /* Pixel 7 */
-        color = (value.getShort() & 0x2) >> 1;
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (6 * BLOCK_WIDTH), y, color);
-
-        /* Pixel 8 */
-        color = (value.getShort() & 0x1);
-        color |= (colorMode == 1) ? 1 : 0;
-        drawBlock(x + (7 * BLOCK_WIDTH), y, color);
+        color = (value.getShort() & 0x3);
+        drawBlock(x + (BLOCK_WIDTH * 3), y, color);
     }
 }

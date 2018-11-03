@@ -1516,8 +1516,10 @@ public class CPU extends Thread
             case 0x3D:
                 a = io.getByteRegister(Register.A);
                 b = io.getByteRegister(Register.B);
+                opLongDesc += "A=" + a + ", B=" + b + ", ";
                 UnsignedWord tempResult = new UnsignedWord(a.getShort() * b.getShort());
                 io.setD(tempResult);
+                opLongDesc += "D'=" + tempResult;
                 cc = io.getCC();
                 cc.and(~(IOController.CC_Z | IOController.CC_C));
                 cc.or(tempResult.isZero() ? IOController.CC_Z : 0);
@@ -2918,7 +2920,9 @@ public class CPU extends Thread
      * @return the complimented value
      */
     public UnsignedByte compliment(UnsignedByte value) {
+        opLongDesc += "R=" + value + ", ";
         UnsignedByte result = new UnsignedByte(~(value.getShort()));
+        opLongDesc += "R'=" + result;
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V));
         cc.or(IOController.CC_C);
@@ -2967,11 +2971,13 @@ public class CPU extends Thread
      * @return the shifted byte value
      */
     public UnsignedByte logicalShiftRight(UnsignedByte value) {
+        opLongDesc = "R=" + value + ", C=" + io.ccCarrySet() + ", ";
         UnsignedByte result = new UnsignedByte(value.getShort() >> 1);
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_C));
         cc.or(value.isMasked(0x1) ? IOController.CC_C : 0);
         cc.or(result.isZero() ? IOController.CC_Z : 0);
+        opLongDesc += "R'=" + result + ", C'=" + io.ccCarrySet();
         return result;
     }
 
