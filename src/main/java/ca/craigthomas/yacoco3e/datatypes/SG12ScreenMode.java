@@ -66,7 +66,7 @@ public class SG12ScreenMode extends ScreenMode
         for (int y = 0; y < 96; y++) {
             for (int x = 0; x < 32; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
-                drawCharacter(value, x, y, y % 5);
+                drawCharacter(value, x, y);
                 memoryPointer++;
             }
         }
@@ -104,23 +104,21 @@ public class SG12ScreenMode extends ScreenMode
      * @param col the column to write at
      * @param row the row to write at
      */
-    private void drawCharacter(UnsignedByte value, int col, int row, int rowMod) {
+    private void drawCharacter(UnsignedByte value, int col, int row) {
         /* Translated position in pixels */
         int x = 32 + (col * (BLOCK_WIDTH * 2));
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Background colors */
-        int back = BLACK;
         int color = (value.getShort() & 0x70) >> 4;
+        if (!value.isMasked(0x80)) {
+            color = BLACK;
+        }
 
         /* Subcell B */
-        int mask = rowMod == 0 || rowMod == 1 || rowMod == 2 ? 0x8 : 0x2;
-        int on = value.isMasked(mask) ? 1 : 0;
-        drawBlock(x, y, on == 1 ? color : back);
+        drawBlock(x, y, value.isMasked(0x8) ? color : BLACK);
 
         /* Subcell B */
-        mask = rowMod == 0 || rowMod == 1 || rowMod == 2 ? 0x4 : 0x1;
-        on = value.isMasked(mask) ? 1 : 0;
-        drawBlock(x + BLOCK_WIDTH, y, on == 1 ? color : back);
+        drawBlock(x + BLOCK_WIDTH, y, value.isMasked(0x4) ? color : BLACK);
     }
 }
