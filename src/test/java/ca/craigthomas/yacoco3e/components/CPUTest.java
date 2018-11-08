@@ -857,6 +857,18 @@ public class CPUTest
     }
 
     @Test
+    public void testAddWithCarryWorksCorrectlyTest3() {
+        registerSet.setA(new UnsignedByte(0x1));
+        io.setCCCarry();
+        cpu.addWithCarry(Register.A, new UnsignedByte(0xFF));
+        assertEquals(new UnsignedByte(0x01), registerSet.getA());
+        assertTrue(io.ccCarrySet());
+        assertTrue(io.ccOverflowSet());
+        assertFalse(io.ccHalfCarrySet());
+        assertFalse(io.ccZeroSet());
+    }
+
+    @Test
     public void testDecimalAdditionAdjustWorksCorrectly() {
         registerSet.setA(new UnsignedByte(0x55));
         cpu.addWithCarry(Register.A, new UnsignedByte(0x17));
