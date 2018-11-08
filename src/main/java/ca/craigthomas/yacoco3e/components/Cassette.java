@@ -8,6 +8,8 @@ import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.logging.Logger;
 
 import static ca.craigthomas.yacoco3e.common.IO.flushToStream;
 import static ca.craigthomas.yacoco3e.common.IO.openInputStream;
@@ -60,6 +62,9 @@ public class Cassette
 
     /* The last input bit we saw */
     private byte lastInputBit;
+
+    /* A logger for the cassette drive */
+    private final static Logger LOGGER = Logger.getLogger(Cassette.class.getName());
 
     public Cassette() {
         mode = Mode.PLAY;
@@ -250,6 +255,8 @@ public class Cassette
         IO.closeStream(stream);
         rewind();
 
+        checkForEOF();
+
         return true;
     }
 
@@ -268,5 +275,53 @@ public class Cassette
      */
     public Mode getMode() {
         return mode;
+    }
+
+    /**
+     * Checks to make sure that the buffer contains a proper EOF block.
+     * If it does not, will correct it to ensure that it does.
+     *
+     * @return true if proper EOF found or EOF corrected, false otherwise
+     */
+    public boolean checkForEOF() {
+        int length = cassetteBytes.length;
+
+        if (cassetteBytes[length - 1] == 0x55 && cassetteBytes[length - 6] == 0x55) {
+            return true;
+        }
+
+        LOGGER.warning("cassette data contains malformed EOF block - correcting");
+
+        // Backup until we hit the last 0x55 characters
+        int lastIndexOf55 = 0;
+        for (int ptr = length -1; ptr > 0; ptr--) {
+            if (cassetteBytes[ptr] == 0x55) {
+                lastIndexOf55 = ptr;
+                break;
+            }
+        }
+
+        // Check to see if there is another 0x55 before it
+        if (cassetteBytes[lastIndexOf55 - 1] != 0x55) {
+            LOGGER.severe("unable to correct tape pattern, please check data manually");
+            return false;
+        }
+
+        // Create a new array for the cassette bytes and copy old to new
+        int truncatedLength = length - (length - lastIndexOf55);
+        byte [] newCassetteBytes = new byte[truncatedLength + 6];
+        for (int ptr = 0; ptr < lastIndexOf55; ptr++) {
+            newCassetteBytes[ptr] = cassetteBytes[ptr];
+        }
+
+        // Add the trailing information for EOF
+        newCassetteBytes[truncatedLength] = 0x55;
+        newCassetteBytes[truncatedLength + 1] = 0x3C;
+        newCassetteBytes[truncatedLength + 2] = (byte) 0xFF;
+        newCassetteBytes[truncatedLength + 3] = 0x00;
+        newCassetteBytes[truncatedLength + 4] = (byte) 0xFF;
+        newCassetteBytes[truncatedLength + 5] = 0x55;
+        cassetteBytes = newCassetteBytes;
+        return true;
     }
 }

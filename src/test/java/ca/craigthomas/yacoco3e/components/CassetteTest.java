@@ -9,9 +9,7 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class CassetteTest
 {
@@ -509,5 +507,30 @@ public class CassetteTest
     @Test
     public void testOpenFileReturnsFalseWhenNullFile() {
         assertFalse(cassette.openFile("this-file-should-not-exist.cas"));
+    }
+
+    @Test
+    public void testCheckForEOFDoesNothingOnCorrectEOFBlock() {
+        byte [] goodBytes = {0x55, 0x55, 0x3C, (byte) 0xFF, 0x00, (byte) 0xFF, 0x55};
+        cassette.cassetteBytes = goodBytes;
+        assertTrue(cassette.checkForEOF());
+        assertArrayEquals(goodBytes, cassette.cassetteBytes);
+    }
+
+    @Test
+    public void testCheckForEOFCannotCorrectBadByteSequence() {
+        byte [] badBytes = {0x00, 0x55, 0x3C, (byte) 0xFF, 0x00, (byte) 0xFF};
+        cassette.cassetteBytes = badBytes;
+        assertFalse(cassette.checkForEOF());
+        assertArrayEquals(badBytes, cassette.cassetteBytes);
+    }
+
+    @Test
+    public void testCheckForEOFCorrectsBadByteSequence() {
+        byte [] badBytes = {0x55, 0x55, 0x3C, (byte) 0xFF, 0x00, (byte) 0xFF};
+        byte [] goodBytes = {0x55, 0x55, 0x3C, (byte) 0xFF, 0x00, (byte) 0xFF, 0x55};
+        cassette.cassetteBytes = badBytes;
+        assertTrue(cassette.checkForEOF());
+        assertArrayEquals(goodBytes, cassette.cassetteBytes);
     }
 }
