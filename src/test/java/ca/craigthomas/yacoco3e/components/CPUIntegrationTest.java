@@ -2162,6 +2162,15 @@ public class CPUIntegrationTest
     }
 
     @Test
+    public void testABXWorksCorrectly1() throws IllegalIndexedPostbyteException {
+        ioSpy.setB(new UnsignedByte(0x21));
+        ioSpy.setX(new UnsignedWord(0x1091));
+        ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x3A));
+        cpuSpy.executeInstruction();
+        assertEquals(new UnsignedWord(0x10B2), registerSetSpy.getX());
+    }
+
+    @Test
     public void testRTSWorksCorrectly() throws IllegalIndexedPostbyteException {
         ioSpy.setS(new UnsignedWord(0x0020));
         ioSpy.writeByte(new UnsignedWord(0x0), new UnsignedByte(0x39));

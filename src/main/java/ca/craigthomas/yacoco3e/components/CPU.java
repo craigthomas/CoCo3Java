@@ -3682,6 +3682,7 @@ public class CPU extends Thread
         int result = value.getShort() + (io.ccCarrySet() ? 1 : 0);
         cc.and(~(IOController.CC_N | IOController.CC_V | IOController.CC_Z | IOController.CC_C | IOController.CC_H));
         if (result > 255) {
+            result &= 0xFF;
             setCC = true;
             setOverflow = true;
         }
