@@ -280,12 +280,14 @@ public class Cassette
     /**
      * Checks to make sure that the buffer contains a proper EOF block.
      * If it does not, will correct it to ensure that it does.
+     *
+     * @return true if proper EOF found or EOF corrected, false otherwise
      */
-    public void checkForEOF() {
+    public boolean checkForEOF() {
         int length = cassetteBytes.length;
 
         if (cassetteBytes[length - 1] == 0x55 && cassetteBytes[length - 6] == 0x55) {
-            return;
+            return true;
         }
 
         LOGGER.warning("cassette data contains malformed EOF block - correcting");
@@ -302,7 +304,7 @@ public class Cassette
         // Check to see if there is another 0x55 before it
         if (cassetteBytes[lastIndexOf55 - 1] != 0x55) {
             LOGGER.severe("unable to correct tape pattern, please check data manually");
-            return;
+            return false;
         }
 
         // Create a new array for the cassette bytes and copy old to new
@@ -320,5 +322,6 @@ public class Cassette
         newCassetteBytes[truncatedLength + 4] = (byte) 0xFF;
         newCassetteBytes[truncatedLength + 5] = 0x55;
         cassetteBytes = newCassetteBytes;
+        return true;
     }
 }
