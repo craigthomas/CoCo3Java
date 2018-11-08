@@ -855,4 +855,12 @@ public class CPUTest
         assertFalse(io.ccHalfCarrySet());
         assertFalse(io.ccZeroSet());
     }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectly() {
+        registerSet.setA(new UnsignedByte(0x55));
+        cpu.addWithCarry(Register.A, new UnsignedByte(0x17));
+        cpu.decimalAdditionAdjust();
+        assertEquals(new UnsignedByte(0x72), registerSet.getA());
+    }
 }

@@ -3368,7 +3368,7 @@ public class CPU extends Thread
         }
 
         byte1 = cc.getShort() & IOController.CC_C;
-        UnsignedByte result = new UnsignedByte(byte1);
+        UnsignedByte result = new UnsignedByte(byte1 + byte3);
 
         a.set(io.binaryAdd(a, result, false, true, false));
         cc.and(~(IOController.CC_C | IOController.CC_N | IOController.CC_Z));
