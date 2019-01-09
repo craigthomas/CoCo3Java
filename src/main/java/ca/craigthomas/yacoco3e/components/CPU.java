@@ -2015,7 +2015,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractMC(Register.A, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SBCA, IMM [%04X]", memoryResult);
+                setShortDesc("SBCA, DIR [%04X]", memoryResult);
                 break;
 
             /* SUBD - Subtract M from D - Direct */
@@ -2119,7 +2119,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 storeWordRegister(Register.X, memoryResult.get());
                 operationTicks = 5;
-                setShortDesc("STX, EXT [%04X]", memoryResult);
+                setShortDesc("STX, DIR [%04X]", memoryResult);
                 break;
 
             /* SUBA - Subtract M from A - Indexed */
@@ -2503,7 +2503,7 @@ public class CPU extends Thread
                 memoryResult = io.getDirect();
                 subtractMC(Register.B, io.readByte(memoryResult.get()));
                 operationTicks = 4;
-                setShortDesc("SBCB, IMM [%04X]", memoryResult);
+                setShortDesc("SBCB, DIR [%04X]", memoryResult);
                 break;
 
             /* ADDD - Add D - Direct */
@@ -3353,22 +3353,20 @@ public class CPU extends Thread
         UnsignedByte cc = io.getByteRegister(Register.CC);
         UnsignedByte a = io.getByteRegister(Register.A);
         int value = io.getByteRegister(Register.A).getShort();
-        int byte1 = (value & 0xF0) >> 4;
-        int byte2 = value & 0x0F;
-        int byte3 = 0;
+        int mostSignificantNibble = value & 0xF0;
+        int leastSignificantNibble = value & 0x0F;
+        int adjustment = 0;
 
-        if (io.ccCarrySet() || byte1 > 9 || (byte1 > 8 && byte2 > 9)) {
-            byte3 += 6;
+        if (io.ccCarrySet() || mostSignificantNibble > 0x90 || (mostSignificantNibble > 0x80 && leastSignificantNibble > 0x09)) {
+            adjustment |= 0x60;
         }
 
-        byte3 = byte3 << 4;
-
-        if (io.ccCarrySet() || byte2 > 9) {
-            byte3 += 6;
+        if (io.ccHalfCarrySet() || leastSignificantNibble > 0x09) {
+            adjustment |= 0x06;
         }
 
-        byte1 = cc.getShort() & IOController.CC_C;
-        UnsignedByte result = new UnsignedByte(byte1);
+        mostSignificantNibble = cc.getShort() & IOController.CC_C;
+        UnsignedByte result = new UnsignedByte(mostSignificantNibble + adjustment);
 
         a.set(io.binaryAdd(a, result, false, true, false));
         cc.and(~(IOController.CC_C | IOController.CC_N | IOController.CC_Z));
@@ -3609,12 +3607,13 @@ public class CPU extends Thread
      */
     public void logicalAnd(Register register, UnsignedByte value) {
         UnsignedByte reg = io.getByteRegister(register);
+        opLongDesc = register + "=" + reg + ", M=" + value + ", ";
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_V | IOController.CC_Z));
         reg.and(value.getShort());
         cc.or(reg.isZero() ? IOController.CC_Z : 0);
         cc.or(reg.isNegative() ? IOController.CC_N : 0);
-        opLongDesc = register + "'=" + reg;
+        opLongDesc += register + "'=" + reg;
     }
 
     /**
@@ -3679,17 +3678,20 @@ public class CPU extends Thread
         UnsignedByte cc = io.getCC();
         opLongDesc = register + "=" + reg + ", M=" + value + ", C=" + io.ccCarrySet() + ", " + register + "'=";
         boolean setCC = false;
+        boolean setOverflow = false;
         int result = value.getShort() + (io.ccCarrySet() ? 1 : 0);
         cc.and(~(IOController.CC_N | IOController.CC_V | IOController.CC_Z | IOController.CC_C | IOController.CC_H));
         if (result > 255) {
-            result = 0;
+            result &= 0xFF;
             setCC = true;
+            setOverflow = true;
         }
         reg.set(io.binaryAdd(reg, new UnsignedByte(result), true, true, true));
         opLongDesc += reg;
         cc.or(setCC ? IOController.CC_C : 0);
         cc.or(reg.isZero() ? IOController.CC_Z : 0);
         cc.or(reg.isNegative() ? IOController.CC_N : 0);
+        cc.or(setOverflow ? IOController.CC_V : 0);
     }
 
     /**
