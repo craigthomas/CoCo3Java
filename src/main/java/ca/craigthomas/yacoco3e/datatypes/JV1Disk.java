@@ -11,6 +11,7 @@ import ca.craigthomas.yacoco3e.components.DiskTrack;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class JV1Disk implements VirtualDisk
 {
@@ -153,5 +154,15 @@ public class JV1Disk implements VirtualDisk
     @Override
     public int sectorsPerTrack() {
         return DiskDrive.DEFAULT_SECTORS_PER_TRACK;
+    }
+
+    @Override
+    public boolean saveToFile(String filename, VirtualDisk virtualDisk)
+    {
+        OutputStream stream = IO.openOutputStream(filename);
+        if (stream == null) return false;
+        boolean flag = IO.flushToStream(stream, virtualDisk.getRawBytes());
+        IO.closeStream(stream);
+        return flag;
     }
 }

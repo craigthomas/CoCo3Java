@@ -5,6 +5,7 @@
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/34856186055249429f2b80c9d286fc8d)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
 [![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge?style=flat)](https://dependencyci.com/github/craigthomas/CoCo3Java)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## What Is It?
 
@@ -114,11 +115,11 @@ of the tape buffer to the actual file. You can to that by clicking the menu item
 ## Disk Drives
 
 The emulator has built-in support for disk drive systems, however, it requires
-a Disk Basic ROM (1.0 or 1.1) to be loaded on emulator startup with the `--diskbas`
-switch:
+a Disk Basic ROM (1.0 or 1.1) to be loaded into the cartridge slot on emulator
+startup with the `--cartridge` switch:
 
 ```bash
-java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --diskbas /path/to/disk/basic/rom
+java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --cartridge /path/to/disk/basic/rom
 ```
 
 Four virtual disk drives are available by default (drive numbers 0-3).

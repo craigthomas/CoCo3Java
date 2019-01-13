@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.listeners;
@@ -10,7 +10,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * An ActionListener that will quit the emulator.
+ * An ActionListener that will flush cassette data to the cassette file.
  */
 public class FlushCassetteMenuItemActionListener implements ActionListener
 {

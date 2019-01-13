@@ -168,6 +168,9 @@ public class IOController
         /* Disks */
         diskDriveSelect = 0;
 
+        samControlBits = new UnsignedByte();
+        vdgOperatingMode = new UnsignedByte();
+
         /* Initialize drive data */
         disk = new DiskDrive[NUM_DISK_DRIVES];
         for (int i = 0; i < NUM_DISK_DRIVES; i++) {
@@ -175,9 +178,6 @@ public class IOController
         }
 
         screen.setIOController(this);
-
-        samControlBits = new UnsignedByte();
-        vdgOperatingMode = new UnsignedByte();
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.common;
@@ -7,6 +7,8 @@ package ca.craigthomas.yacoco3e.common;
 import ca.craigthomas.yacoco3e.components.Memory;
 import org.apache.commons.io.IOUtils;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.io.*;
 import java.nio.ByteOrder;
 import java.util.logging.Logger;
@@ -27,6 +29,11 @@ public class IO
      * @return an array of bytes, null on error
      */
     public static byte[] loadStream(InputStream stream) {
+        if (stream == null) {
+            LOGGER.severe("Error reading input stream: stream is empty");
+            return null;
+        }
+
         try {
             byte[] data;
 
@@ -46,8 +53,7 @@ public class IO
             }
             return data;
         } catch (Exception e) {
-            LOGGER.severe("error reading from stream");
-            LOGGER.severe(e.getMessage());
+            LOGGER.severe("Error reading from stream: " + e.getMessage());
             return null;
         }
     }
@@ -60,13 +66,10 @@ public class IO
      * @return An opened InputStream, or null if there is an error
      */
     public static InputStream openInputStream(String filename) {
-        InputStream inputStream;
         try {
-            inputStream = new FileInputStream(new File(filename));
-            return inputStream;
+            return new FileInputStream(new File(filename));
         } catch (FileNotFoundException e) {
-            LOGGER.severe("Error opening file");
-            LOGGER.severe(e.getMessage());
+            LOGGER.severe("Error opening file: " + e.getMessage());
             return null;
         }
     }
@@ -79,13 +82,10 @@ public class IO
      * @return An opened OutputStream, or null if there is an error
      */
     public static OutputStream openOutputStream(String filename) {
-        OutputStream outputStream;
         try {
-            outputStream = new FileOutputStream(new File(filename));
-            return outputStream;
+            return new FileOutputStream(new File(filename));
         } catch (FileNotFoundException e) {
-            LOGGER.severe("Error creating file");
-            LOGGER.severe(e.getMessage());
+            LOGGER.severe("Error creating file: " + e.getMessage());
             return null;
         }
     }
@@ -101,9 +101,8 @@ public class IO
     public static boolean flushToStream(OutputStream stream, byte[] byteArray) {
         try {
             stream.write(byteArray);
-        } catch(IOException e) {
-            LOGGER.severe("Error flushing buffer to file");
-            LOGGER.severe(e.getMessage());
+        } catch(Exception e) {
+            LOGGER.severe("Error flushing buffer to file: " + e.getMessage());
             return false;
         }
         return true;
@@ -117,9 +116,33 @@ public class IO
     public static void closeStream(Closeable stream) {
         try {
             stream.close();
-        } catch (IOException e) {
-            LOGGER.severe("Error closing stream");
-            LOGGER.severe(e.getMessage());
+        } catch (Exception e) {
+            LOGGER.severe("Error closing stream: " + e.getMessage());
         }
+    }
+
+    /**
+     * Copies an array of bytes to an array of shorts.
+     *
+     * @param source the source byte array
+     * @param target the target short array
+     * @return true if the source was not null, false otherwise
+     */
+    public static boolean copyByteArrayToShortArray(byte[] source, short[] target) {
+        int byteCounter = 0;
+
+        if (source == null || target == null) {
+            return false;
+        }
+
+        if (source.length > target.length) {
+            return false;
+        }
+
+        for (byte data : source) {
+            target[byteCounter] = (short) data;
+            byteCounter++;
+        }
+        return true;
     }
 }

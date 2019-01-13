@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.listeners;
 
-import ca.craigthomas.yacoco3e.components.CPU;
+import ca.craigthomas.yacoco3e.components.Emulator;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -16,24 +15,21 @@ import java.awt.event.ActionListener;
  */
 public class QuitMenuItemActionListener implements ActionListener
 {
-    private CPU cpu;
+    private Emulator emulator;
 
-    public QuitMenuItemActionListener(CPU cpu) {
+    public QuitMenuItemActionListener(Emulator emulator) {
         super();
-        this.cpu = cpu;
+        this.emulator = emulator;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        int result = JOptionPane.showConfirmDialog(
-                (Component) null,
+        if (JOptionPane.showConfirmDialog(
+                null,
                 "Are you sure you want to quit?",
-                "Confirm Action",
-                JOptionPane.OK_CANCEL_OPTION
-        );
-        if (result == JOptionPane.OK_OPTION) {
-            cpu.kill();
-            System.exit(0);
+                "Confirm Quit",
+                JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            emulator.shutdown();
         }
     }
 }

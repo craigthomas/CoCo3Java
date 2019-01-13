@@ -1,13 +1,16 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.*;
 
 import java.io.InputStream;
+import java.util.logging.Logger;
 
+import static ca.craigthomas.yacoco3e.common.IO.copyByteArrayToShortArray;
 import static ca.craigthomas.yacoco3e.common.IO.loadStream;
 
 /**
@@ -38,9 +41,14 @@ public class Memory
 
     protected static final int TOTAL_PAGES = 0x3F;
 
+    private int totalSize;
+
     public Memory() {
         this(MEM_512K);
     }
+
+    /* A logger for the emulator */
+    private final static Logger LOGGER = Logger.getLogger(Memory.class.getName());
 
     /**
      * Initializes the memory module with the number of bytes specified.
@@ -48,16 +56,23 @@ public class Memory
      * @param size the number of bytes to initialize in main memory
      */
     public Memory(int size) {
+        totalSize = size;
         memory = new short[size];
-        enableExecutivePAR();
         executivePAR = new short[PAR_COUNT];
         taskPAR = new short[PAR_COUNT];
         defaultPAR = new short[PAR_COUNT];
-        mmuEnabled = true;
 
         /* ROM memory sizes */
         cartROM = new short[MEM_32K];
         rom = new short[MEM_32K];
+
+        resetMemory();
+    }
+
+    public void resetMemory() {
+        memory = new short[totalSize];
+        enableExecutivePAR();
+        mmuEnabled = true;
 
         /* Setup RAM/ROM mode variables */
         allRAMMode = true;
@@ -328,50 +343,26 @@ public class Memory
         return new UnsignedByte(readPhysicalByte(address));
     }
 
-    public boolean loadROM(byte[] streamData) {
-        int byteCounter = 0;
-        if (streamData != null) {
-            for (byte data : streamData) {
-                rom[byteCounter] = (short) data;
-                byteCounter++;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public boolean loadCartROM(byte[] streamData) {
-        int byteCounter = 0;
-        if (streamData != null) {
-            for (byte data : streamData) {
-                cartROM[byteCounter] = (short) data;
-                byteCounter++;
-            }
-            return true;
-        }
-        return false;
-    }
-
     /**
-     * Load a file full of bytes into emulator memory.
+     * Loads a ROM file into the specified type of memory. Where the
+     * ROM is loaded depends on the destination.
      *
-     * @param stream The open stream to read from
-     * @param offset The memory location to start loading the file into
+     * @param filename the filename to load from
+     * @param destination the destination memory space to copy to
+     * @return true if the file loaded correctly, false otherwise
      */
-    public boolean loadStreamIntoMemory(InputStream stream, UnsignedWord offset) {
-        byte[] data = loadStream(stream);
-        UnsignedWord currentOffset = offset.copy();
-
-        if (data == null) {
-            return false;
+    public boolean loadROM(String filename, MemoryType destination) {
+        InputStream stream = IO.openInputStream(filename);
+        byte[] data = IO.loadStream(stream);
+        boolean result =
+                destination == MemoryType.CARTRIDGE ?
+                copyByteArrayToShortArray(data, cartROM) :
+                copyByteArrayToShortArray(data, rom);
+        if (!result) {
+            LOGGER.severe("Could not load file [" + filename + "] into " + destination);
+        } else {
+            LOGGER.info("Loaded file [" + filename + "] into " + destination);
         }
-
-        /* Read data from the buffer */
-        for (byte theByte : data) {
-            writeByte(currentOffset, new UnsignedByte(theByte));
-            currentOffset.add(1);
-        }
-
-        return true;
+        return result;
     }
 }

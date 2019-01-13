@@ -21,6 +21,6 @@ public class MemoryResultTest
     public void testMemoryResultToStringCorrect() {
         MemoryResult result = new MemoryResult(3, new UnsignedWord(0xBEEF));
         assertEquals(3, result.getBytesConsumed());
-        assertEquals("[3 bytes read, 0xBEEF]", result.toString());
+        assertEquals("[3 bytes read, $BEEF]", result.toString());
     }
 }

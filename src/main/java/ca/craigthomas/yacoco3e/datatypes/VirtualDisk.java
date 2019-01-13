@@ -75,11 +75,5 @@ public interface VirtualDisk
      * @param virtualDisk the virtual disk to save
      * @return true if the save succeeded, false otherwise
      */
-    static boolean saveToFile(String filename, VirtualDisk virtualDisk) {
-        OutputStream stream = IO.openOutputStream(filename);
-        if (stream == null) return false;
-        boolean flag = IO.flushToStream(stream, virtualDisk.getRawBytes());
-        IO.closeStream(stream);
-        return flag;
-    }
+    boolean saveToFile(String filename, VirtualDisk virtualDisk);
 }

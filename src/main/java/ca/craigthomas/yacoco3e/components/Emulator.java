@@ -1,26 +1,23 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.common.IO;
-import ca.craigthomas.yacoco3e.datatypes.JV1Disk;
-import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
-import ca.craigthomas.yacoco3e.datatypes.VirtualDisk;
+import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.*;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
 
-public class Emulator
+import javax.swing.UIManager.*;
+
+
+public class Emulator extends Thread
 {
     /* The main emulator components */
     private Screen screen;
@@ -28,6 +25,7 @@ public class Emulator
     private CPU cpu;
     private IOController ioController;
     private Cassette cassette;
+    private Memory memory;
 
     // The Canvas on which all the drawing will take place
     private Canvas canvas;
@@ -36,54 +34,128 @@ public class Emulator
     private JFrame container;
     private JMenuBar menuBar;
 
+    /* State variables */
+    private boolean trace;
+    private boolean verbose;
+    private volatile EmulatorStatus status;
+    private Timer timer;
+    private TimerTask timerTask;
+
     /* A logger for the emulator */
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
 
-    public Emulator(int scaleFactor, String romFile, boolean trace, String cassetteFile, String diskBasicROM) {
-        Memory memory = new Memory();
+    public static class Builder {
+        private int scale;
+        private String systemROM;
+        private String cartridgeROM;
+        private String cassetteFile;
+        private boolean trace;
+        private boolean verbose;
+
+        public Builder() {
+            scale = 1;
+        }
+
+        public Builder setScale(int newScale) {
+            scale = newScale;
+            return this;
+        }
+
+        public Builder setSystemROM(String filename) {
+            systemROM = filename;
+            return this;
+        }
+
+        public Builder setCartridgeROM(String filename) {
+            cartridgeROM = filename;
+            return this;
+        }
+
+        public Builder setCassetteFile(String filename) {
+            cassetteFile = filename;
+            return this;
+        }
+
+        public Builder setTrace(boolean newTrace) {
+            trace = newTrace;
+            return this;
+        }
+
+        public Builder setVerbose(boolean newVerbose) {
+            verbose = newVerbose;
+            return this;
+        }
+
+        public Emulator build() {
+            return new Emulator(this);
+        }
+    }
+
+    private Emulator(Builder builder) {
+        memory = new Memory();
         keyboard = new Keyboard();
-        screen = new Screen(scaleFactor);
+        screen = new Screen(builder.scale);
         cassette = new Cassette();
         ioController = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
         cpu = new CPU(ioController);
-        cpu.setTrace(trace);
         ioController.setCPU(cpu);
+        trace = builder.trace;
+        verbose = builder.verbose;
+        status = EmulatorStatus.STOPPED;
+
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Nimbus LAF not available");
+        }
 
         initEmulatorJFrame();
 
         // Attempt to load specified ROM file
-        if (romFile != null) {
-            InputStream romFileStream = IO.openInputStream(romFile);
-            if (!memory.loadROM(IO.loadStream(romFileStream))) {
-                LOGGER.severe("Could not load ROM file [" + romFile + "]");
-            }
-            IO.closeStream(romFileStream);
-        } else {
-            LOGGER.severe("no ROM file specified");
-            System.exit(1);
-        }
+        loadROM(builder.systemROM);
 
-        // Check to see if disk basic was specified
-        if (diskBasicROM != null) {
-            InputStream romFileStream = IO.openInputStream(diskBasicROM);
-            if (!memory.loadCartROM(IO.loadStream(romFileStream))) {
-                LOGGER.severe("Could not load Disk Basic ROM file [" + diskBasicROM + "]");
-            } else {
-                LOGGER.info("Loaded Disk Basic ROM [" + diskBasicROM + "]");
-            }
-            IO.closeStream(romFileStream);
-        } else {
-            LOGGER.info("Disk Basic ROM file not specified");
-        }
+        // Check to see if a cartridge was specified
+        loadCartridgeROM(builder.cartridgeROM);
 
         // Attempt to load specified cassette file
-        if (cassetteFile != null) {
-            if (!cassette.openFile(cassetteFile)) {
-                LOGGER.severe("Could not load cassette file [" + cassetteFile + "]");
-            } else {
-                LOGGER.info("Loaded cassette file [" + cassetteFile + "]");
+        loadCassetteFile(builder.cassetteFile);
+    }
+
+    public void loadROM(String filename) {
+        if (filename != null) {
+            if (memory.loadROM(filename, MemoryType.ROM)) {
+                status = EmulatorStatus.RUNNING;
             }
         }
+    }
+
+    public void loadCartridgeROM(String filename) {
+        if (filename != null) {
+            if (!memory.loadROM(filename, MemoryType.CARTRIDGE)) {
+                status = EmulatorStatus.PAUSED;
+            }
+        }
+    }
+
+    public void loadCassetteFile(String filename) {
+        if (filename != null) {
+            if (!cassette.openFile(filename)) {
+                LOGGER.severe("Could not load cassette file [" + filename + "]");
+            } else {
+                LOGGER.info("Loaded cassette file [" + filename + "]");
+            }
+        }
+    }
+
+    public void reset() {
+        memory.resetMemory();
+        ioController.reset();
+        cpu.reset();
     }
 
     /**
@@ -95,21 +167,42 @@ public class Emulator
         container = new JFrame("Yet Another CoCo 3 Emulator");
         menuBar = new JMenuBar();
 
-        // File menu
-        JMenu fileMenu = new JMenu("File");
-        fileMenu.setMnemonic(KeyEvent.VK_F);
+        // Emulator menu
+        JMenu emulatorMenu = new JMenu("Emulator");
+        emulatorMenu.setMnemonic(KeyEvent.VK_E);
+
+        JMenuItem pauseEmulatorItem = new JMenuItem("Pause", KeyEvent.VK_P);
+        emulatorMenu.add(pauseEmulatorItem);
+
+        JMenuItem resetEmulatorItem = new JMenuItem("Reset", KeyEvent.VK_R);
+        emulatorMenu.add(resetEmulatorItem);
+
+        emulatorMenu.addSeparator();
 
         JMenuItem quitFile = new JMenuItem("Quit", KeyEvent.VK_Q);
-        quitFile.addActionListener(new QuitMenuItemActionListener(cpu));
-        fileMenu.add(quitFile);
-        menuBar.add(fileMenu);
+        quitFile.addActionListener(new QuitMenuItemActionListener(this));
+        emulatorMenu.add(quitFile);
+        menuBar.add(emulatorMenu);
+
+        // ROM menu
+        JMenu romMenu = new JMenu("ROM");
+        romMenu.setMnemonic(KeyEvent.VK_R);
+
+        JMenuItem openROMItem = new JMenuItem("Load System ROM", KeyEvent.VK_S);
+        openROMItem.addActionListener(new OpenSystemROMMenuItemActionListener(this));
+        romMenu.add(openROMItem);
+
+        JMenuItem openCartROMItem = new JMenuItem("Load Cartridge ROM", KeyEvent.VK_C);
+        openCartROMItem.addActionListener(new OpenCartridgeROMMenuItemActionListener(this));
+        romMenu.add(openCartROMItem);
+        menuBar.add(romMenu);
 
         // Cassette menu
         JMenu cassetteMenu = new JMenu("Cassette");
         cassetteMenu.setMnemonic(KeyEvent.VK_C);
 
         JMenuItem newCassetteItem = new JMenuItem("New Cassette File", KeyEvent.VK_N);
-        newCassetteItem.addActionListener(new RecordCassetteMenuItemActionListener(this, cassette));
+        newCassetteItem.addActionListener(new RecordCassetteMenuItemActionListener(this));
         cassetteMenu.add(newCassetteItem);
 
         JMenuItem flushItem = new JMenuItem("Flush Buffer to File", KeyEvent.VK_F);
@@ -119,7 +212,7 @@ public class Emulator
         cassetteMenu.addSeparator();
 
         JMenuItem openCassetteItem = new JMenuItem("Open for Playback", KeyEvent.VK_O);
-        openCassetteItem.addActionListener(new OpenCassetteMenuItemActionListener(this, cassette));
+        openCassetteItem.addActionListener(new OpenCassetteMenuItemActionListener(this));
         cassetteMenu.add(openCassetteItem);
 
         menuBar.add(cassetteMenu);
@@ -218,7 +311,6 @@ public class Emulator
      */
     private void refreshScreen()
     {
-        // Check to see if the resolution of the screen changed
         if (screen.getResolutionChanged()) {
             attachCanvas();
             screen.clearResolutionChanged();
@@ -235,97 +327,82 @@ public class Emulator
      * will repaint the screen and listen for any debug key presses.
      */
     public void start() {
-        ioController.reset();
-        cpu.start();
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
+        this.reset();
+        timer = new Timer();
+        timerTask = new TimerTask() {
             public void run() {
                 screen.refreshScreen();
                 refreshScreen();
             }
         };
-        timer.scheduleAtFixedRate(task, 0L, 33L);
+        timer.scheduleAtFixedRate(timerTask, 0L, 33L);
+        run();
     }
 
     /**
-     * Opens a dialog box to prompt the user to choose a cassette file
-     * to open for playback.
+     * Runs the main emulator loop until the emulator is killed.
      */
-    public void openCassetteFileDialog() {
-        JFileChooser fileChooser = new JFileChooser();
-        FileFilter filter1 = new FileNameExtensionFilter("Cassette Files (*.cas)", "cas");
-        fileChooser.setCurrentDirectory(new File("."));
-        fileChooser.setDialogTitle("Open Cassette File");
-        fileChooser.setAcceptAllFileFilterUsed(true);
-        fileChooser.setFileFilter(filter1);
-        if (fileChooser.showOpenDialog(container) == JFileChooser.APPROVE_OPTION) {
-            if (!cassette.openFile(fileChooser.getSelectedFile().toString())) {
-                JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
+    public void run() {
+        int operationTicks = 0;
 
-    public void saveCassetteFileDialog() {
-        JFileChooser fileChooser = new JFileChooser();
-        FileFilter filter1 = new FileNameExtensionFilter("Cassette Files (*.cas)", "cas");
-        fileChooser.setCurrentDirectory(new java.io.File("."));
-        fileChooser.setDialogTitle("Create Cassette File");
-        fileChooser.setAcceptAllFileFilterUsed(true);
-        fileChooser.setFileFilter(filter1);
-        if (fileChooser.showSaveDialog(container) == JFileChooser.APPROVE_OPTION) {
-            if (!cassette.openFile(fileChooser.getSelectedFile().toString())) {
-                JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
+        while (status != EmulatorStatus.KILLED) {
+            while (status == EmulatorStatus.RUNNING) {
+                try {
+                    operationTicks = cpu.executeInstruction();
+                } catch (IllegalIndexedPostbyteException e) {
+                    System.out.println(e.getMessage());
+                    status = EmulatorStatus.PAUSED;
+                }
 
-    /**
-     * Loads a virtual disk into the specified drive.
-     *
-     * @param driveNum the drive number to load
-     */
-    public void openVirtualDiskFileDialog(int driveNum) {
-        JFileChooser fileChooser = new JFileChooser();
-        FileFilter filter1 = new FileNameExtensionFilter("DSK Files (*.dsk)", "dsk");
-        fileChooser.setCurrentDirectory(new java.io.File("."));
-        fileChooser.setDialogTitle("Open Virtual Disk File");
-        fileChooser.setAcceptAllFileFilterUsed(true);
-        fileChooser.setFileFilter(filter1);
-        if (fileChooser.showOpenDialog(container) == JFileChooser.APPROVE_OPTION) {
-            JV1Disk jv1Disk = new JV1Disk();
-            if (jv1Disk.isCorrectFormat(fileChooser.getSelectedFile())) {
-                boolean loaded = jv1Disk.loadFile(fileChooser.getSelectedFile().toString());
-                if (!loaded) {
-                    JOptionPane.showMessageDialog(container, "Error opening file.", "File Open Problem",
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    ioController.loadVirtualDisk(driveNum, jv1Disk);
-                    LOGGER.info("Drive " + driveNum + ": loaded file [" + fileChooser.getSelectedFile().toString() + "]");
+                /* Increment timers if necessary */
+                ioController.timerTick(operationTicks);
+
+                /* Fire interrupts if set */
+                cpu.serviceInterrupts();
+
+                /* Check to see if we should trace the output */
+                if (trace) {
+                    System.out.print("PC:" + cpu.getLastPC() + " | OP:"
+                            + cpu.getLastOperand() + " | " + cpu.getOpShortDesc());
+                    if (verbose) {
+                        System.out.print(" | " + ioController.regs);
+                    }
+                    System.out.print(" | " + cpu.getOpLongDesc());
+                    System.out.println();
                 }
             }
         }
+        this.shutdown();
     }
 
     /**
-     * Saves the contents of the disk to a file on the hard drive.
+     * Shuts down the emulator by killing any timer tasks, and removing the
+     * main container.
      */
-    public void saveVirtualDiskFileDialog(int drive) {
-        JFileChooser fileChooser = new JFileChooser();
-        FileFilter filter1 = new FileNameExtensionFilter("DSK Files (*.dsk)", "dsk");
-        fileChooser.setCurrentDirectory(new java.io.File("."));
-        fileChooser.setDialogTitle("Save to Virtual Disk File");
-        fileChooser.setAcceptAllFileFilterUsed(true);
-        fileChooser.setFileFilter(filter1);
-        if (fileChooser.showSaveDialog(container) == JFileChooser.APPROVE_OPTION) {
-            VirtualDisk virtualDisk = new JV1Disk();
-            ioController.saveVirtualDisk(drive, virtualDisk);
-            if (!VirtualDisk.saveToFile(fileChooser.getSelectedFile().toString(), virtualDisk)) {
-                JOptionPane.showMessageDialog(container, "Error saving file.", "File Save Problem",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
+    public void shutdown() {
+        timer.cancel();
+        timer.purge();
+        timerTask.cancel();
+        container.dispose();
     }
 
+    public void setStatus(EmulatorStatus status) {
+        this.status = status;
+    }
+
+    public JFrame getContainer() {
+        return container;
+    }
+
+    public Memory getMemory() {
+        return memory;
+    }
+
+    public IOController getIOController() {
+        return ioController;
+    }
+
+    public Cassette getCassette() {
+        return cassette;
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.datatypes;
@@ -142,5 +142,10 @@ public class RegisterSet
 
     public void incrementPC() {
         pc.add(1);
+    }
+
+    public String toString() {
+        return "A:" + a + " B:" + b + " D:" + getD() + " X:" + x + " Y:" + y +
+                " U:" + u + " S:" + s + " CC:" + cc + " DP:" + dp;
     }
 }
