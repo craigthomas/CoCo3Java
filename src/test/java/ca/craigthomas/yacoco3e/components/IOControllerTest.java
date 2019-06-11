@@ -292,6 +292,8 @@ public class IOControllerTest
         io.irqStatus = new UnsignedByte(0x20);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
+
         assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
@@ -311,6 +313,8 @@ public class IOControllerTest
         io.firqStatus = new UnsignedByte(0x20);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
+
         assertEquals(new UnsignedWord(0xBEEF), io.timerValue);
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
@@ -328,6 +332,8 @@ public class IOControllerTest
         io.irqStatus = new UnsignedByte(0x10);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
+
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
@@ -344,6 +350,7 @@ public class IOControllerTest
         io.firqStatus = new UnsignedByte(0x10);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
@@ -360,6 +367,7 @@ public class IOControllerTest
         io.irqStatus = new UnsignedByte(0x8);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
@@ -376,6 +384,7 @@ public class IOControllerTest
         io.firqStatus = new UnsignedByte(0x8);
         io.timerTick(1);
         cpu.executeInstruction();
+        cpu.serviceInterrupts();
         assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
     }
 
@@ -983,5 +992,61 @@ public class IOControllerTest
 
         io.writeByte(new UnsignedWord(0xFF21), new UnsignedByte(0x00));
         assertFalse(cassette.isMotorOn());
+    }
+
+    @Test
+    public void testBinaryAddCausesCarryCase1() {
+        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xB6), new UnsignedByte(0x6D), false, true, false);
+        assertEquals(new UnsignedByte(0x23), result);
+        assertTrue(io.ccCarrySet());
+    }
+
+    @Test
+    public void testBinaryAddDoesNotCauseCarryCase2() {
+        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xB2), new UnsignedByte(0x4B), false, true, false);
+        assertEquals(new UnsignedByte(0xFd), result);
+        assertFalse(io.ccCarrySet());
+    }
+
+    @Test
+    public void testBinaryAddDoesNotCauseOverflowCase1() {
+        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xC6), new UnsignedByte(0xF4), false, false, true);
+        assertEquals(new UnsignedByte(0xBA), result);
+        assertFalse(io.ccOverflowSet());
+    }
+
+    @Test
+    public void testBinaryAddCausesOverflowCase2() {
+        UnsignedByte result = io.binaryAdd(new UnsignedByte(0x53), new UnsignedByte(0x36), false, false, true);
+        assertEquals(new UnsignedByte(0x89), result);
+        assertTrue(io.ccOverflowSet());
+    }
+
+    @Test
+    public void testBinaryAddWordCausesCarryCase1() {
+        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xB600), new UnsignedWord(0x6D00), false, true, false);
+        assertEquals(new UnsignedWord(0x2300), result);
+        assertTrue(io.ccCarrySet());
+    }
+
+    @Test
+    public void testBinaryAddWordDoesNotCauseCarryCase2() {
+        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xB200), new UnsignedWord(0x4B00), false, true, false);
+        assertEquals(new UnsignedWord(0xFD00), result);
+        assertFalse(io.ccCarrySet());
+    }
+
+    @Test
+    public void testBinaryAddWordDoesNotCauseOverflowCase1() {
+        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xC600), new UnsignedWord(0xF400), false, false, true);
+        assertEquals(new UnsignedWord(0xBA00), result);
+        assertFalse(io.ccOverflowSet());
+    }
+
+    @Test
+    public void testBinaryAddWordCausesOverflowCase2() {
+        UnsignedWord result = io.binaryAdd(new UnsignedWord(0x5300), new UnsignedWord(0x3600), false, false, true);
+        assertEquals(new UnsignedWord(0x8900), result);
+        assertTrue(io.ccOverflowSet());
     }
 }

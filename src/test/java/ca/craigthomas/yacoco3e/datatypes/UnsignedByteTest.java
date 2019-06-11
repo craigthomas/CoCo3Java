@@ -184,6 +184,6 @@ public class UnsignedByteTest
     @Test
     public void testToStringWorksCorrectly() {
         UnsignedByte result = new UnsignedByte(0xBE);
-        assertEquals("BE", result.toString());
+        assertEquals("$BE", result.toString());
     }
 }

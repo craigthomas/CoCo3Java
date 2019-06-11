@@ -51,7 +51,7 @@ public class UnsignedWordTest
     @Test
     public void testToString() {
         UnsignedWord result = new UnsignedWord(0xABCD);
-        assertEquals("0xABCD", result.toString());
+        assertEquals("$ABCD", result.toString());
     }
 
     @Test

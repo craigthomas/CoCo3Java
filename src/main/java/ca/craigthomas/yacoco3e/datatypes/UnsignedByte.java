@@ -138,7 +138,7 @@ public class UnsignedByte
     }
 
     public String toString() {
-        return String.format("%02X", value);
+        return String.format("$%02X", value).replace("0x", "");
     }
 
     @Override

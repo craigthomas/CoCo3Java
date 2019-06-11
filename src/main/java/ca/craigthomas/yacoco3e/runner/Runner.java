@@ -24,8 +24,14 @@ public class Runner
         jCommander.parse(argv);
 
         /* Create the emulator and start it running */
-        Emulator emulator = new Emulator(arguments.scale, arguments.romFile, arguments.trace, arguments.cassetteFile,
-                arguments.diskBasicROM);
+        Emulator emulator = new Emulator.Builder()
+                .setScale(arguments.scale)
+                .setSystemROM(arguments.romFile)
+                .setTrace(arguments.trace)
+                .setVerbose(arguments.verbose)
+                .setCassetteFile(arguments.cassetteFile)
+                .setCartridgeROM(arguments.cartridgeROM)
+                .build();
         emulator.start();
     }
 }

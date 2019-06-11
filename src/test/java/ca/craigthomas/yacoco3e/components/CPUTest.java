@@ -11,6 +11,7 @@ import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class CPUTest
@@ -62,6 +63,25 @@ public class CPUTest
     public void testNegateSetsNegativeFlag() {
         cpu.negate(new UnsignedByte(0x01));
         assertTrue(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testNegateEdgeCase() {
+        UnsignedByte result = cpu.negate(new UnsignedByte(0x80));
+        assertEquals(new UnsignedByte(0x80), result);
+        assertTrue(io.ccNegativeSet());
+        assertTrue(io.ccOverflowSet());
+        assertTrue(io.ccCarrySet());
+    }
+
+    @Test
+    public void testNegateEdgeCase1() {
+        UnsignedByte result = cpu.negate(new UnsignedByte(0x0));
+        assertEquals(new UnsignedByte(0x0), result);
+        assertFalse(io.ccNegativeSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccCarrySet());
+        assertTrue(io.ccZeroSet());
     }
 
     @Test
@@ -340,6 +360,15 @@ public class CPUTest
         assertFalse(io.ccZeroSet());
         assertTrue(io.ccOverflowSet());
         assertTrue(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testIncrementSetsZero() {
+        UnsignedByte result = cpu.increment(new UnsignedByte(0xFF));
+        assertEquals(0x0, result.getShort());
+        assertTrue(io.ccZeroSet());
+        assertFalse(io.ccOverflowSet());
+        assertFalse(io.ccNegativeSet());
     }
 
     @Test
@@ -822,6 +851,34 @@ public class CPUTest
         assertEquals(new UnsignedWord(0x0202), registerSet.getD());
         assertFalse(io.ccZeroSet());
         assertFalse(io.ccNegativeSet());
+    }
+
+    @Test
+    public void testBranchLongWorksCorrectly() {
+        registerSet.setPC(new UnsignedWord(0x1000));
+        cpu.branchLong(new UnsignedWord(0x7FFF));
+        assertEquals(new UnsignedWord(0x8FFF), registerSet.getPC());
+    }
+
+    @Test
+    public void testBranchLongNegativeNumber() {
+        registerSet.setPC(new UnsignedWord(0x5700));
+        cpu.branchLong(new UnsignedWord(0xAA00));
+        assertEquals(new UnsignedWord(0x0100), registerSet.getPC());
+    }
+
+    @Test
+    public void testBranchShortWorksCorrectly() {
+        registerSet.setPC(new UnsignedWord(0x0010));
+        cpu.branchShort(new UnsignedByte(0x7F));
+        assertEquals(new UnsignedWord(0x008F), registerSet.getPC());
+    }
+
+    @Test
+    public void testBranchShortNegativeNumber() {
+        registerSet.setPC(new UnsignedWord(0x57));
+        cpu.branchShort(new UnsignedByte(0xAA));
+        assertEquals(new UnsignedWord(0x1), registerSet.getPC());
     }
 
     @Test

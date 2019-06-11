@@ -206,7 +206,7 @@ public class UnsignedWord
      * @return the signed integer representation of the word
      */
     public int getSignedInt() {
-        return (isMasked(0x8000)) ? -(twosCompliment().getInt()) : value;
+        return (isNegative()) ? -(twosCompliment().getInt()) : value;
     }
 
     /**
@@ -235,6 +235,6 @@ public class UnsignedWord
 
     @Override
     public String toString() {
-        return String.format("0x%04X", value);
+        return String.format("$%04X", value);
     }
 }

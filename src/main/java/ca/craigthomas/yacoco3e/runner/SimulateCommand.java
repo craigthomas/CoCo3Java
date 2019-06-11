@@ -5,11 +5,13 @@
 package ca.craigthomas.yacoco3e.runner;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 
 /**
  * A data class that stores the arguments that may be passed to the emulator.
  */
-public class Arguments
+@Parameters(commandDescription = "Runs the ROM and outputs traces to STDOUT")
+public class SimulateCommand
 {
     @Parameter(description="ROM file")
     public String romFile;
@@ -20,12 +22,9 @@ public class Arguments
     @Parameter(names="--trace", description="trace output")
     public Boolean trace = false;
 
-    @Parameter(names="--verbose", description="verbose output")
-    public Boolean verbose = false;
-
     @Parameter(names="--cassette", description="cassette file")
     public String cassetteFile;
 
-    @Parameter(names="--cartridge", description="Cartridge ROM")
-    public String cartridgeROM;
+    @Parameter(names="--diskbas", description="Disk Basic ROM")
+    public String diskBasicROM;
 }
