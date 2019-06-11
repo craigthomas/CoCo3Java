@@ -166,29 +166,12 @@ file, and can be loaded from the host computer in a future session.
 
 ## Keyboard
 
-The Color Computer 3 keyboard maps most keys to their traditional 
-counterparts. However, there are some differences with shifted keys
-as well as some regular keystrokes. These are listed below:
+The emulated keyboard maps most keys to their traditional
+counterparts. Differences are listed below:
 
 | CoCo 3 Key | Keyboard Combination |
 | :--------: | :------------------: |
-| `!`        | `SHIFT`-`1`          |
-| `"`        | `SHIFT`-`2`          |
-| `#`        | `SHIFT`-`3`          |
-| `$`        | `SHIFT`-`4`          |
-| `%`        | `SHIFT`-`5`          |
-| `&`        | `SHIFT`-`6`          |
-| `'`        | `SHIFT`-`7`          |
-| `(`        | `SHIFT`-`8`          |
-| `)`        | `SHIFT`-`9`          |
-| `=`        | `SHIFT`-`-`          |
-| `+`        | `SHIFT`-`:`          |
-| `:`        | `'`                  |
-| `*`        | `SHIFT`-`'`          |
-| `@`        | `ALT`                |
 | `BREAK`    | `ESCAPE`             |
-
-Note that these key mappings are likely to change in the future.
 
 
 ## Current Status
