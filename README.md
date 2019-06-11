@@ -1,11 +1,27 @@
 # Yet Another Color Computer 3 Emulator
 
-
 [![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/34856186055249429f2b80c9d286fc8d)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
 [![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge?style=flat)](https://dependencyci.com/github/craigthomas/CoCo3Java)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+## Table of Contents
+
+1. [What Is It?](#what-is-it)
+2. [License](#license)
+3. [Compiling](#compiling)
+4. [Running](#running)
+    1. [Running a ROM](#running-a-rom)
+    2. [Trace Mode](#trace-mode)
+5. [Cassette Tapes](#cassette-tapes)
+    1. [Reading](#reading)
+    2. [Writing](#writing)
+6. [Disk Drives](#disk-drives)
+    1. [Loading a Disk Image](#loading-a-disk-image)
+    2. [Saving a Disk Image](#saving-a-disk-image)
+7. [Keyboard](#keyboard)
+8. [Current Status](#current-status)
 
 ## What Is It?
 
@@ -50,7 +66,7 @@ To build the project, switch to the root of the source directory, and type:
 
 On Windows, switch to the root of the source directory, and type:
 
-```
+```bash
 gradlew.bat build
 ```
 
