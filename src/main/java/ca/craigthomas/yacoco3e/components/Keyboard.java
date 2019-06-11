@@ -31,9 +31,9 @@ import java.awt.event.KeyEvent;
  * HIGH
  *   7
  *   6   SHIFT   F2    F1   CTRL   ALT   BRK   CLR   ENTER
- *   5     /     .     -     ,      ;     "     9      8
+ *   5     /     .     -     ,      ;     :     9      8
  *   4     7     6     5     4      3     2     1      0
- *   3   SPACE   RIGHT LEFT  DOW    UP    z     y      x
+ *   3   SPACE   RIGHT LEFT  DOWN   UP    z     y      x
  *   2     w     v     u     t      s     r     q      p
  *   1     o     n     m     l      k     j     i      h
  *   0     g     f     e     d      c     b     a      @
@@ -42,7 +42,9 @@ import java.awt.event.KeyEvent;
  *                          LOW
  *
  *  The keypresses on the CoCo are recorded as active low values, therefore
- *  the byte values are inversed.
+ *  the byte values are inversed. The keyboard is read by strobing the low
+ *  byte values one at a time, and then reading the high byte value to see
+ *  if it is active.
  */
 public class Keyboard extends KeyAdapter
 {
@@ -70,8 +72,92 @@ public class Keyboard extends KeyAdapter
     @Override
     public void keyPressed(KeyEvent e) {
         int keyPressed = e.getKeyCode();
-        switch (keyPressed) {
 
+        if (e.getKeyChar() == '!') {
+            column7.or(0x40);
+            column1.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '#') {
+            column7.or(0x40);
+            column3.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '$') {
+            column7.or(0x40);
+            column4.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '%') {
+            column7.or(0x40);
+            column5.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == ':') {
+            column2.or(0x20);
+            column7.and(~0x40);
+            return;
+        }
+
+        if (e.getKeyChar() == '\'') {
+            column7.or(0x40);
+            column7.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '=') {
+            column7.or(0x40);
+            column5.or(0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '@') {
+            column0.or(0x01);
+            column7.and(~0x40);
+            return;
+        }
+
+        if (e.getKeyChar() == '"') {
+            column7.or(0x40);
+            column2.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '*') {
+            column7.or(0x40);
+            column2.or(0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '&') {
+            column7.or(0x40);
+            column6.or(0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '(') {
+            column7.or(0x40);
+            column0.or(0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == ')') {
+            column7.or(0x40);
+            column1.or(0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '+') {
+            column7.or(0x40);
+            column3.or(0x20);
+            return;
+        }
+
+        switch (keyPressed) {
             /* SHIFT */
             case KeyEvent.VK_SHIFT:
                 column7.or(0x40);
@@ -137,7 +223,7 @@ public class Keyboard extends KeyAdapter
                 column3.or(0x20);
                 break;
 
-            /* ' */
+            /* : */
             case KeyEvent.VK_QUOTE:
                 column2.or(0x20);
                 break;
@@ -204,6 +290,7 @@ public class Keyboard extends KeyAdapter
 
             /* LEFT ARROW */
             case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_BACK_SPACE:
                 column5.or(0x08);
                 break;
 
@@ -347,11 +434,6 @@ public class Keyboard extends KeyAdapter
                 column1.or(0x01);
                 break;
 
-            /* @ */
-            case KeyEvent.VK_AT:
-                column0.or(0x01);
-                break;
-
             default:
                 break;
         }
@@ -360,6 +442,91 @@ public class Keyboard extends KeyAdapter
     @Override
     public void keyReleased(KeyEvent e) {
         int keyPressed = e.getKeyCode();
+
+        if (e.getKeyChar() == '!') {
+            column7.and(~0x40);
+            column1.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '#') {
+            column7.and(~0x40);
+            column3.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '$') {
+            column7.and(~0x40);
+            column4.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '%') {
+            column7.and(~0x40);
+            column5.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == ':') {
+            column2.and(~0x20);
+            column7.and(~0x40);
+            return;
+        }
+
+        if (e.getKeyChar() == '\'') {
+            column7.and(~0x40);
+            column7.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '=') {
+            column7.and(~0x40);
+            column5.and(~0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '@') {
+            column0.and(~0x01);
+            column7.and(~0x40);
+            return;
+        }
+
+        if (e.getKeyChar() == '"') {
+            column7.and(~0x40);
+            column2.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '*') {
+            column7.and(~0x40);
+            column2.and(~0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '&') {
+            column7.and(~0x40);
+            column6.and(~0x10);
+            return;
+        }
+
+        if (e.getKeyChar() == '(') {
+            column7.and(~0x40);
+            column0.and(~0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == ')') {
+            column7.and(~0x40);
+            column1.and(~0x20);
+            return;
+        }
+
+        if (e.getKeyChar() == '+') {
+            column7.and(~0x40);
+            column3.and(~0x20);
+            return;
+        }
+
         switch (keyPressed) {
 
             /* SHIFT */
@@ -427,7 +594,7 @@ public class Keyboard extends KeyAdapter
                 column3.and(~0x20);
                 break;
 
-            /* ' */
+            /* : */
             case KeyEvent.VK_QUOTE:
                 column2.and(~0x20);
                 break;
@@ -494,6 +661,7 @@ public class Keyboard extends KeyAdapter
 
             /* LEFT ARROW */
             case KeyEvent.VK_LEFT:
+            case KeyEvent.VK_BACK_SPACE:
                 column5.and(~0x08);
                 break;
 
@@ -635,11 +803,6 @@ public class Keyboard extends KeyAdapter
             /* A */
             case KeyEvent.VK_A:
                 column1.and(~0x01);
-                break;
-
-            /* @ */
-            case KeyEvent.VK_AT:
-                column0.and(~0x01);
                 break;
 
             default:
