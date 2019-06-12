@@ -1,0 +1,7 @@
+systemROM: "system"
+cartridgeROM: "cartridge"
+cassetteROM: "cassette"
+drive0Image: "0"
+drive1Image: "1"
+drive2Image: "2"
+drive3Image: "3"

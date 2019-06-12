@@ -4,18 +4,21 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.InputStream;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
 
 import javax.swing.UIManager.*;
-
 
 public class Emulator extends Thread
 {
@@ -49,6 +52,7 @@ public class Emulator extends Thread
         private String systemROM;
         private String cartridgeROM;
         private String cassetteFile;
+        private String configFile;
         private boolean trace;
         private boolean verbose;
 
@@ -86,6 +90,11 @@ public class Emulator extends Thread
             return this;
         }
 
+        public Builder setConfigFile(String newConfigFile) {
+            configFile = newConfigFile;
+            return this;
+        }
+
         public Emulator build() {
             return new Emulator(this);
         }
@@ -116,14 +125,64 @@ public class Emulator extends Thread
 
         initEmulatorJFrame();
 
-        // Attempt to load specified ROM file
-        loadROM(builder.systemROM);
+        // Check to see if we specified a configuration file
+        ConfigFile builderConfig = ConfigFile.parseConfigFile(builder.configFile);
 
-        // Check to see if a cartridge was specified
-        loadCartridgeROM(builder.cartridgeROM);
+        // Set the configuration based on the command line arguments
+        ConfigFile commandLineConfig = new ConfigFile(builder.systemROM, builder.cartridgeROM, builder.cassetteFile);
 
-        // Attempt to load specified cassette file
-        loadCassetteFile(builder.cassetteFile);
+        // Attempt to load the assets for the emulator
+        loadAssets(builderConfig, commandLineConfig);
+    }
+
+    /**
+     * Loads assets into the emulator based. Will attempt to use command-line
+     * specified assets first, then use configuration file specified assets.
+     *
+     * @param builderConfig the configuration specified by the emulator builder
+     * @param commandLineConfig the configuration specified by the command line
+     */
+    public void loadAssets(ConfigFile builderConfig, ConfigFile commandLineConfig) {
+        if (!commandLineConfig.isEmpty()) {
+            loadFromConfigFile(commandLineConfig);
+            return;
+        }
+
+        if (builderConfig != null && !builderConfig.isEmpty()) {
+            loadFromConfigFile(builderConfig);
+            return;
+        }
+
+        // Load a configuration from the environment
+        ConfigFile environmentConfig = ConfigFile.parseConfigFile("config.yml");
+        loadFromConfigFile(environmentConfig);
+    }
+
+    /**
+     * Attempts to load emulator memory based upon a ConfigFile specification.
+     *
+     * @param config the ConfigFile to load
+     */
+    public void loadFromConfigFile(ConfigFile config) {
+        if (config == null) {
+            return;
+        }
+
+        if (config.hasSystemROM()) {
+            loadROM(config.getSystemROM());
+        }
+
+        if (config.hasCartridgeROM()) {
+            loadCartridgeROM(config.getCartridgeROM());
+        }
+
+        if (config.hasCassetteROM()) {
+            if (!cassette.openFile(config.getCassetteROM())) {
+                LOGGER.severe("Could not load cassette file [" + config.getCassetteROM() + "]");
+            } else {
+                LOGGER.info("Loaded cassette file [" + config.getCassetteROM() + "]");
+            }
+        }
     }
 
     public void loadROM(String filename) {
@@ -142,16 +201,9 @@ public class Emulator extends Thread
         }
     }
 
-    public void loadCassetteFile(String filename) {
-        if (filename != null) {
-            if (!cassette.openFile(filename)) {
-                LOGGER.severe("Could not load cassette file [" + filename + "]");
-            } else {
-                LOGGER.info("Loaded cassette file [" + filename + "]");
-            }
-        }
-    }
-
+    /**
+     * Resets the emulator.
+     */
     public void reset() {
         memory.resetMemory();
         ioController.reset();

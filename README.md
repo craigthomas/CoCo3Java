@@ -12,7 +12,7 @@
 2. [License](#license)
 3. [Compiling](#compiling)
 4. [Running](#running)
-    1. [Running a ROM](#running-a-rom)
+    1. [Specifying a System ROM](#specifying-a-system-rom)
     2. [Trace Mode](#trace-mode)
 5. [Cassette Tapes](#cassette-tapes)
     1. [Reading](#reading)
@@ -20,8 +20,9 @@
 6. [Disk Drives](#disk-drives)
     1. [Loading a Disk Image](#loading-a-disk-image)
     2. [Saving a Disk Image](#saving-a-disk-image)
-7. [Keyboard](#keyboard)
-8. [Current Status](#current-status)
+7. [Configuration File](#configuration-file)
+8. [Keyboard](#keyboard)
+9. [Current Status](#current-status)
 
 ## What Is It?
 
@@ -75,16 +76,34 @@ The compiled Jar file will be placed in the `build/libs` directory.
 
 ## Running
 
-#### Running a ROM
+For the emulator to run, you will need to have the Java 8 Runtime Environment (JRE)
+installed on your computer. See [Oracle's Java SE Runtime Environment Download](https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html)
+page for more information on installing the JRE. Alternatively, you can
+use [OpenJDK](https://openjdk.java.net/install/).
 
-The command-line interface requires a single argument, which is the
-path to a Color Computer 3 ROM file. The ROM may be either a 
-Super-Extended Color Basic ROM, or a cartridge ROM. The syntax is as
-follows:
+Simply double-clicking the jar file will start the emulator running. By
+default, the emulator will be in paused mode until you attach a system
+ROM to it. You can do so by clicking *ROM*, *Load System ROM*. You can
+also specify what ROM file to load via the command line (see [Specifying
+a System ROM](#specifying-a-system-rom) section below on how to specify a ROM on the
+command-line, and the [Configuration File](#configuration-file) section
+below on how to create a configuration file so you don't have to specify
+the system ROM each time you start the emulator).
+
+
+#### Specifying a System ROM
+
+The system ROM refers to the basic operating system of the machine.
+Usually this is a Super Extended Color Basic ROM, or a cartridge ROM.
+The syntax to specify the system ROM is as follows:
 
 ```bash
-java -jar build/libs/yacoco3e-1.0-all.jar /path/to/rom/file.rom
+java -jar build/libs/yacoco3e-1.0-all.jar --system /path/to/rom/file.rom
 ```
+
+See the section on [Configuration File](#configuration-file) for more
+information on how to create a configuration file so that you don't
+have to specify ROM files or switches on the command-line.
 
 #### Trace Mode
 
@@ -93,7 +112,7 @@ is running as the emulator is running it. Note however that the speed of
 the emulator will be significantly slower:
 
 ```bash
-java -jar build/libs/yacoco3e-1.0-all.jar file.rom --trace
+java -jar build/libs/yacoco3e-1.0-all.jar --trace
 ```
 
 ## Cassette Tapes
@@ -110,8 +129,12 @@ You can also attach a cassette tape file to the emulator on startup with the
 following:
 
 ```bash
-java -jar build/libs/yacoco3e-1.0-all.jar file.rom --cassette /path/to/cas/file
+java -jar build/libs/yacoco3e-1.0-all.jar --cassette /path/to/cas/file
 ```
+
+See the section on [Configuration File](#configuration-file) for more
+information on how to create a configuration file so that you don't
+have to specify ROM files or switches on the command-line.
  
 #### Writing
 
@@ -131,14 +154,18 @@ of the tape buffer to the actual file. You can to that by clicking the menu item
 ## Disk Drives
 
 The emulator has built-in support for disk drive systems, however, it requires
-a Disk Basic ROM (1.0 or 1.1) to be loaded into the cartridge slot on emulator
-startup with the `--cartridge` switch:
+a Disk Basic ROM (1.0 or 1.1) to be loaded into the cartridge slot on the emulator
+with the `--cartridge` switch:
 
 ```bash
-java -jar build/libs/yacoco3e-1.0-all.jar super-ext-basic.rom --cartridge /path/to/disk/basic/rom
+java -jar build/libs/yacoco3e-1.0-all.jar --cartridge /path/to/disk/basic/rom
 ```
 
 Four virtual disk drives are available by default (drive numbers 0-3).
+
+See the section on [Configuration File](#configuration-file) for more
+information on how to create a configuration file so that you don't
+have to specify ROM files or switches on the command-line.
 
 
 #### Loading a Disk Image
@@ -163,6 +190,53 @@ select a location on your computer where the disk file will be saved to.
 Once entered, the contents of the drive will be saved to the virtual disk
 file, and can be loaded from the host computer in a future session.
 
+
+## Configuration File
+
+The emulator allows you to create a simple configuration file so that
+you do not have to specify arguments on the command line. The configuration
+file is in YAML format, and supports the following keys:
+
+* `systemROM` - the full path to the ROM file to be used as the system ROM (e.g.
+Super Extended Color Basic ROM file).
+* `cartridgeROM` - the full path to the ROM file plugged into the cartridge (e.g.
+Megabug).
+* `cassetteROM` - the full path to the ROM file used in the cassette recorder.
+* `drive0Image` - the `DSK` image to be used in drive 0.
+* `drive1Image` - the `DSK` image to be used in drive 0.
+* `drive2Image` - the `DSK` image to be used in drive 0.
+* `drive3Image` - the `DSK` image to be used in drive 0.
+
+Leaving any one of the keys out will result in the emulator ignoring that particular
+ROM image. An example YAML configuration file that specifies ROMs to use for the
+system, cartridge slot, cassette, and drive 0 is as follows:
+
+```
+systemROM: "C:\Users\basic3.rom"
+cartridgeROM: "C:\disk11.rom"
+cassetteROM: "C:\Users\zaxxon.cas"
+drive0Image: "C:\megabug.dsk"
+```
+
+If you start the emulator without command-line arguments, it will look for a configuration file named
+`config.yml` in the current execution directory. This means you can just run the jar file or
+double click it without specifying anything at the command-line. If you want to specify
+a different configuration file to use, you must pass the `--config` option on the
+command-line:
+
+```
+java -jar build/libs/yacoco3e-1.0-all.jar --config "C:\Users\my-emulator-config.yml"
+```
+
+The order in which the emulator will attempt to interpret ROMs is:
+
+1. Command-line specified ROMs (e.g. the `--cartridge` switch)
+2. Command-line specified configuration file (e.g. with the `--config` switch)
+3. Looking for `config.yml` in the current directory
+
+If none of the options above result in any valid ROMs to use for the system ROM,
+then the emulator will start, but will be in a paused mode. You can then attach
+ROM files manually using the menu system.
 
 ## Keyboard
 
