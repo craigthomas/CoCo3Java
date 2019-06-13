@@ -929,6 +929,7 @@ public class CPUTest
     public void testDecimalAdditionAdjustWorksCorrectly() {
         registerSet.setA(new UnsignedByte(0x55));
         cpu.addWithCarry(Register.A, new UnsignedByte(0x17));
+        assertEquals(new UnsignedByte(0x6C), registerSet.getA());
         cpu.decimalAdditionAdjust();
         assertEquals(new UnsignedByte(0x72), registerSet.getA());
     }
