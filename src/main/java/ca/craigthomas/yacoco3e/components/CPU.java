@@ -2731,7 +2731,7 @@ public class CPU
      * @param word1 the first word to compare
      * @param word2 the second word to compare
      */
-    public UnsignedWord compareWord(UnsignedWord word1, UnsignedWord word2) {
+    public void compareWord(UnsignedWord word1, UnsignedWord word2) {
         UnsignedByte cc = io.getCC();
         cc.and(~(IOController.CC_N | IOController.CC_Z | IOController.CC_V | IOController.CC_C));
         UnsignedWord result = io.binaryAdd(word1, word2.twosCompliment(), false, false, true);
@@ -2739,7 +2739,6 @@ public class CPU
         cc.or(result.isZero() ? IOController.CC_Z : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
         opLongDesc = word1 + " vs " + word2 + ", N=" + io.ccNegativeSet() + ", C=" + io.ccCarrySet() + ", V=" + io.ccOverflowSet();
-        return result;
     }
 
     /**
@@ -2825,6 +2824,7 @@ public class CPU
         int mostSignificantNibble = value & 0xF0;
         int leastSignificantNibble = value & 0x0F;
         int adjustment = 0;
+        boolean carryPreviouslySet = io.ccCarrySet();
 
         if (io.ccCarrySet() || mostSignificantNibble > 0x90 || (mostSignificantNibble > 0x80 && leastSignificantNibble > 0x09)) {
             adjustment |= 0x60;
@@ -2834,13 +2834,12 @@ public class CPU
             adjustment |= 0x06;
         }
 
-        mostSignificantNibble = cc.getShort() & IOController.CC_C;
-        UnsignedByte result = new UnsignedByte(mostSignificantNibble + adjustment);
+        UnsignedByte result = new UnsignedByte(adjustment);
 
-        a.set(io.binaryAdd(a, result, false, true, false));
         cc.and(~(IOController.CC_C | IOController.CC_N | IOController.CC_Z));
+        io.setA(io.binaryAdd(a, result, false, true, false));
         cc.or(io.getByteRegister(Register.A).isZero() ? IOController.CC_Z : 0);
-        cc.or(!result.isZero() ? IOController.CC_C : 0);
+        cc.or(carryPreviouslySet ? IOController.CC_C : 0);
         cc.or(result.isNegative() ? IOController.CC_N : 0);
     }
 

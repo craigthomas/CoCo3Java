@@ -929,7 +929,20 @@ public class CPUTest
     public void testDecimalAdditionAdjustWorksCorrectly() {
         registerSet.setA(new UnsignedByte(0x55));
         cpu.addWithCarry(Register.A, new UnsignedByte(0x17));
+        assertEquals(new UnsignedByte(0x6C), registerSet.getA());
         cpu.decimalAdditionAdjust();
         assertEquals(new UnsignedByte(0x72), registerSet.getA());
+        assertFalse(io.ccCarrySet());
+    }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectlyWhenCarrySet() {
+        registerSet.setA(new UnsignedByte(0x55));
+        cpu.addWithCarry(Register.A, new UnsignedByte(0x17));
+        io.setCCCarry();
+        assertEquals(new UnsignedByte(0x6C), registerSet.getA());
+        cpu.decimalAdditionAdjust();
+        assertEquals(new UnsignedByte(0xD2), registerSet.getA());
+        assertTrue(io.ccCarrySet());
     }
 }

@@ -183,6 +183,14 @@ public class Emulator extends Thread
                 LOGGER.info("Loaded cassette file [" + config.getCassetteROM() + "]");
             }
         }
+
+        String drive0 = config.getDrive0Image();
+        if (drive0 != null) {
+            JV1Disk disk = new JV1Disk();
+            if (disk.loadFile(drive0)) {
+                ioController.disk[0].loadFromVirtualDisk(disk);
+            }
+        }
     }
 
     public void loadROM(String filename) {
