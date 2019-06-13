@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.runner;
@@ -11,8 +11,8 @@ import com.beust.jcommander.Parameter;
  */
 public class Arguments
 {
-    @Parameter(description="ROM file")
-    public String romFile;
+    @Parameter(names="--system", description="system ROM")
+    public String systemROM;
 
     @Parameter(names="--scale", description="scale factor")
     public Integer scale = 2;
@@ -26,6 +26,9 @@ public class Arguments
     @Parameter(names="--cassette", description="cassette file")
     public String cassetteFile;
 
-    @Parameter(names="--cartridge", description="Cartridge ROM")
+    @Parameter(names="--cartridge", description="cartridge ROM")
     public String cartridgeROM;
+
+    @Parameter(names="--config", description="path to config file")
+    public String configFile;
 }

@@ -26,11 +26,12 @@ public class Runner
         /* Create the emulator and start it running */
         Emulator emulator = new Emulator.Builder()
                 .setScale(arguments.scale)
-                .setSystemROM(arguments.romFile)
+                .setSystemROM(arguments.systemROM)
                 .setTrace(arguments.trace)
                 .setVerbose(arguments.verbose)
                 .setCassetteFile(arguments.cassetteFile)
                 .setCartridgeROM(arguments.cartridgeROM)
+                .setConfigFile(arguments.configFile)
                 .build();
         emulator.start();
     }

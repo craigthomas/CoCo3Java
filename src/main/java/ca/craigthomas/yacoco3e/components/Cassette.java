@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2019 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -8,12 +8,7 @@ import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.logging.Logger;
-
-import static ca.craigthomas.yacoco3e.common.IO.flushToStream;
-import static ca.craigthomas.yacoco3e.common.IO.openInputStream;
-import static ca.craigthomas.yacoco3e.common.IO.openOutputStream;
 
 public class Cassette
 {
@@ -239,24 +234,20 @@ public class Cassette
      * PLAY, then the file will be opened in read only mode. If the current
      * mode is RECORD, then the file will be opened for writing.
      *
-     * @param filename the name of the file to open
+     * @param cassetteFile the name of the file to open
      * @return true if the file could be opened, false otherwise
      */
-    public boolean openFile(String filename) {
-        this.filename = filename;
+    public boolean openFile(String cassetteFile) {
+        filename = cassetteFile;
         if (mode == Mode.RECORD) {
             return true;
         }
 
-        InputStream stream = openInputStream(filename);
-        if (stream == null) return false;
-        cassetteBytes = IO.loadStream(stream);
+        cassetteBytes = IO.loadStream(IO.openInputStream(cassetteFile));
         if (cassetteBytes == null) return false;
-        IO.closeStream(stream);
+
         rewind();
-
         checkForEOF();
-
         return true;
     }
 
@@ -264,8 +255,9 @@ public class Cassette
      * Flushes the current input buffer to the cassette file.
      */
     public void flushBufferToFile() {
-        OutputStream stream = openOutputStream(filename);
-        flushToStream(stream, inputBuffer);
+        OutputStream stream = IO.openOutputStream(filename);
+        IO.flushToStream(stream, inputBuffer);
+        IO.closeStream(stream);
     }
 
     /**
@@ -310,9 +302,7 @@ public class Cassette
         // Create a new array for the cassette bytes and copy old to new
         int truncatedLength = length - (length - lastIndexOf55);
         byte [] newCassetteBytes = new byte[truncatedLength + 6];
-        for (int ptr = 0; ptr < lastIndexOf55; ptr++) {
-            newCassetteBytes[ptr] = cassetteBytes[ptr];
-        }
+        System.arraycopy(cassetteBytes, 0, newCassetteBytes, 0, lastIndexOf55);
 
         // Add the trailing information for EOF
         newCassetteBytes[truncatedLength] = 0x55;

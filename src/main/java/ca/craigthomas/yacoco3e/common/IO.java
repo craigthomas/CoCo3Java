@@ -48,8 +48,10 @@ public class IO
                 }
                 data = tempStream.toByteArray();
                 tempStream.close();
+                stream.close();
             } else {
                 data = IOUtils.toByteArray(stream);
+                stream.close();
             }
             return data;
         } catch (Exception e) {
