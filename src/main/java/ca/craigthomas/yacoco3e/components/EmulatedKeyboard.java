@@ -4,69 +4,12 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-/**
- * This class records key-presses on the emulated keyboard, and stores
- * them in the correct memory locations for I/O routines.
- *
- * The keys on the COCO3 keyboard are as follows (symbols in brackets
- * represent shifted values):
- *
- * 1(!)  2(")  3(#)  4($)  5(%)  6(&)  7(')  8(()  9())  0( )  :(*)  -(=)
- * ALT   Q     W     E     R     T     Y     U     I     O     P     @
- * CTRL  A     S     D     F     G     H     J     L     ;(+)  ENTER
- * SHIFT Z     X     C     V     B     N     M     ,(<)  .(>)  /(?)  SHIFT
- * UP    DOWN  LEFT  RIGHT F1    F2    BREAK ESC
- *
- * A single word is used to encode what keys are pressed. The HIGH byte of
- * the word represents the ROW of the key in the table below. The LOW byte
- * of the word represents the COLUMN of the key in the table below. To get
- * the value of the keyboard, this keyboard word is available at memory
- * addresses: FF00 (HIGH) and FF02 (LOW).
- *
- * HIGH
- *   7
- *   6   SHIFT   F2    F1   CTRL   ALT   BRK   CLR   ENTER
- *   5     /     .     -     ,      ;     :     9      8
- *   4     7     6     5     4      3     2     1      0
- *   3   SPACE   RIGHT LEFT  DOWN   UP    z     y      x
- *   2     w     v     u     t      s     r     q      p
- *   1     o     n     m     l      k     j     i      h
- *   0     g     f     e     d      c     b     a      @
- *
- *         7     6     5     4      3     2     1      0
- *                          LOW
- *
- *  The keypresses on the CoCo are recorded as active low values, therefore
- *  the byte values are inversed. The keyboard is read by strobing the low
- *  byte values one at a time, and then reading the high byte value to see
- *  if it is active.
- */
-abstract class Keyboard extends KeyAdapter
+public class EmulatedKeyboard extends Keyboard
 {
-    protected UnsignedByte column0;
-    protected UnsignedByte column1;
-    protected UnsignedByte column2;
-    protected UnsignedByte column3;
-    protected UnsignedByte column4;
-    protected UnsignedByte column5;
-    protected UnsignedByte column6;
-    protected UnsignedByte column7;
-
-    public Keyboard() {
+    public EmulatedKeyboard() {
         super();
-        column0 = new UnsignedByte(0);
-        column1 = new UnsignedByte(0);
-        column2 = new UnsignedByte(0);
-        column3 = new UnsignedByte(0);
-        column4 = new UnsignedByte(0);
-        column5 = new UnsignedByte(0);
-        column6 = new UnsignedByte(0);
-        column7 = new UnsignedByte(0);
     }
 
     @Override
@@ -808,50 +751,5 @@ abstract class Keyboard extends KeyAdapter
             default:
                 break;
         }
-    }
-
-    /**
-     * Return the high byte from the keyboard. The value of DRB strobes a
-     * column. If the column number is associated with a keypress, returns
-     * the corresponding row.
-     *
-     * @return the high byte of the keyboard
-     */
-    public UnsignedByte getHighByte(UnsignedByte drb) {
-        UnsignedByte iDRB = drb.inverse();
-
-        if (iDRB.isMasked(0x1)) {
-            return column0.inverse();
-        }
-
-        if (iDRB.isMasked(0x2)) {
-            return column1.inverse();
-        }
-
-        if (iDRB.isMasked(0x4)) {
-            return column2.inverse();
-        }
-
-        if (iDRB.isMasked(0x8)) {
-            return column3.inverse();
-        }
-
-        if (iDRB.isMasked(0x10)) {
-            return column4.inverse();
-        }
-
-        if (iDRB.isMasked(0x20)) {
-            return column5.inverse();
-        }
-
-        if (iDRB.isMasked(0x40)) {
-            return column6.inverse();
-        }
-
-        if (iDRB.isMasked(0x80)) {
-            return column7.inverse();
-        }
-
-        return new UnsignedByte(0xFF);
     }
 }

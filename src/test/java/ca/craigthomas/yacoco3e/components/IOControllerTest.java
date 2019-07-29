@@ -27,7 +27,7 @@ public class IOControllerTest
     public void setUp() throws IllegalIndexedPostbyteException{
         memory = new Memory();
         regs = new RegisterSet();
-        keyboard = new Keyboard();
+        keyboard = new EmulatedKeyboard();
         screen = new Screen(1);
         cassette = new Cassette();
         io = new IOController(memory, regs, keyboard, screen, cassette);

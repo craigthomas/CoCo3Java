@@ -21,7 +21,7 @@ public class KeyboardTest
     @Before
     public void setUp() {
         event = Mockito.mock(KeyEvent.class);
-        keyboard = new Keyboard();
+        keyboard = new EmulatedKeyboard();
     }
 
     @Test

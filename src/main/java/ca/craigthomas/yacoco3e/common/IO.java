@@ -7,8 +7,6 @@ package ca.craigthomas.yacoco3e.common;
 import ca.craigthomas.yacoco3e.components.Memory;
 import org.apache.commons.io.IOUtils;
 
-import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import java.io.*;
 import java.nio.ByteOrder;
 import java.util.logging.Logger;
@@ -142,7 +140,7 @@ public class IO
         }
 
         for (byte data : source) {
-            target[byteCounter] = (short) data;
+            target[byteCounter] = data;
             byteCounter++;
         }
         return true;
