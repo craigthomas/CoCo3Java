@@ -3,8 +3,7 @@
 [![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
 [![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/34856186055249429f2b80c9d286fc8d)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
-[![Dependency Status](https://dependencyci.com/github/craigthomas/CoCo3Java/badge?style=flat)](https://dependencyci.com/github/craigthomas/CoCo3Java)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 ## Table of Contents
 
@@ -22,6 +21,8 @@
     2. [Saving a Disk Image](#saving-a-disk-image)
 7. [Configuration File](#configuration-file)
 8. [Keyboard](#keyboard)
+    1. [Emulated Keyboard](#emulated-keyboard)
+    2. [Pass-through Keyboard](#pass-through-keyboard)
 9. [Current Status](#current-status)
 
 ## What Is It?
@@ -240,13 +241,64 @@ ROM files manually using the menu system.
 
 ## Keyboard
 
-The emulated keyboard maps most keys to their traditional
-counterparts. Differences are listed below:
+There are two different types of keyboards that the emulator supports.
+
+### Emulated Keyboard
+
+The emulated keyboard will attempt to map multiple keystrokes into their 
+corresponding Color Computer 3 key presses. This means for instance, if you
+type a `"` (double-quote) character on your keyboard, it will mimic pressing
+`SHIFT`-`2` on the Color Computer 3 keyboard (which corresponds to the 
+double-quote character). 
+
+The emulated keyboard maps just about every multi-key keypress to a proper Color Computer
+3 counterpart. There is a single difference noted below:
 
 | CoCo 3 Key | Keyboard Combination |
 | :--------: | :------------------: |
 | `BREAK`    | `ESCAPE`             |
 
+The emulated keyboard is enabled by default, as it provides a more natural
+mapping from a contemporary keyboard to the Color Computer 3 keyboard. This
+behaviour however, may cause problems with programs that rely on certain other
+keyboard presses and combinations. In which case, you may wish to use a pass-through
+keyboard setting (see below).
+
+To switch to the emulated keyboard if it is currently not enabled, click on the 
+menu option *Keyboard*, *Emulated Keyboard*. The option will have a selected icon
+next to it if it is enabled.
+
+### Pass-through Keyboard
+
+The pass-through keyboard will not attempt to interpret multiple key presses. Instead,
+it will pass on key combinations as pressed on the keyboard. For instance, pressing
+`SHIFT`-`2` will literally pass on `SHIFT` and `2` as the keyboard combination, and will
+ultimately produce a double-quote character `"`. For those who are not familiar with the 
+Color Computer 3 layout, this behaviour may be confusing, as key combinations on a 
+contemporary keyboard are not the same as on the Color Computer 3. The differences
+are noted below:
+
+| CoCo 3 Key | Keyboard Combination |
+| :--------: | :------------------: |
+| `!`        | `SHIFT`-`1`          |
+| `"`        | `SHIFT`-`2`          |
+| `#`        | `SHIFT`-`3`          |
+| `$`        | `SHIFT`-`4`          |
+| `%`        | `SHIFT`-`5`          |
+| `&`        | `SHIFT`-`6`          |
+| `'`        | `SHIFT`-`7`          |
+| `(`        | `SHIFT`-`8`          |
+| `)`        | `SHIFT`-`9`          |
+| `=`        | `SHIFT`-`-`          |
+| `+`        | `SHIFT`-`:`          |
+| `:`        | `'`                  |
+| `*`        | `SHIFT`-`'`          |
+| `@`        | `ALT`                |
+| `BREAK`    | `ESCAPE`             |  
+
+To switch to the pass-through keyboard if it is currently not enabled, click on the 
+menu option *Keyboard*, *Pass-through Keyboard*. The option will have a selected icon
+next to it if it is enabled.
 
 ## Current Status
 

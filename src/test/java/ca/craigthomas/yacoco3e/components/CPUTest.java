@@ -27,7 +27,7 @@ public class CPUTest
         registerSet = new RegisterSet();
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
-        io = new IOController(memory, registerSet, new Keyboard(), screen, cassette);
+        io = new IOController(memory, registerSet, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
     }
 

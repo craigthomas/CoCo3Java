@@ -23,7 +23,7 @@ public class DiskDriveTest
     public void setUp() {
         Memory memory = new Memory();
         RegisterSet regs = new RegisterSet();
-        Keyboard keyboard = new Keyboard();
+        Keyboard keyboard = new EmulatedKeyboard();
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         IOController io = new IOController(memory, regs, keyboard, screen, cassette);

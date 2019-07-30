@@ -4,16 +4,12 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.io.InputStream;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
@@ -102,7 +98,7 @@ public class Emulator extends Thread
 
     private Emulator(Builder builder) {
         memory = new Memory();
-        keyboard = new Keyboard();
+        keyboard = new EmulatedKeyboard();
         screen = new Screen(builder.scale);
         cassette = new Cassette();
         ioController = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
@@ -169,11 +165,15 @@ public class Emulator extends Thread
         }
 
         if (config.hasSystemROM()) {
-            loadROM(config.getSystemROM());
+            if (memory.loadROM(config.getSystemROM(), MemoryType.ROM)) {
+                setStatus(EmulatorStatus.RUNNING);
+            }
         }
 
         if (config.hasCartridgeROM()) {
-            loadCartridgeROM(config.getCartridgeROM());
+            if (!memory.loadROM(config.getCartridgeROM(), MemoryType.CARTRIDGE)) {
+                setStatus(EmulatorStatus.PAUSED);
+            }
         }
 
         if (config.hasCassetteROM()) {
@@ -189,22 +189,6 @@ public class Emulator extends Thread
             JV1Disk disk = new JV1Disk();
             if (disk.loadFile(drive0)) {
                 ioController.disk[0].loadFromVirtualDisk(disk);
-            }
-        }
-    }
-
-    public void loadROM(String filename) {
-        if (filename != null) {
-            if (memory.loadROM(filename, MemoryType.ROM)) {
-                status = EmulatorStatus.RUNNING;
-            }
-        }
-    }
-
-    public void loadCartridgeROM(String filename) {
-        if (filename != null) {
-            if (!memory.loadROM(filename, MemoryType.CARTRIDGE)) {
-                status = EmulatorStatus.PAUSED;
             }
         }
     }
@@ -330,6 +314,23 @@ public class Emulator extends Thread
         diskMenu.add(drive3MenuItem);
 
         menuBar.add(diskMenu);
+
+        // Keyboard menu
+        JMenu keyboardMenu = new JMenu("Keyboard");
+        keyboardMenu.setMnemonic(KeyEvent.VK_K);
+
+        JRadioButtonMenuItem emulatedKeyboardMenuItem = new JRadioButtonMenuItem("Emulated Keyboard");
+        emulatedKeyboardMenuItem.setSelected(true);
+        keyboardMenu.add(emulatedKeyboardMenuItem);
+
+        JRadioButtonMenuItem passthroughKeyboardMenuItem = new JRadioButtonMenuItem("Pass-through Keyboard");
+        keyboardMenu.add(passthroughKeyboardMenuItem);
+
+        emulatedKeyboardMenuItem.addActionListener(new SetEmulatedKeyboardActionListener(this, passthroughKeyboardMenuItem, emulatedKeyboardMenuItem));
+        passthroughKeyboardMenuItem.addActionListener(new SetPassthroughKeyboardActionListener(this, passthroughKeyboardMenuItem, emulatedKeyboardMenuItem));
+
+        menuBar.add(keyboardMenu);
+
         attachCanvas();
     }
 
@@ -363,6 +364,18 @@ public class Emulator extends Thread
         canvas.requestFocus();
 
         canvas.addKeyListener(keyboard);
+    }
+
+    /**
+     * Switches out the existing keyboard for a new one (emulated or pass-through).
+     *
+     * @param newKeyboard the new Keyboard to add as a keyListener
+     */
+    public void switchKeyListener(Keyboard newKeyboard) {
+        canvas.removeKeyListener(keyboard);
+        canvas.addKeyListener(newKeyboard);
+        keyboard = newKeyboard;
+        ioController.setKeyboard(keyboard);
     }
 
     /**

@@ -212,6 +212,15 @@ public class IOController
     }
 
     /**
+     * Creates a back-reference to the Keyboard.
+     *
+     * @param keyboard the new keyboard the io controller will interface with
+     */
+    public void setKeyboard(Keyboard keyboard) {
+        this.keyboard = keyboard;
+    }
+
+    /**
      * Reads a byte from RAM, bypassing the MMU, and reading only from
      * the physical RAM array. This method should be used by devices
      * which need to read from RAM such as the screen.
