@@ -1,9 +1,10 @@
 # Yet Another Color Computer 3 Emulator
 
-[![Build Status](https://travis-ci.org/craigthomas/CoCo3Java.svg?branch=master&style=flat)](https://travis-ci.org/craigthomas/CoCo3Java) 
-[![Coverage Status](https://codecov.io/gh/craigthomas/CoCo3Java/branch/master/graph/badge.svg)](https://codecov.io/gh/craigthomas/CoCo3Java)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/34856186055249429f2b80c9d286fc8d)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://img.shields.io/travis/craigthomas/CoCo3Java?style=flat-square)](https://travis-ci.org/craigthomas/CoCo3Java) 
+[![Coverage Status](https://img.shields.io/codecov/c/github/craigthomas/CoCo3Java?style=flat-square)](https://codecov.io/gh/craigthomas/CoCo3Java)
+[![Codacy Badge](https://img.shields.io/codacy/grade/34856186055249429f2b80c9d286fc8d?style=flat-square)](https://www.codacy.com/app/craig-thomas/CoCo3Java?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=craigthomas/CoCo3Java&amp;utm_campaign=Badge_Grade)
+[![Dependency Status](https://img.shields.io/librariesio/github/craigthomas/CoCo3Java?style=flat-square)](https://libraries.io/github/craigthomas/CoCo3Java)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 ## Table of Contents
 
