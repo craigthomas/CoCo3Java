@@ -19,7 +19,7 @@ dependencies {
     compile 'org.apache.commons:commons-lang3:3.6'
     compile 'com.beust:jcommander:1.72'
     compile 'org.yaml:snakeyaml:1.24'
-    testCompile 'junit:junit:4.12'
+    testCompile 'junit:junit:4.13.2'
     testCompile 'org.mockito:mockito-all:1.10.19'
 }
 
