@@ -1,6 +1,6 @@
 # Yet Another Color Computer 3 Emulator
 
-[![Build Status](https://img.shields.io/travis/craigthomas/CoCo3Java?style=flat-square)](https://travis-ci.com/craigthomas/CoCo3Java) 
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/craigthomas/CoCo3Java/Build%20Test%20Coverage?style=flat-square)](https://github.com/craigthomas/CoCo3Java/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/craigthomas/CoCo3Java?style=flat-square)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Dependency Status](https://img.shields.io/librariesio/github/craigthomas/CoCo3Java?style=flat-square)](https://libraries.io/github/craigthomas/CoCo3Java)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -55,10 +55,11 @@ software components.
 
 ## Compiling
 
-Simply copy the source files to a directory of your choice. In addition 
-to the source, you will need the following required software packages:
-
-- Java JDK 8 1.8.0 u141 or later
+You will need a copy of the Java Development Kit (JDK) version 8 or greater 
+installed in to compile the JAR file. I strongly recommend using an open-source 
+licensed JDK build (GPL v2 with Classpath Exception), available at 
+[https://adoptopenjdk.net](https://adoptopenjdk.net) and install OpenJDK 8 or 
+OpenJDK 11.
 
 To build the project, switch to the root of the source directory, and type:
  
