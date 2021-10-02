@@ -18,6 +18,10 @@ import javax.swing.UIManager.*;
 
 public class Emulator extends Thread
 {
+    /* Pre-defined constants */
+    private final static int LOW_SPEED_CLOCK_FREQUENCY = 14917;
+    private final static long SCREEN_REFRESH_RATE = 17L;
+
     /* The main emulator components */
     private Screen screen;
     private Keyboard keyboard;
@@ -37,6 +41,7 @@ public class Emulator extends Thread
     private boolean trace;
     private boolean verbose;
     private volatile EmulatorStatus status;
+    private volatile int remainingTicks;
     private Timer timer;
     private TimerTask timerTask;
 
@@ -395,6 +400,10 @@ public class Emulator extends Thread
         canvas.getBufferStrategy().show();
     }
 
+    public void refreshTicks() {
+        remainingTicks = LOW_SPEED_CLOCK_FREQUENCY;
+    }
+
     /**
      * Starts the main emulator loop running. Fires at the rate of 60Hz,
      * will repaint the screen and listen for any debug key presses.
@@ -404,11 +413,12 @@ public class Emulator extends Thread
         timer = new Timer();
         timerTask = new TimerTask() {
             public void run() {
+                refreshTicks();
                 screen.refreshScreen();
                 refreshScreen();
             }
         };
-        timer.scheduleAtFixedRate(timerTask, 0L, 33L);
+        timer.scheduleAtFixedRate(timerTask, 0L, SCREEN_REFRESH_RATE);
         run();
     }
 
@@ -421,7 +431,10 @@ public class Emulator extends Thread
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
                 try {
-                    operationTicks = cpu.executeInstruction();
+                    if (remainingTicks > 0) {
+                        operationTicks = cpu.executeInstruction();
+                        remainingTicks -= operationTicks;
+                    }
                 } catch (IllegalIndexedPostbyteException e) {
                     System.out.println(e.getMessage());
                     status = EmulatorStatus.PAUSED;
