@@ -968,6 +968,21 @@ public class IOControllerTest
     }
 
     @Test
+    public void testSAMR1SetHighSpeed() {
+        io.writeByte(new UnsignedWord(0xFFD9), new UnsignedByte(0));
+        assertEquals(new UnsignedByte(0x02), io.samClockSpeed);
+        assertEquals(IOController.HIGH_SPEED_CLOCK_FREQUENCY, io.tickRefreshAmount);
+    }
+
+    @Test
+    public void testSAMR1SetClearHighSpeed() {
+        io.writeByte(new UnsignedWord(0xFFD9), new UnsignedByte(0));
+        io.writeByte(new UnsignedWord(0xFFD8), new UnsignedByte(0));
+        assertEquals(new UnsignedByte(0x00), io.samClockSpeed);
+        assertEquals(IOController.LOW_SPEED_CLOCK_FREQUENCY, io.tickRefreshAmount);
+    }
+
+    @Test
     public void testResetSetsCorrectValues() {
         memory.rom = new short [0x4000];
         memory.rom[0x3FFE] = (short) 0xC0;
