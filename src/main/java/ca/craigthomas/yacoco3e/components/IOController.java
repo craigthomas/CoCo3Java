@@ -103,6 +103,11 @@ public class IOController
     /* The number of ticks to pass in 16.6 milliseconds */
     public static final int TIMER_16_6_MILLIS = 14833;
 
+    /* The number of ticks that is allowed to be processed in 0.89MHz mode and 1.78 MHz mode */
+    public final static int LOW_SPEED_CLOCK_FREQUENCY = 14917;
+    public final static int HIGH_SPEED_CLOCK_FREQUENCY = 29834;
+    public UnsignedByte samClockSpeed;
+
     /* The timer tick threshold */
     public int timerTickThreshold;
 
@@ -125,6 +130,8 @@ public class IOController
 
     public boolean pia1FastTimerEnabled;
     public boolean pia1SlowTimerEnabled;
+
+    public volatile int tickRefreshAmount;
 
 
     public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette) {
@@ -178,6 +185,9 @@ public class IOController
         }
 
         screen.setIOController(this);
+
+        samClockSpeed = new UnsignedByte();
+        tickRefreshAmount = LOW_SPEED_CLOCK_FREQUENCY;
     }
 
     /**
@@ -349,6 +359,11 @@ public class IOController
             /* Vertical Offset Register 0 */
             case 0xFF9E:
                 return verticalOffsetRegister.getLow();
+
+            /* SAM Clock Speed R1 */
+            case 0xFFD8:
+            case 0xFFD9:
+                return new UnsignedByte();
 
             /* Interrupt vectors */
             case 0xFFF2:
@@ -884,6 +899,18 @@ public class IOController
                 updateVerticalOffset();
                 break;
 
+            /* Clear SAM R1 Bit - Clock Speed */
+            case 0xFFD8:
+                samClockSpeed.and(~0x2);
+                updateClockSpeed();
+                break;
+
+            /* Set SAM R1 Bit - Clock Speed */
+            case 0xFFD9:
+                samClockSpeed.or(0x2);
+                updateClockSpeed();
+                break;
+
             /* Clear SAM TY Bit - ROM/RAM mode */
             case 0xFFDE:
                 memory.disableAllRAMMode();
@@ -924,6 +951,17 @@ public class IOController
             int newOffset = verticalOffsetRegister.getInt() << 3;
             screen.setMemoryOffset(newOffset);
         }
+    }
+
+    /**
+     * Updates the number of ticks available for a tick refresh. When a CPU operation
+     * occurs, the number of ticks it consumes are counted. This count is deducted from
+     * a set number of ticks the CPU is allowed to execute every 60th of a second.
+     * When the SAM R0 or SAM R1 bits are modified, the number of ticks available changes,
+     * as the processor can be switched into 0.895 MHz mode or 1.78 MHz mode.
+     */
+    public void updateClockSpeed() {
+        tickRefreshAmount = (samClockSpeed.isMasked(0x2)) ? HIGH_SPEED_CLOCK_FREQUENCY : LOW_SPEED_CLOCK_FREQUENCY;
     }
 
     public void updateVideoMode() {

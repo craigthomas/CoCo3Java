@@ -19,7 +19,6 @@ import javax.swing.UIManager.*;
 public class Emulator extends Thread
 {
     /* Pre-defined constants */
-    private final static int LOW_SPEED_CLOCK_FREQUENCY = 14917;
     private final static long SCREEN_REFRESH_RATE = 17L;
 
     /* The main emulator components */
@@ -400,13 +399,18 @@ public class Emulator extends Thread
         canvas.getBufferStrategy().show();
     }
 
+    /**
+     * Refreshes the number of ticks that can be consumed during the current
+     * 60th of a second time slice.
+     */
     public void refreshTicks() {
-        remainingTicks = LOW_SPEED_CLOCK_FREQUENCY;
+        remainingTicks = ioController.tickRefreshAmount;
     }
 
     /**
      * Starts the main emulator loop running. Fires at the rate of 60Hz,
-     * will repaint the screen and listen for any debug key presses.
+     * will repaint the screen, listen for any debug key presses, and
+     * refresh the number of ticks available to be consumed.
      */
     public void start() {
         this.reset();

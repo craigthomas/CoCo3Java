@@ -319,6 +319,7 @@ Below are a list of items that are currently working:
 - SAM Display Offset Registers (`$FFC6` - `$FFD3`)
 - SAM TY Bits (`$FFDE`, `$FFDF`) 
 - SAM Mode Registers (`$FFC0` - `$FFC5`)
+- SAM R1 Clock Speed Bits (`FFD8`, `FFD9`)
 - VDG Register (`$FF22`)
 - Cassette tape interface
 - IRQ Interrupts (both PIA and GIME)
