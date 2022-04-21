@@ -1,10 +1,18 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+}
+
 group 'ca.craigthomas'
 version '1.0'
-
-apply plugin: 'java'
-apply plugin: 'jacoco'
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'ca.craigthomas.yacoco3e.runner.Runner'
 
@@ -23,21 +31,10 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.5.1'
 }
 
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:6.1.0'
-    }
-}
-
 jacocoTestReport {
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
 }
 
