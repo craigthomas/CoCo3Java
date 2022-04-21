@@ -46,8 +46,8 @@ public class SaveVirtualDiskMenuItemListenerTest
         when(listener0spy.createFileChooser()).thenReturn(fileChooser);
         when(listener1spy.createFileChooser()).thenReturn(fileChooser);
         when(emulator.getIOController()).thenReturn(ioController);
-        when(ioController.saveVirtualDisk(anyInt(), anyObject())).thenReturn(virtualDisk);
-        when(virtualDisk.saveToFile(anyString(), anyObject())).thenReturn(true);
+        when(ioController.saveVirtualDisk(anyInt(), any())).thenReturn(virtualDisk);
+        when(virtualDisk.saveToFile(anyString(), any())).thenReturn(true);
     }
 
     @Test

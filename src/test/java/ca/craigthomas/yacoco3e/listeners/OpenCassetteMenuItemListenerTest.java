@@ -40,7 +40,7 @@ public class OpenCassetteMenuItemListenerTest
         mockItemEvent = mock(ActionEvent.class);
         when(mockItemEvent.getSource()).thenReturn(button);
         when(listenerSpy.createFileChooser()).thenReturn(fileChooser);
-        when(cassette.openFile(anyObject())).thenReturn(true);
+        when(cassette.openFile(any())).thenReturn(true);
     }
 
     @Test

@@ -940,17 +940,17 @@ public class IOController
      * Offset = (VO15 VO14 VO13) * 64K + SAM * 512 + (VO5 VO4 VO3 VO2 VO1 VO0) * 8
      */
     public void updateVerticalOffset() {
+        int newOffset;
         if (cocoCompatibleMode) {
-            int newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
+            newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
             newOffset = newOffset >> 5;
             newOffset *= 65536;
             newOffset += (samDisplayOffsetRegister.getShort() * 0x200);
             newOffset += ((verticalOffsetRegister.getLow().getShort() & 0x3F) * 0x04);
-            screen.setMemoryOffset(newOffset);
         } else {
-            int newOffset = verticalOffsetRegister.getInt() << 3;
-            screen.setMemoryOffset(newOffset);
+            newOffset = verticalOffsetRegister.getInt() << 3;
         }
+        screen.setMemoryOffset(newOffset);
     }
 
     /**
