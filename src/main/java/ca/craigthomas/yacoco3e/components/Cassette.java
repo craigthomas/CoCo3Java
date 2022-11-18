@@ -59,7 +59,7 @@ public class Cassette
     private byte lastInputBit;
 
     /* A logger for the cassette drive */
-    private final static Logger LOGGER = Logger.getLogger(Cassette.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Cassette.class.getName());
 
     public Cassette() {
         mode = Mode.PLAY;
@@ -244,7 +244,10 @@ public class Cassette
         }
 
         cassetteBytes = IO.loadStream(IO.openInputStream(cassetteFile));
-        if (cassetteBytes == null) return false;
+        if (cassetteBytes.length == 0) {
+            this.record();
+            return true;
+        }
 
         rewind();
         checkForEOF();

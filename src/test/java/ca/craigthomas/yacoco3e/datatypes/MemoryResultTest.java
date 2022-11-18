@@ -13,14 +13,14 @@ public class MemoryResultTest
     @Test
     public void testMemoryResultSetsValuesCorrect() {
         MemoryResult result = new MemoryResult(3, new UnsignedWord(0xBEEF));
-        assertEquals(3, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xBEEF), result.get());
+        assertEquals(3, result.bytesConsumed);
+        assertEquals(new UnsignedWord(0xBEEF), result.value);
     }
 
     @Test
     public void testMemoryResultToStringCorrect() {
         MemoryResult result = new MemoryResult(3, new UnsignedWord(0xBEEF));
-        assertEquals(3, result.getBytesConsumed());
+        assertEquals(3, result.bytesConsumed);
         assertEquals("[3 bytes read, $BEEF]", result.toString());
     }
 }

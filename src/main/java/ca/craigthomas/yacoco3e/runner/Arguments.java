@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2022 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.runner;

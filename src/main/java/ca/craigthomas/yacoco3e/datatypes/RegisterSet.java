@@ -11,15 +11,24 @@ package ca.craigthomas.yacoco3e.datatypes;
  */
 public class RegisterSet
 {
-    private UnsignedByte a;
-    private UnsignedByte b;
-    private UnsignedByte dp;
-    private UnsignedByte cc;
-    private UnsignedWord pc;
-    private UnsignedWord x;
-    private UnsignedWord y;
-    private UnsignedWord s;
-    private UnsignedWord u;
+    public static final short CC_C = 0x01;
+    public static final short CC_V = 0x02;
+    public static final short CC_Z = 0x04;
+    public static final short CC_N = 0x08;
+    public static final short CC_I = 0x10;
+    public static final short CC_H = 0x20;
+    public static final short CC_F = 0x40;
+    public static final short CC_E = 0x80;
+
+    public UnsignedByte a;
+    public UnsignedByte b;
+    public UnsignedByte dp;
+    public UnsignedByte cc;
+    public UnsignedWord pc;
+    public UnsignedWord x;
+    public UnsignedWord y;
+    public UnsignedWord s;
+    public UnsignedWord u;
 
     public RegisterSet() {
         cc = new UnsignedByte();
@@ -31,84 +40,6 @@ public class RegisterSet
         s = new UnsignedWord();
         a = new UnsignedByte();
         b = new UnsignedByte();
-    }
-
-    public UnsignedWord getPC() {
-        return pc;
-    }
-
-    public void setPC(UnsignedWord pc) {
-        this.pc = pc.copy();
-    }
-
-    public void setDP(UnsignedByte dp) {
-        this.dp = dp.copy();
-    }
-
-    public UnsignedByte getDP() {
-        return dp;
-    }
-
-    public UnsignedWord getX() {
-        return x;
-    }
-
-    public UnsignedWord getY() {
-        return y;
-    }
-
-    public UnsignedWord getU() {
-        return u;
-    }
-
-    public UnsignedWord getS() {
-        return s;
-    }
-
-    public void setA(UnsignedByte a) {
-        this.a = a.copy();
-    }
-
-    public void setB(UnsignedByte b) {
-        this.b = b.copy();
-    }
-
-    public void setCC(UnsignedByte cc) {
-        this.cc = cc.copy();
-    }
-
-    public void setX(UnsignedWord x) {
-        this.x = x.copy();
-    }
-
-    public void setY(UnsignedWord y) {
-        this.y = y.copy();
-    }
-
-    public void setU(UnsignedWord u) {
-        this.u = u.copy();
-    }
-
-    public void setS(UnsignedWord s) {
-        this.s = s.copy();
-    }
-
-    /**
-     * Returns the value of the A register.
-     *
-     * @return the value of the A register
-     */
-    public UnsignedByte getA() {
-        return a;
-    }
-
-    /**
-     * Returns the value of the B register.
-     *
-     * @return the value of the B register
-     */
-    public UnsignedByte getB() {
-        return b;
     }
 
     /**
@@ -131,13 +62,8 @@ public class RegisterSet
         b = d.getLow();
     }
 
-    /**
-     * Gets the value of the condition code register.
-     *
-     * @return the value of the condition code register
-     */
-    public UnsignedByte getCC() {
-        return cc;
+    public void setD(int d) {
+        this.setD(new UnsignedWord(d));
     }
 
     public void incrementPC() {
@@ -145,7 +71,7 @@ public class RegisterSet
     }
 
     public String toString() {
-        return "A:" + a + " B:" + b + " D:" + getD() + " X:" + x + " Y:" + y +
+        return "PC:" + pc + " A:" + a + " B:" + b + " D:" + getD() + " X:" + x + " Y:" + y +
                 " U:" + u + " S:" + s + " CC:" + cc + " DP:" + dp;
     }
 }

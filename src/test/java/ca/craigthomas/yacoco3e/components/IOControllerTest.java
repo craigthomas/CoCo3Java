@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2022 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 
 import java.awt.event.KeyEvent;
 
+import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 import static org.junit.Assert.*;
 
 public class IOControllerTest
@@ -24,7 +25,7 @@ public class IOControllerTest
     private CPU cpu;
 
     @Before
-    public void setUp() throws IllegalIndexedPostbyteException{
+    public void setup() throws MalformedInstructionException {
         memory = new Memory();
         regs = new RegisterSet();
         keyboard = new EmulatedKeyboard();
@@ -36,14 +37,14 @@ public class IOControllerTest
     }
 
     @Test
-    public void testReadByteReadsCorrectByte() throws IllegalIndexedPostbyteException{
+    public void testReadByteReadsCorrectByte() {
         memory.memory[0x7BEEF] = 0xAB;
         UnsignedByte result = io.readByte(new UnsignedWord(0xBEEF));
         assertEquals(new UnsignedByte(0xAB), result);
     }
 
     @Test
-    public void testReadIOByteReadsCorrectByte() throws IllegalIndexedPostbyteException{
+    public void testReadIOByteReadsCorrectByte() {
         io.pia1CRA = new UnsignedByte(0x1122);
         UnsignedByte result = io.readByte(new UnsignedWord(0xFF01));
         assertEquals(new UnsignedByte(0x1122), result);
@@ -247,7 +248,7 @@ public class IOControllerTest
     public void testNoInterruptThrownOnPIAInterruptsIfInterruptsTurnedOff() {
         io.pia1SlowTimer = 99999;
         io.pia1SlowTimerEnabled = true;
-        io.getCC().and(~IOController.CC_I);
+        io.regs.cc.and(~CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1SlowTimer);
     }
@@ -257,7 +258,7 @@ public class IOControllerTest
         io.pia1CRB = new UnsignedByte(0x1);
         io.pia1SlowTimer = 99999;
         io.pia1SlowTimerEnabled = true;
-        io.getCC().or(IOController.CC_I);
+        io.regs.cc.or(CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1SlowTimer);
         assertFalse(io.pia1CRA.isMasked(0x80));
@@ -270,7 +271,7 @@ public class IOControllerTest
         io.pia1FastTimerEnabled = true;
         io.pia1CRB = new UnsignedByte(0);
         io.pia1CRA = new UnsignedByte(0x1);
-        io.getCC().or(IOController.CC_I);
+        io.regs.cc.or(CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1FastTimer);
         assertTrue(io.pia1CRA.isMasked(0x80));
@@ -278,13 +279,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMETimerInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMETimerInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
         memory.rom[0x3FF9] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.timerTickCounter = 999999;
         io.timerResetValue = new UnsignedWord(0xBEEF);
         io.timerValue = new UnsignedWord(0x1);
@@ -299,13 +300,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMETimerFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMETimerFastInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
         memory.rom[0x3FF7] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.timerTickCounter = 999999;
         io.timerResetValue = new UnsignedWord(0xBEEF);
         io.timerValue = new UnsignedWord(0x1);
@@ -320,13 +321,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMEHorizontalBorderInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMEHorizontalBorderInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
         memory.rom[0x3FF9] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.horizontalBorderTickValue = 999999;
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x10);
@@ -338,13 +339,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMEHorizontalBorderFastInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
         memory.rom[0x3FF7] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.horizontalBorderTickValue = 999999;
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x10);
@@ -355,13 +356,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMEVerticalBorderInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMEVerticalBorderInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF8] = (short) 0xDE;
         memory.rom[0x3FF9] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.verticalBorderTickValue = 999999;
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x8);
@@ -372,13 +373,13 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGIMEVerticalBorderFastInterruptFiresCorrectly() throws IllegalIndexedPostbyteException {
+    public void testGIMEVerticalBorderFastInterruptFiresCorrectly() throws MalformedInstructionException {
         memory.enableAllRAMMode();
         memory.rom = new short [0x4000];
         memory.rom[0x3FF6] = (short) 0xDE;
         memory.rom[0x3FF7] = (short) 0xAD;
 
-        regs.setS(new UnsignedWord(0x0300));
+        regs.s.set(new UnsignedWord(0x0300));
         io.verticalBorderTickValue = 999999;
         io.firqEnabled = true;
         io.firqStatus = new UnsignedByte(0x8);
@@ -389,19 +390,19 @@ public class IOControllerTest
     }
 
     @Test
-    public void testWriteByteWritesCorrectByte() throws IllegalIndexedPostbyteException{
+    public void testWriteByteWritesCorrectByte() {
         io.writeByte(new UnsignedWord(0xBEEF), new UnsignedByte(0xAB));
         assertEquals(memory.memory[0x7BEEF], 0xAB);
     }
 
     @Test
-    public void testWriteIOByteWritesCorrectByte() throws IllegalIndexedPostbyteException{
+    public void testWriteIOByteWritesCorrectByte() {
         io.writeByte(new UnsignedWord(0xFF00), new UnsignedByte(0xAB));
         assertEquals(io.ioMemory[0x0], 0xAB);
     }
 
     @Test
-    public void testReadWordReadsCorrectWord() throws IllegalIndexedPostbyteException{
+    public void testReadWordReadsCorrectWord() {
         memory.memory[0x7BEEE] = 0xAB;
         memory.memory[0x7BEEF] = 0xCD;
         UnsignedWord result = io.readWord(new UnsignedWord(0xBEEE));
@@ -409,128 +410,65 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGetImmediateReadsAddressFromPC() throws IllegalIndexedPostbyteException{
+    public void testGetImmediateReadsAddressFromPC() {
         memory.memory[0x7BEEE] = 0xAB;
         memory.memory[0x7BEEF] = 0xCD;
-        regs.setPC(new UnsignedWord(0xBEEE));
+        regs.pc.set(new UnsignedWord(0xBEEE));
         MemoryResult result = io.getImmediateWord();
-        assertEquals(2, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xABCD), result.get());
+        assertEquals(2, result.bytesConsumed);
+        assertEquals(new UnsignedWord(0xABCD), result.value);
     }
 
     @Test
-    public void testGetDirectReadsAddressFromDPAndPC() throws IllegalIndexedPostbyteException{
+    public void testGetDirectReadsAddressFromDPAndPC() {
         memory.memory[0x7BEEE] = 0xCD;
-        regs.setPC(new UnsignedWord(0xBEEE));
-        regs.setDP(new UnsignedByte(0xAB));
+        regs.pc.set(new UnsignedWord(0xBEEE));
+        regs.dp.set(new UnsignedByte(0xAB));
         MemoryResult result = io.getDirect();
-        assertEquals(1, result.getBytesConsumed());
-        assertEquals(new UnsignedWord(0xABCD), result.get());
+        assertEquals(1, result.bytesConsumed);
+        assertEquals(new UnsignedWord(0xABCD), result.value);
     }
 
     @Test
-    public void testPushStackWritesToMemoryLocation() throws IllegalIndexedPostbyteException{
-        regs.setS(new UnsignedWord(0xA000));
+    public void testPushStackWritesToMemoryLocation() {
+        regs.s.set(new UnsignedWord(0xA000));
         io.pushStack(Register.S, new UnsignedByte(0x98));
         assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).getShort());
     }
 
     @Test
-    public void testPushStackWritesToMemoryLocationUsingUStack() throws IllegalIndexedPostbyteException{
-        regs.setU(new UnsignedWord(0xA000));
+    public void testPushStackWritesToMemoryLocationUsingUStack() {
+        regs.u.set(new UnsignedWord(0xA000));
         io.pushStack(Register.U, new UnsignedByte(0x98));
         assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).getShort());
     }
 
     @Test
-    public void testPopStackReadsMemoryLocation() throws IllegalIndexedPostbyteException{
-        regs.setS(new UnsignedWord(0xA000));
+    public void testPopStackReadsMemoryLocation() {
+        regs.s.set(new UnsignedWord(0xA000));
         memory.memory[0x7A000] = 0x98;
         UnsignedByte result = io.popStack(Register.S);
         assertEquals(new UnsignedByte(0x98), result);
-        assertEquals(new UnsignedWord(0xA001), regs.getS());
+        assertEquals(new UnsignedWord(0xA001), regs.s);
     }
 
     @Test
-    public void testPopStackReadsMemoryLocationFromU() throws IllegalIndexedPostbyteException{
-        regs.setU(new UnsignedWord(0xA000));
+    public void testPopStackReadsMemoryLocationFromU() {
+        regs.u.set(new UnsignedWord(0xA000));
         memory.memory[0x7A000] = 0x98;
         UnsignedByte result = io.popStack(Register.U);
         assertEquals(new UnsignedByte(0x98), result);
-        assertEquals(new UnsignedWord(0xA001), regs.getU());
+        assertEquals(new UnsignedWord(0xA001), regs.u);
     }
 
     @Test
-    public void testBinaryAddWordZeroValues() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(0), new UnsignedWord(0), false, false, false);
-        assertEquals(new UnsignedWord(0), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordOnes() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(1), new UnsignedWord(1), false, false, false);
-        assertEquals(new UnsignedWord(2), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesNotChangedOnFalse() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0xFFFF), new UnsignedWord(1), false, false, false);
-        assertEquals(new UnsignedWord(0), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesOverflow() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0x8FFF), new UnsignedWord(0x8FFF), false, false, true);
-        assertEquals(new UnsignedWord(0x1FFE), result);
-        assertEquals(new UnsignedByte(IOController.CC_V), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesNoOverflow() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  1), new UnsignedWord(1), false, false, true);
-        assertEquals(new UnsignedWord(2), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesCarry() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0xFFFF), new UnsignedWord(1), false, true, false);
-        assertEquals(new UnsignedWord(0), result);
-        assertEquals(new UnsignedByte(IOController.CC_C), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesNoCarry() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  1), new UnsignedWord(1), false, true, false);
-        assertEquals(new UnsignedWord(2), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesHalfCarry() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0xFFFF), new UnsignedWord(1), true, false, false);
-        assertEquals(new UnsignedWord(0), result);
-        assertEquals(new UnsignedByte(IOController.CC_H), regs.getCC());
-    }
-
-    @Test
-    public void testBinaryAddWordConditionCodesNoHalfCarry() throws IllegalIndexedPostbyteException{
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(  0), new UnsignedWord(1), true, false, false);
-        assertEquals(new UnsignedWord(1), result);
-        assertEquals(new UnsignedByte(0), regs.getCC());
-    }
-
-    @Test
-    public void testGetWordRegisterWorksCorrectly() throws IllegalIndexedPostbyteException{
-        regs.setY(new UnsignedWord(0xA));
-        regs.setX(new UnsignedWord(0xB));
-        regs.setU(new UnsignedWord(0xC));
-        regs.setS(new UnsignedWord(0xD));
+    public void testGetWordRegisterWorksCorrectly() {
+        regs.y.set(new UnsignedWord(0xA));
+        regs.x.set(new UnsignedWord(0xB));
+        regs.u.set(new UnsignedWord(0xC));
+        regs.s.set(new UnsignedWord(0xD));
         regs.setD(new UnsignedWord(0xE));
-        regs.setPC(new UnsignedWord(0xF));
+        regs.pc.set(new UnsignedWord(0xF));
         assertEquals(new UnsignedWord(0xA), io.getWordRegister(Register.Y));
         assertEquals(new UnsignedWord(0xB), io.getWordRegister(Register.X));
         assertEquals(new UnsignedWord(0xC), io.getWordRegister(Register.U));
@@ -541,48 +479,7 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGetByteRegisterWorksCorrectly() throws IllegalIndexedPostbyteException{
-        regs.setA(new UnsignedByte(0xA));
-        regs.setB(new UnsignedByte(0xB));
-        regs.setDP(new UnsignedByte(0xC));
-        regs.setCC(new UnsignedByte(0xD));
-        assertEquals(new UnsignedByte(0xA), io.getByteRegister(Register.A));
-        assertEquals(new UnsignedByte(0xB), io.getByteRegister(Register.B));
-        assertEquals(new UnsignedByte(0xC), io.getByteRegister(Register.DP));
-        assertEquals(new UnsignedByte(0xD), io.getByteRegister(Register.CC));
-        assertNull(io.getByteRegister(Register.UNKNOWN));
-    }
-
-    @Test
-    public void testCCInterruptSet() throws IllegalIndexedPostbyteException{
-        assertFalse(io.ccInterruptSet());
-        io.setCCInterrupt();
-        assertTrue(io.ccInterruptSet());
-    }
-
-    @Test
-    public void testCCHalfCarrySet() throws IllegalIndexedPostbyteException{
-        assertFalse(io.ccHalfCarrySet());
-        io.setCCHalfCarry();
-        assertTrue(io.ccHalfCarrySet());
-    }
-
-    @Test
-    public void testCCFastInterruptSet() throws IllegalIndexedPostbyteException{
-        assertFalse(io.ccFastInterruptSet());
-        io.setCCFastInterrupt();
-        assertTrue(io.ccFastInterruptSet());
-    }
-
-    @Test
-    public void testCCEverythingSet() throws IllegalIndexedPostbyteException{
-        assertFalse(io.ccEverythingSet());
-        io.setCCEverything();
-        assertTrue(io.ccEverythingSet());
-    }
-
-    @Test
-    public void testWriteIOByteWritesToPARs() throws IllegalIndexedPostbyteException{
+    public void testWriteIOByteWritesToPARs() {
         io.writeIOByte(new UnsignedWord(0xFFA0), new UnsignedByte(0xA0));
         assertEquals(0xA0, memory.executivePAR[0]);
         
@@ -633,7 +530,7 @@ public class IOControllerTest
     }
 
     @Test
-    public void testMMUEnableDisableWorksCorrectly() throws IllegalIndexedPostbyteException{
+    public void testMMUEnableDisableWorksCorrectly() {
         io.writeIOByte(new UnsignedWord(0xFF90), new UnsignedByte(0x0));
         assertFalse(memory.mmuEnabled);
 
@@ -642,7 +539,7 @@ public class IOControllerTest
     }
 
     @Test
-    public void testPARSelectWorksCorrectly() throws IllegalIndexedPostbyteException{
+    public void testPARSelectWorksCorrectly() {
         io.writeIOByte(new UnsignedWord(0xFF91), new UnsignedByte(0x0));
         assertFalse(memory.executiveParEnabled);
 
@@ -651,7 +548,7 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGetIndexedRegisterWorksCorrectly() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedRegisterWorksCorrectly() {
         UnsignedByte postByte = new UnsignedByte(0x00);
         assertEquals(Register.X, io.getIndexedRegister(postByte));
 
@@ -666,274 +563,274 @@ public class IOControllerTest
     }
 
     @Test
-    public void testGetIndexedZeroOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedZeroOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x84));
-        assertEquals(new UnsignedWord(0xB000), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB000), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedZeroOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedZeroOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x94));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed5BitPositiveOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed5BitPositiveOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x01));
-        assertEquals(new UnsignedWord(0xB001), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB001), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed5BitNegativeOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed5BitNegativeOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x1F));
-        assertEquals(new UnsignedWord(0xAFFF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xAFFF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRPostIncrement() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRPostIncrement() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x80));
-        assertEquals(new UnsignedWord(0xB000), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xB001), regs.getX());
+        assertEquals(new UnsignedWord(0xB000), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xB001), regs.x);
     }
 
     @Test
-    public void testGetIndexedRPostIncrementTwice() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRPostIncrementTwice() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x81));
-        assertEquals(new UnsignedWord(0xB000), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xB002), regs.getX());
+        assertEquals(new UnsignedWord(0xB000), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xB002), regs.x);
     }
 
     @Test
-    public void testGetIndexedRPostIncrementTwiceIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRPostIncrementTwiceIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x91));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xB002), regs.getX());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xB002), regs.x);
     }
 
     @Test
-    public void testGetIndexedRDecrement() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRDecrement() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x82));
-        assertEquals(new UnsignedWord(0xAFFF), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xAFFF), regs.getX());
+        assertEquals(new UnsignedWord(0xAFFF), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xAFFF), regs.x);
     }
 
     @Test
-    public void testGetIndexedRDecrementTwice() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRDecrementTwice() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x83));
-        assertEquals(new UnsignedWord(0xAFFE), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xAFFE), regs.getX());
+        assertEquals(new UnsignedWord(0xAFFE), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xAFFE), regs.x);
     }
 
     @Test
-    public void testGetIndexedRDecrementTwiceIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRDecrementTwiceIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xAFFE), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x93));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
-        assertEquals(new UnsignedWord(0xAFFE), regs.getX());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
+        assertEquals(new UnsignedWord(0xAFFE), regs.x);
     }
 
     @Test
-    public void testGetIndexedRWithBOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
-        regs.setB(new UnsignedByte(0x0B));
+    public void testGetIndexedRWithBOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
+        regs.b.set(new UnsignedByte(0x0B));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x85));
-        assertEquals(new UnsignedWord(0xB00B), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB00B), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRWithBOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
-        regs.setB(new UnsignedByte(0x0B));
+    public void testGetIndexedRWithBOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
+        regs.b.set(new UnsignedByte(0x0B));
         io.writeWord(new UnsignedWord(0xB00B), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x95));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRWithAOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
-        regs.setA(new UnsignedByte(0x0A));
+    public void testGetIndexedRWithAOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
+        regs.a.set(new UnsignedByte(0x0A));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x86));
-        assertEquals(new UnsignedWord(0xB00A), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB00A), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRWithAOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
-        regs.setA(new UnsignedByte(0x0A));
+    public void testGetIndexedRWithAOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
+        regs.a.set(new UnsignedByte(0x0A));
         io.writeWord(new UnsignedWord(0xB00A), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x96));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed8BitPositiveOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed8BitPositiveOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8802));
-        assertEquals(new UnsignedWord(0xB002), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB002), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed8BitNegativeOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed8BitNegativeOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x88FE));
-        assertEquals(new UnsignedWord(0xAFFE), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xAFFE), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed8BitPositiveOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed8BitPositiveOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xB002), new UnsignedWord(0xBEEF));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9802));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed8BitNegativeOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed8BitNegativeOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xAFFE), new UnsignedWord(0xBEEF));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x98FE));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed16BitPositiveOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed16BitPositiveOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x89));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
-        assertEquals(new UnsignedWord(0xB200), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB200), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed16BitNegativeOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed16BitNegativeOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x89));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
-        assertEquals(new UnsignedWord(0xAE00), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xAE00), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed16BitPositiveOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed16BitPositiveOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xB200), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x99));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexed16BitNegativeOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexed16BitNegativeOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         io.writeWord(new UnsignedWord(0xAE00), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x99));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRWithDOffset() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRWithDOffset() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         regs.setD(new UnsignedWord(0x0200));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x8B));
-        assertEquals(new UnsignedWord(0xB200), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xB200), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedRWithDOffsetIndirect() throws IllegalIndexedPostbyteException{
-        regs.setX(new UnsignedWord(0xB000));
+    public void testGetIndexedRWithDOffsetIndirect() throws MalformedInstructionException {
+        regs.x.set(new UnsignedWord(0xB000));
         regs.setD(new UnsignedWord(0x0200));
         io.writeWord(new UnsignedWord(0xB200), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9B));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith8BitPositiveOffset() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedPCWith8BitPositiveOffset() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8C0A));
-        assertEquals(new UnsignedWord(0x000C), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0x000C), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith8BitNegativeOffset() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedPCWith8BitNegativeOffset() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x8CFC));
-        assertEquals(new UnsignedWord(0xFFFE), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xFFFE), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith8BitPositiveOffsetIndexed() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedPCWith8BitPositiveOffsetIndexed() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0x000C), new UnsignedWord(0xBEEF));
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9C0A));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith8BitNegativeOffsetIndexed() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedPCWith8BitNegativeOffsetIndexed() throws MalformedInstructionException {
         memory.rom = new short [0x4000];
         memory.rom[0x3FFC] = (short) 0xBE;
         memory.rom[0x3FFD] = (short) 0xEF;
 
         io.writeWord(new UnsignedWord(0x0000), new UnsignedWord(0x9CFA));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith16BitPositiveOffset() throws IllegalIndexedPostbyteException{
+    public void testGetIndexedPCWith16BitPositiveOffset() throws MalformedInstructionException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x8D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
-        assertEquals(new UnsignedWord(0x0203), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0x0203), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith16BitNegativeOffset() throws IllegalIndexedPostbyteException {
+    public void testGetIndexedPCWith16BitNegativeOffset() throws MalformedInstructionException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x8D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
-        assertEquals(new UnsignedWord(0xFE03), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xFE03), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith16BitPositiveOffsetIndexed() throws IllegalIndexedPostbyteException {
+    public void testGetIndexedPCWith16BitPositiveOffsetIndexed() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0x0203), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0x0200));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedPCWith16BitNegativeOffsetIndexed() throws IllegalIndexedPostbyteException {
+    public void testGetIndexedPCWith16BitNegativeOffsetIndexed() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0xFE03), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9D));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xFE00));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
     @Test
-    public void testGetIndexedExtendedIndirect() throws IllegalIndexedPostbyteException {
+    public void testGetIndexedExtendedIndirect() throws MalformedInstructionException {
         io.writeWord(new UnsignedWord(0xB000), new UnsignedWord(0xBEEF));
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x9F));
         io.writeWord(new UnsignedWord(0x0001), new UnsignedWord(0xB000));
-        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().get());
+        assertEquals(new UnsignedWord(0xBEEF), io.getIndexed().value);
     }
 
-    @Test(expected = IllegalIndexedPostbyteException.class)
-    public void testGetIndexedIllegalPostByteExceptionOnRPostIncrement() throws IllegalIndexedPostbyteException {
+    @Test(expected = MalformedInstructionException.class)
+    public void testGetIndexedIllegalPostByteExceptionOnRPostIncrement() throws MalformedInstructionException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x90));
         io.getIndexed();
     }
 
-    @Test(expected = IllegalIndexedPostbyteException.class)
-    public void testGetIndexedIllegalPostByteExceptionOnRPostDecrement() throws IllegalIndexedPostbyteException {
+    @Test(expected = MalformedInstructionException.class)
+    public void testGetIndexedIllegalPostByteExceptionOnRPostDecrement() throws MalformedInstructionException {
         io.writeByte(new UnsignedWord(0x0000), new UnsignedByte(0x92));
         io.getIndexed();
     }
@@ -988,15 +885,15 @@ public class IOControllerTest
         memory.rom[0x3FFE] = (short) 0xC0;
 
         io.reset();
-        assertFalse(io.ccOverflowSet());
-        assertFalse(io.ccNegativeSet());
-        assertFalse(io.ccZeroSet());
-        assertFalse(io.ccHalfCarrySet());
-        assertFalse(io.ccCarrySet());
-        assertTrue(io.ccFastInterruptSet());
-        assertTrue(io.ccInterruptSet());
+        assertFalse(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_N));
+        assertFalse(io.regs.cc.isMasked(CC_Z));
+        assertFalse(io.regs.cc.isMasked(CC_H));
+        assertFalse(io.regs.cc.isMasked(CC_C));
+        assertTrue(io.regs.cc.isMasked(CC_F));
+        assertTrue(io.regs.cc.isMasked(CC_I));
 
-        assertEquals(new UnsignedWord(0xC000), regs.getPC());
+        assertEquals(new UnsignedWord(0xC000), regs.pc);
         assertFalse(memory.mmuEnabled);
     }
 
@@ -1007,61 +904,5 @@ public class IOControllerTest
 
         io.writeByte(new UnsignedWord(0xFF21), new UnsignedByte(0x00));
         assertFalse(cassette.isMotorOn());
-    }
-
-    @Test
-    public void testBinaryAddCausesCarryCase1() {
-        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xB6), new UnsignedByte(0x6D), false, true, false);
-        assertEquals(new UnsignedByte(0x23), result);
-        assertTrue(io.ccCarrySet());
-    }
-
-    @Test
-    public void testBinaryAddDoesNotCauseCarryCase2() {
-        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xB2), new UnsignedByte(0x4B), false, true, false);
-        assertEquals(new UnsignedByte(0xFd), result);
-        assertFalse(io.ccCarrySet());
-    }
-
-    @Test
-    public void testBinaryAddDoesNotCauseOverflowCase1() {
-        UnsignedByte result = io.binaryAdd(new UnsignedByte(0xC6), new UnsignedByte(0xF4), false, false, true);
-        assertEquals(new UnsignedByte(0xBA), result);
-        assertFalse(io.ccOverflowSet());
-    }
-
-    @Test
-    public void testBinaryAddCausesOverflowCase2() {
-        UnsignedByte result = io.binaryAdd(new UnsignedByte(0x53), new UnsignedByte(0x36), false, false, true);
-        assertEquals(new UnsignedByte(0x89), result);
-        assertTrue(io.ccOverflowSet());
-    }
-
-    @Test
-    public void testBinaryAddWordCausesCarryCase1() {
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xB600), new UnsignedWord(0x6D00), false, true, false);
-        assertEquals(new UnsignedWord(0x2300), result);
-        assertTrue(io.ccCarrySet());
-    }
-
-    @Test
-    public void testBinaryAddWordDoesNotCauseCarryCase2() {
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xB200), new UnsignedWord(0x4B00), false, true, false);
-        assertEquals(new UnsignedWord(0xFD00), result);
-        assertFalse(io.ccCarrySet());
-    }
-
-    @Test
-    public void testBinaryAddWordDoesNotCauseOverflowCase1() {
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(0xC600), new UnsignedWord(0xF400), false, false, true);
-        assertEquals(new UnsignedWord(0xBA00), result);
-        assertFalse(io.ccOverflowSet());
-    }
-
-    @Test
-    public void testBinaryAddWordCausesOverflowCase2() {
-        UnsignedWord result = io.binaryAdd(new UnsignedWord(0x5300), new UnsignedWord(0x3600), false, false, true);
-        assertEquals(new UnsignedWord(0x8900), result);
-        assertTrue(io.ccOverflowSet());
     }
 }

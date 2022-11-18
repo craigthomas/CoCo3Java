@@ -55,6 +55,19 @@ public class FieldTest
     }
 
     @Test
+    public void testHasMoreBytesTrueWhenStillSpace() {
+        field = new Field(2);
+        field.write((byte) 0x11);
+        assertTrue(field.hasMoreBytes());
+    }
+
+    @Test
+    public void testHasMoreBytesWhenZeroBufferSize() {
+        field = new Field(0);
+        assertFalse(field.hasMoreBytes());
+    }
+
+    @Test
     public void testZeroFillWorks() {
         field = new Field(2);
         field.write((byte) 0x11);
@@ -95,6 +108,12 @@ public class FieldTest
     public void testIsExpectedWorks() {
         field = new Field(2, 0, (short) 0x22);
         assertTrue(field.isExpected((byte) 0x22));
+    }
+
+    @Test
+    public void testIsExpectedReturnsFalseWhenNotExpected() {
+        field = new Field(2, 0, (short) 0x22);
+        assertFalse(field.isExpected((byte) 0x23));
     }
 
     @Test

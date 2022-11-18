@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2023 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.datatypes;
@@ -15,6 +15,12 @@ public class UnsignedWord
 
     public UnsignedWord(int value) {
         set(value);
+    }
+
+    public UnsignedWord(int high, UnsignedByte low) {
+        value = 0;
+        setHigh(new UnsignedByte(high));
+        setLow(low);
     }
 
     public UnsignedWord(UnsignedByte high, UnsignedByte low) {
@@ -156,7 +162,7 @@ public class UnsignedWord
      * @param value the new value to set
      */
     public void set(int value) {
-        this.value = (value & 0xFFFF);
+        this.value = (value & 0x0FFFF);
     }
 
     /**
@@ -166,28 +172,6 @@ public class UnsignedWord
      */
     public void set(UnsignedWord value) {
         this.value = value.getInt();
-    }
-
-    /**
-     * Returns true if this word is greater than or equal to the specified
-     * word.
-     *
-     * @param word1 the word to check against
-     * @return true if this word is greater than word1
-     */
-    public boolean gte(UnsignedWord word1) {
-        return this.value >= word1.getInt();
-    }
-
-    /**
-     * Returns true if this word is less than or equal to the specified
-     * word.
-     *
-     * @param word1 the word to check against
-     * @return true if this word is less than word1
-     */
-    public boolean lte(UnsignedWord word1) {
-        return this.value <= word1.getInt();
     }
 
     /**

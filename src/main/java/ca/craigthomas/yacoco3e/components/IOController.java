@@ -6,17 +6,19 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
+import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
+
 public class IOController
 {
     /* The number of IO memory addresses */
-    public final static int IO_ADDRESS_SIZE = 256;
+    public static final int IO_ADDRESS_SIZE = 256;
 
     /* The IO memory address space */
     protected short [] ioMemory;
 
     /* IO Devices */
     protected Memory memory;
-    protected RegisterSet regs;
+    public RegisterSet regs;
     protected Keyboard keyboard;
     protected Screen screen;
     protected Cassette cassette;
@@ -58,30 +60,6 @@ public class IOController
     protected UnsignedByte vdgOperatingMode;
     protected UnsignedByte samControlBits;
 
-    /* Condition Code - Carry */
-    public static final short CC_C = 0x01;
-
-    /* Condition Code - Overflow */
-    public static final short CC_V = 0x02;
-
-    /* Condition Code - Zero */
-    public static final short CC_Z = 0x04;
-
-    /* Condition Code - Negative */
-    public static final short CC_N = 0x08;
-
-    /* Condition Code - Interrupt Request */
-    public static final short CC_I = 0x10;
-
-    /* Condition Code - Half Carry */
-    public static final short CC_H = 0x20;
-
-    /* Condition Code - Fast Interrupt Request */
-    public static final short CC_F = 0x40;
-
-    /* Condition Code - Everything */
-    public static final short CC_E = 0x80;
-
     /* GIME IRQ enabled / disabled */
     public boolean irqEnabled;
 
@@ -104,8 +82,8 @@ public class IOController
     public static final int TIMER_16_6_MILLIS = 14833;
 
     /* The number of ticks that is allowed to be processed in 0.89MHz mode and 1.78 MHz mode */
-    public final static int LOW_SPEED_CLOCK_FREQUENCY = 14917;
-    public final static int HIGH_SPEED_CLOCK_FREQUENCY = 29834;
+    public static final int LOW_SPEED_CLOCK_FREQUENCY = 14917;
+    public static final int HIGH_SPEED_CLOCK_FREQUENCY = 29834;
     public UnsignedByte samClockSpeed;
 
     /* The timer tick threshold */
@@ -243,6 +221,16 @@ public class IOController
     }
 
     /**
+     * Convenience function allowing to read a byte using an integer address.
+     *
+     * @param address the address to read from
+     * @return the UnsignedByte at that address
+     */
+    public UnsignedByte readByte(int address) {
+        return readByte(new UnsignedWord(address));
+    }
+
+    /**
      * Reads an UnsignedByte from the specified address.
      *
      * @param address the UnsignedWord location to read from
@@ -264,7 +252,7 @@ public class IOController
      * service (e.g. Read Address in Tandy Disk Basic 1.1).
      */
     public void pokeDisks() {
-        for (int i = 0; i < disk.length; i++) {
+        for (int i = 0; i < NUM_DISK_DRIVES; i++) {
             disk[i].tickUpdate();
         }
     }
@@ -322,18 +310,22 @@ public class IOController
 
             /* Disk Drive Status Register */
             case 0xFF48:
+//                System.out.println("$FF48 - Reading drive " + diskDriveSelect + "  status register " + disk[diskDriveSelect].getStatusRegister());
                 return disk[diskDriveSelect].getStatusRegister();
 
             /* Disk Track Status Register */
             case 0xFF49:
+//                System.out.println("$FF49 - Reading drive " + diskDriveSelect + " track register " + disk[diskDriveSelect].getTrack());
                 return new UnsignedByte(disk[diskDriveSelect].getTrack());
 
             /* Disk Sector Status Register */
             case 0xFF4A:
+//                System.out.println("$FF4A - Reading drive " + diskDriveSelect + " sector register " + disk[diskDriveSelect].getSector());
                 return new UnsignedByte(disk[diskDriveSelect].getSector());
 
             /* Disk Data Register */
             case 0xFF4B:
+//                System.out.println("$FF4B - Reading drive " + diskDriveSelect + " data register " + disk[diskDriveSelect].getDataRegister());
                 return disk[diskDriveSelect].getDataRegister();
 
             /* IRQs Enabled Register */
@@ -387,6 +379,10 @@ public class IOController
         }
     }
 
+    public UnsignedWord readWord(int address) {
+        return readWord(new UnsignedWord(address));
+    }
+
     /**
      * Reads an UnsignedWord from the specified address.
      *
@@ -398,6 +394,17 @@ public class IOController
         result.setHigh(readByte(address));
         result.setLow(readByte(address.next()));
         return result;
+    }
+
+    /**
+     * Convenience function allowing to write a byte using an integer
+     * address and an integer value.
+     *
+     * @param address the address to write to
+     * @param value the value to write
+     */
+    public void writeByte(int address, int value) {
+        writeByte(new UnsignedWord(address), new UnsignedByte(value));
     }
 
     /**
@@ -425,10 +432,6 @@ public class IOController
         int intAddress = address.getInt() - 0xFF00;
         ioMemory[intAddress] = value.getShort();
 
-//        if (!address.equals(new UnsignedWord(0xFF20)) && !address.equals(new UnsignedWord(0xFF02))) {
-//            System.out.println("Writing " + value + " to address " + address);
-//        }
-
         switch (address.getInt()) {
             /* PIA 1 Data Register A */
             case 0xFF00:
@@ -452,13 +455,8 @@ public class IOController
             case 0xFF19:
             case 0xFF1D:
                 /* Bit 0 = IRQ 63.5 microseconds */
-                if (value.isMasked(0x1)) {
-                    pia1FastTimerEnabled = true;
-                    pia1FastTimer = 0;
-                } else {
-                    pia1FastTimerEnabled = false;
-                    pia1FastTimer = 0;
-                }
+                pia1FastTimerEnabled = value.isMasked(0x1);
+                pia1FastTimer = 0;
 
                 /* Bit 1 = hi/lo edge trigger (ignored) */
 
@@ -491,13 +489,8 @@ public class IOController
             case 0xFF1B:
             case 0xFF1F:
                 /* Bit 0 = IRQ 16 milliseconds */
-                if (value.isMasked(0x1)) {
-                    pia1SlowTimerEnabled = true;
-                    pia1SlowTimer = 0;
-                } else {
-                    pia1SlowTimerEnabled = false;
-                    pia1SlowTimer = 0;
-                }
+                pia1SlowTimerEnabled = value.isMasked(0x1);
+                pia1SlowTimer = 0;
 
                 /* Bit 1 = hi/lo edge trigger (ignored) */
 
@@ -579,13 +572,11 @@ public class IOController
 
             /* Disk Drive Control Register */
             case 0xFF40:
+//                System.out.println("$FF40 - Writing control register drive " + diskDriveSelect + " value " + value);
                 /* Bit 2-0 = Disk drive select */
                 diskDriveSelect = (value.isMasked(0x1)) ? 0 : diskDriveSelect;
                 diskDriveSelect = (value.isMasked(0x2)) ? 1 : diskDriveSelect;
                 diskDriveSelect = (value.isMasked(0x4)) ? 2 : diskDriveSelect;
-
-                /* Bit 6 = Disk drive select */
-                diskDriveSelect = (value.isMasked(0x40)) ? 3 : diskDriveSelect;
 
                 /* Bit 3 = Disk drive motor on */
                 if (value.isMasked(0x08)) {
@@ -598,6 +589,9 @@ public class IOController
 
                 /* Bit 5 = Density flag (ignored) */
 
+                /* Bit 6 = Disk drive select */
+                diskDriveSelect = (value.isMasked(0x40)) ? 3 : diskDriveSelect;
+
                 /* Bit 7 = Halt flag */
                 if (value.isMasked(0x80)) {
                     disk[diskDriveSelect].enableHalt();
@@ -608,24 +602,28 @@ public class IOController
 
             /* Disk Command Register */
             case 0xFF48:
+//                System.out.println("$FF48 - Writing command register drive " +diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].executeCommand(value);
                 break;
 
             /* Track Status Register */
             case 0xFF49:
+//                System.out.println("$FF49 - Writing track register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setTrack(value);
                 break;
 
             /* Sector Status Register */
             case 0xFF4A:
+//                System.out.println("$FF4A - Writing sector register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setSector(value);
                 break;
 
             /* Disk Data Register */
             case 0xFF4B:
+//                System.out.println("$FF4B - Writing data register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setDataRegister(value);
                 break;
-
+                
             /* INIT 0 */
             case 0xFF90:
                 /* Bit 1 & 0 = ROM memory mapping */
@@ -659,7 +657,8 @@ public class IOController
                 }
 
                 /* Bit 5 = Timer Rate - 0 is 63.5 microseconds, 1 is 70 nanoseconds */
-                timerTickThreshold = (value.isMasked(0x20)) ? TIMER_63_5_MICROS : TIMER_63_5_MICROS;
+//                timerTickThreshold = (value.isMasked(0x20)) ? TIMER_63_5_MICROS : TIMER_63_5_MICROS;
+                timerTickThreshold = TIMER_63_5_MICROS;
                 break;
 
             /* IRQs Enabled Register */
@@ -922,6 +921,16 @@ public class IOController
                 break;
 
             default:
+                switch(address.getInt()) {
+                    case 0xFFFA:
+                    case 0xFFF2:
+                    case 0xFFF4:
+                        System.out.println("Write to IO address " + address);
+                        break;
+
+                    default:
+                        break;
+                }
                 memory.writeByte(address, value);
                 break;
         }
@@ -940,17 +949,16 @@ public class IOController
      * Offset = (VO15 VO14 VO13) * 64K + SAM * 512 + (VO5 VO4 VO3 VO2 VO1 VO0) * 8
      */
     public void updateVerticalOffset() {
-        int newOffset;
         if (cocoCompatibleMode) {
-            newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
+            int newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
             newOffset = newOffset >> 5;
             newOffset *= 65536;
             newOffset += (samDisplayOffsetRegister.getShort() * 0x200);
             newOffset += ((verticalOffsetRegister.getLow().getShort() & 0x3F) * 0x04);
+            screen.setMemoryOffset(newOffset);
         } else {
-            newOffset = verticalOffsetRegister.getInt() << 3;
+            screen.setMemoryOffset(verticalOffsetRegister.getInt() << 3);
         }
-        screen.setMemoryOffset(newOffset);
     }
 
     /**
@@ -968,9 +976,6 @@ public class IOController
         ScreenMode.Mode mode = screen.getMode();
         int colorSet = vdgOperatingMode.isMasked(0x8) ? 1 : 0;
         int vdgBytes = vdgOperatingMode.getShort() & 0x70;
-
-//        System.out.println("VDG " + vdgOperatingMode);
-//        System.out.println("SAM " + samControlBits);
 
         if (!vdgOperatingMode.isMasked(0x80)) {
             if (vdgOperatingMode.isMasked(0x10)) {
@@ -1029,6 +1034,17 @@ public class IOController
     }
 
     /**
+     * Convenience function allowing the address and values to be written
+     * as integers instead of UnsignedWord objects.
+     *
+     * @param address the address to write to
+     * @param value the value to write
+     */
+    public void writeWord(int address, int value) {
+        writeWord(new UnsignedWord(address), new UnsignedWord(value));
+    }
+
+    /**
      * Writes an UnsignedWord to the specified memory address.
      *
      * @param address the UnsignedWord location to write to
@@ -1048,11 +1064,11 @@ public class IOController
      */
     public void pushStack(Register register, UnsignedByte value) {
         if (register == Register.S) {
-            regs.getS().add(-1);
-            writeByte(regs.getS(), value);
+            regs.s.add(-1);
+            writeByte(regs.s, value);
         } else {
-            regs.getU().add(-1);
-            writeByte(regs.getU(), value);
+            regs.u.add(-1);
+            writeByte(regs.u, value);
         }
     }
 
@@ -1078,11 +1094,11 @@ public class IOController
     public UnsignedByte popStack(Register register) {
         UnsignedByte result = new UnsignedByte();
         if (register == Register.S) {
-            result.set(readByte(regs.getS()));
-            regs.getS().add(1);
+            result.set(readByte(regs.s));
+            regs.s.add(1);
         } else {
-            result.set(readByte(regs.getU()));
-            regs.getU().add(1);
+            result.set(readByte(regs.u));
+            regs.u.add(1);
         }
         return result;
     }
@@ -1095,7 +1111,7 @@ public class IOController
      * @return a MemoryResult with the data from the PC location
      */
     public MemoryResult getImmediateByte() {
-        UnsignedByte theByte = readByte(regs.getPC());
+        UnsignedByte theByte = readByte(regs.pc);
         regs.incrementPC();
         return new MemoryResult(
                 1,
@@ -1110,13 +1126,10 @@ public class IOController
      * @return a MemoryResult with the data from the PC location
      */
     public MemoryResult getImmediateWord() {
-        UnsignedWord theWord = readWord(regs.getPC());
+        UnsignedWord theWord = readWord(regs.pc);
         regs.incrementPC();
         regs.incrementPC();
-        return new MemoryResult(
-                2,
-                theWord
-        );
+        return new MemoryResult(2, theWord);
     }
 
     /**
@@ -1127,56 +1140,22 @@ public class IOController
      * @return a MemoryResult with the data from the DP:PC location
      */
     public MemoryResult getDirect() {
-        UnsignedByte lowByte = readByte(regs.getPC());
+        UnsignedByte lowByte = readByte(regs.pc);
         regs.incrementPC();
-        return new MemoryResult(
-                1,
-                new UnsignedWord(regs.getDP(), lowByte)
-        );
-    }
-
-    /**
-     * Returns the register based on the post byte code.
-     *
-     * @param postByte the post byte to decode
-     * @return the specified register, UNKNOWN if not a valid code
-     */
-    public Register getIndexedRegister(UnsignedByte postByte) {
-        int value = postByte.getShort();
-        value &= 0x60;
-        value = value >> 5;
-
-        switch (value) {
-            case 0x0:
-                return Register.X;
-
-            case 0x1:
-                return Register.Y;
-
-            case 0x2:
-                return Register.U;
-
-            case 0x3:
-                return Register.S;
-
-            default:
-                return Register.UNKNOWN;
-        }
+        return new MemoryResult(1, new UnsignedWord(regs.dp, lowByte));
     }
 
     /**
      * The getIndexed function reads the byte following the current PC word, and
      * interprets the byte. Depending on the value of the byte, a new value is
-     * returned. May throw an IllegalIndexedPostbyteException.
+     * returned. May throw an MalformedInstructionException.
      *
      * @return a new MemoryResult with the indexed value
      */
-    public MemoryResult getIndexed() throws IllegalIndexedPostbyteException {
-        UnsignedByte postByte = readByte(regs.getPC());
+    public MemoryResult getIndexed() throws MalformedInstructionException {
+        UnsignedByte postByte = readByte(regs.pc);
         regs.incrementPC();
         UnsignedWord r;
-        UnsignedByte a;
-        UnsignedByte b;
         UnsignedWord d;
         UnsignedByte nByte;
         UnsignedWord nWord;
@@ -1234,21 +1213,19 @@ public class IOController
             /* B,R -> B offset from R */
             case 0x05:
                 r = getWordRegister(getIndexedRegister(postByte));
-                b = getByteRegister(Register.B);
-                result = new UnsignedWord(r.getInt() + b.getSignedShort());
+                result = new UnsignedWord(r.getInt() + regs.b.getSignedShort());
                 return new MemoryResult(1, result);
 
             /* A,R -> A offset from R */
             case 0x06:
                 r = getWordRegister(getIndexedRegister(postByte));
-                a = getByteRegister(Register.A);
-                result = new UnsignedWord(r.getInt() + a.getSignedShort());
+                result = new UnsignedWord(r.getInt() + regs.a.getSignedShort());
                 return new MemoryResult(1, result);
 
             /* n,R -> 8-bit offset from R */
             case 0x08:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nByte = readByte(regs.getPC());
+                nByte = readByte(regs.pc);
                 regs.incrementPC();
                 result = new UnsignedWord(r.getInt() + nByte.getSignedShort());
                 return new MemoryResult(2, result);
@@ -1256,7 +1233,7 @@ public class IOController
             /* n,R -> 16-bit offset from R */
             case 0x09:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nWord = readWord(regs.getPC());
+                nWord = readWord(regs.pc);
                 regs.incrementPC();
                 regs.incrementPC();
                 result = new UnsignedWord(r.getInt() + nWord.getSignedInt());
@@ -1272,7 +1249,7 @@ public class IOController
             /* n,PC -> 8-bit offset from PC */
             case 0x0C:
                 r = getWordRegister(Register.PC);
-                nByte = readByte(regs.getPC());
+                nByte = readByte(regs.pc);
                 regs.incrementPC();
                 result = new UnsignedWord(r.getInt() + nByte.getSignedShort());
                 return new MemoryResult(2, result);
@@ -1280,7 +1257,7 @@ public class IOController
             /* n,PC -> 16-bit offset from PC */
             case 0x0D:
                 r = getWordRegister(Register.PC);
-                nWord = readWord(regs.getPC());
+                nWord = readWord(regs.pc);
                 regs.incrementPC();
                 regs.incrementPC();
                 result = new UnsignedWord(r.getInt() + nWord.getSignedInt());
@@ -1308,21 +1285,19 @@ public class IOController
             /* [B,R] -> B offset from R - indirect */
             case 0x15:
                 r = getWordRegister(getIndexedRegister(postByte));
-                b = getByteRegister(Register.B);
-                result = readWord(new UnsignedWord(r.getInt() + b.getSignedShort()));
+                result = readWord(new UnsignedWord(r.getInt() + regs.b.getSignedShort()));
                 return new MemoryResult(1, result);
 
             /* [A,R] -> A offset from R - indirect */
             case 0x16:
                 r = getWordRegister(getIndexedRegister(postByte));
-                a = getByteRegister(Register.A);
-                result = readWord(new UnsignedWord(r.getInt() + a.getSignedShort()));
+                result = readWord(new UnsignedWord(r.getInt() + regs.a.getSignedShort()));
                 return new MemoryResult(1, result);
 
             /* [n,R] -> 8-bit offset from R - indirect */
             case 0x18:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nByte = readByte(regs.getPC());
+                nByte = readByte(regs.pc);
                 regs.incrementPC();
                 result = readWord(new UnsignedWord(r.getInt() + nByte.getSignedShort()));
                 return new MemoryResult(2, result);
@@ -1330,7 +1305,7 @@ public class IOController
             /* [n,R] -> 16-bit offset from R - indirect */
             case 0x19:
                 r = getWordRegister(getIndexedRegister(postByte));
-                nWord = readWord(regs.getPC());
+                nWord = readWord(regs.pc);
                 regs.incrementPC();
                 regs.incrementPC();
                 result = readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
@@ -1339,14 +1314,13 @@ public class IOController
             /* [D,R] -> D offset from R - indirect*/
             case 0x1B:
                 r = getWordRegister(getIndexedRegister(postByte));
-                d = getWordRegister(Register.D);
-                result = readWord(new UnsignedWord(r.getInt() + d.getSignedInt()));
+                result = readWord(new UnsignedWord(r.getInt() + regs.getD().getSignedInt()));
                 return new MemoryResult(1, result);
 
             /* [n,PC] -> 8-bit offset from PC - indirect */
             case 0x1C:
                 r = getWordRegister(Register.PC);
-                nByte = readByte(regs.getPC());
+                nByte = readByte(regs.pc);
                 regs.incrementPC();
                 result = readWord(new UnsignedWord(r.getInt() + nByte.getSignedShort()));
                 return new MemoryResult(2, result);
@@ -1354,7 +1328,7 @@ public class IOController
             /* [n,PC] -> 16-bit offset from PC - indirect */
             case 0x1D:
                 r = getWordRegister(Register.PC);
-                nWord = readWord(regs.getPC());
+                nWord = readWord(regs.pc);
                 regs.incrementPC();
                 regs.incrementPC();
                 result = readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
@@ -1362,81 +1336,14 @@ public class IOController
 
             /* [n] -> extended indirect */
             case 0x1F:
-                nWord = readWord(regs.getPC());
+                nWord = readWord(regs.pc);
                 regs.incrementPC();
                 regs.incrementPC();
                 result = readWord(nWord);
                 return new MemoryResult(3, result);
 
             default:
-                throw new IllegalIndexedPostbyteException(postByte);
-        }
-    }
-
-    /**
-     * Given the current registers, will return the value that is
-     * pointed to by the value that is pointed to by the program
-     * counter value.
-     *
-     * @return a MemoryResult with the data from the PC location
-     */
-    public MemoryResult getExtended() {
-        UnsignedWord address = readWord(regs.getPC());
-        regs.incrementPC();
-        regs.incrementPC();
-        return new MemoryResult(
-                2,
-                address
-        );
-    }
-
-    /**
-     * Returns the byte that immediately available by the program counter.
-     *
-     * @return the current program counter byte
-     */
-    public UnsignedByte getPCByte() {
-        return readByte(regs.getPC());
-    }
-
-    /**
-     * Increments the Program Counter by 1 byte.
-     */
-    public void incrementPC() {
-        regs.incrementPC();
-    }
-
-    /**
-     * Returns the Condition Code register.
-     *
-     * @return the Condition Code register
-     */
-    public UnsignedByte getCC() {
-        return regs.getCC();
-    }
-
-    /**
-     * Gets the byte register of the specified type.
-     *
-     * @param register the register to get
-     * @return the register
-     */
-    public UnsignedByte getByteRegister(Register register) {
-        switch (register) {
-            case A:
-                return regs.getA();
-
-            case B:
-                return regs.getB();
-
-            case DP:
-                return regs.getDP();
-
-            case CC:
-                return regs.getCC();
-
-            default:
-                return null;
+                throw new MalformedInstructionException("Invalid postbyte " + postByte);
         }
     }
 
@@ -1449,238 +1356,75 @@ public class IOController
     public UnsignedWord getWordRegister(Register register) {
         switch (register) {
             case Y:
-                return regs.getY();
+                return regs.y;
 
             case X:
-                return regs.getX();
+                return regs.x;
 
             case S:
-                return regs.getS();
+                return regs.s;
 
             case U:
-                return regs.getU();
+                return regs.u;
 
             case D:
                 return regs.getD();
 
             case PC:
-                return regs.getPC();
+                return regs.pc;
         }
 
         return null;
     }
 
     /**
-     * Returns true if the carry flag is set on the condition code register,
-     * false otherwise.
+     * Returns the register based on the post byte code.
      *
-     * @return true if the carry flag is set
+     * @param postByte the post byte to decode
+     * @return the specified register, UNKNOWN if not a valid code
      */
-    public boolean ccCarrySet() {
-        return regs.getCC().isMasked(CC_C);
+    public Register getIndexedRegister(UnsignedByte postByte) {
+        int value = postByte.getShort();
+        value &= 0x60;
+        value = value >> 5;
+
+        switch (value) {
+            case 0x0:
+                return Register.X;
+
+            case 0x1:
+                return Register.Y;
+
+            case 0x2:
+                return Register.U;
+
+            case 0x3:
+                return Register.S;
+
+            default:
+                return Register.UNKNOWN;
+        }
     }
 
     /**
-     * Sets the carry flag on the condition code register.
+     * Given the current registers, will return the value that is
+     * pointed to by the value that is pointed to by the program
+     * counter value.
+     *
+     * @return a MemoryResult with the data from the PC location
      */
-    public void setCCCarry() {
-        regs.getCC().or(CC_C);
-    }
-
-    public boolean ccOverflowSet() {
-        return regs.getCC().isMasked(CC_V);
-    }
-
-    public void setCCOverflow() {
-        regs.getCC().or(CC_V);
-    }
-
-    public boolean ccZeroSet() {
-        return regs.getCC().isMasked(CC_Z);
-    }
-
-    public void setCCZero() {
-        regs.getCC().or(CC_Z);
-    }
-
-    public boolean ccNegativeSet() {
-        return regs.getCC().isMasked(CC_N);
-    }
-
-    public void setCCNegative() {
-        regs.getCC().or(CC_N);
-    }
-
-    public boolean ccInterruptSet() {
-        return regs.getCC().isMasked(CC_I);
-    }
-
-    public void setCCInterrupt() {
-        regs.getCC().or(CC_I);
-    }
-
-    public boolean ccHalfCarrySet() {
-        return regs.getCC().isMasked(CC_H);
-    }
-
-    public void setCCHalfCarry() {
-        regs.getCC().or(CC_H);
-    }
-
-    public boolean ccFastInterruptSet() {
-        return regs.getCC().isMasked(CC_F);
-    }
-
-    public void setCCFastInterrupt() {
-        regs.getCC().or(CC_F);
-    }
-
-    public void setCCEverything() {
-        regs.getCC().or(CC_E);
-    }
-
-    public boolean ccEverythingSet() {
-        return regs.getCC().isMasked(CC_E);
+    public MemoryResult getExtended() {
+        UnsignedWord address = readWord(regs.pc);
+        regs.incrementPC();
+        regs.incrementPC();
+        return new MemoryResult(2, address);
     }
 
     /**
-     * Performs a binary add of the two values, setting flags on the condition
-     * code register where required.
-     *
-     * @param val1 the first value to add
-     * @param val2 the second value to add
-     * @param flagHalfCarry whether to flag half carries
-     * @param flagCarry whether to flag full carries
-     * @param flagOverflow whether to flag overflow
-     *
-     * @return the addition of the two values
+     * Increments the Program Counter by 1 byte.
      */
-    public UnsignedWord binaryAdd(UnsignedWord val1, UnsignedWord val2,
-                                  boolean flagHalfCarry, boolean flagCarry,
-                                  boolean flagOverflow) {
-        int value1 = val1.getInt();
-        int value2 = val2.getInt();
-
-        /* Check to see if a half carry occurred and we should flag it */
-        if (flagHalfCarry) {
-            UnsignedWord test = new UnsignedWord(value1 & 0xF);
-            test.add(value2 & 0xF);
-            if (test.isMasked(0x10)) {
-                setCCHalfCarry();
-            }
-        }
-
-        /* Check to see if a full carry occurred and we should flag it */
-        if (flagCarry) {
-            if (((value1 + value2) & 0x10000) > 0) {
-                setCCCarry();
-            }
-        }
-
-        /* Check to see if overflow occurred and we should flag it */
-        if (flagOverflow) {
-            int signedResult = val1.getSignedInt() + val2.getSignedInt();
-            if (signedResult > 32767 || signedResult < -32767) {
-                setCCOverflow();
-            }
-        }
-
-        return new UnsignedWord(value1 + value2);
-    }
-
-    /**
-     * Performs a binary add of the two values, setting flags on the condition
-     * code register where required.
-     *
-     * @param val1 the first value to add
-     * @param val2 the second value to add
-     * @param flagHalfCarry whether to flag half carries
-     * @param flagCarry whether to flag full carries
-     * @param flagOverflow whether to flag overflow
-     *
-     * @return the addition of the two values
-     */
-    public UnsignedByte binaryAdd(UnsignedByte val1, UnsignedByte val2,
-                                  boolean flagHalfCarry, boolean flagCarry,
-                                  boolean flagOverflow) {
-        int value1 = val1.getShort();
-        int value2 = val2.getShort();
-
-        /* Check for half carries */
-        if (flagHalfCarry) {
-            UnsignedByte test = new UnsignedByte(value1 & 0xF);
-            test.add(value2 & 0xF);
-            if (test.isMasked(0x10)) {
-                setCCHalfCarry();
-            }
-        }
-
-        /* Check for full carries */
-        if (flagCarry) {
-            if (((value1 + value2) & 0x100) > 0) {
-                setCCCarry();
-            }
-        }
-
-        /* Check for overflow */
-        if (flagOverflow) {
-            int signedResult = val1.getSignedShort() + val2.getSignedShort();
-            if (signedResult > 127 || signedResult < -127) {
-                setCCOverflow();
-            }
-        }
-
-        return new UnsignedByte(value1 + value2);
-    }
-
-    /**
-     * Sets the value of the A register.
-     *
-     * @param a the new value of the A register
-     */
-    public void setA(UnsignedByte a) {
-        regs.setA(a);
-    }
-
-    /**
-     * Sets the value of the B register.
-     *
-     * @param b the new value of the B register
-     */
-    public void setB(UnsignedByte b) {
-        regs.setB(b);
-    }
-
-    public void setCC(UnsignedByte cc) {
-        regs.setCC(cc);
-    }
-
-    public void setDP(UnsignedByte dp) {
-        regs.setDP(dp);
-    }
-
-    public void setX(UnsignedWord x) {
-        regs.setX(x);
-    }
-
-    public void setY(UnsignedWord y) {
-        regs.setY(y);
-    }
-
-    public void setU(UnsignedWord u) {
-        regs.setU(u);
-    }
-
-    public void setS(UnsignedWord s) {
-        regs.setS(s);
-    }
-
-    public void setD(UnsignedWord d) {
-        regs.setD(d);
-    }
-
-    public void setPC(UnsignedWord pc) {
-        regs.setPC(pc);
+    public void incrementPC() {
+        regs.incrementPC();
     }
 
     /**
@@ -1688,9 +1432,9 @@ public class IOController
      */
     public void reset() {
         /* Reset Condition Code register */
-        regs.setCC(new UnsignedByte(0));
-        regs.getCC().or(IOController.CC_I);
-        regs.getCC().or(IOController.CC_F);
+        regs.cc = new UnsignedByte(0);
+        regs.cc.or(CC_I);
+        regs.cc.or(CC_F);
 
         /* Disable MMU */
         memory.disableMMU();
@@ -1700,7 +1444,7 @@ public class IOController
         memory.disableAllRAMMode();
 
         /* Load PC with Reset Interrupt Vector */
-        regs.setPC(readWord(new UnsignedWord(0xFFFE)));
+        regs.pc = readWord(new UnsignedWord(0xFFFE));
     }
 
     /**
@@ -1718,26 +1462,28 @@ public class IOController
         verticalBorderTickValue += ticks;
 
         /* Check for old interrupts via PIAs */
-        if (pia1FastTimerEnabled) {
-            pia1FastTimer += ticks;
-            if (pia1FastTimer >= TIMER_63_5_MICROS) {
-                if (!ccInterruptSet() && !pia1CRA.isMasked(0x80)) {
+        /* Increment pia1FastTimer, trigger IRQ if interrupts on, otherwise just write to pia1CRA */
+        pia1FastTimer += ticks;
+        if (pia1FastTimer >= TIMER_63_5_MICROS) {
+            if (pia1FastTimerEnabled) {
+                if (!regs.cc.isMasked(CC_I) && !pia1CRA.isMasked(0x80)) {
                     cpu.scheduleIRQ();
                 }
-                pia1CRA.or(0x80);
-                pia1FastTimer = 0;
             }
+            pia1CRA.or(0x80);
+            pia1FastTimer = 0;
         }
 
-        if (pia1SlowTimerEnabled) {
-            pia1SlowTimer += ticks;
-            if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
-                if (!ccInterruptSet() && !pia1CRB.isMasked(0x80)) {
+        /* Increment pia1SlowTimer, trigger IRQ if interrupts on, otherwise, just write to pia1CRB */
+        pia1SlowTimer += ticks;
+        if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
+            if (pia1SlowTimerEnabled) {
+                if (!regs.cc.isMasked(CC_I) && !pia1CRB.isMasked(0x80)) {
                     cpu.scheduleIRQ();
                 }
-                pia1CRB.or(0x80);
-                pia1SlowTimer = 0;
             }
+            pia1CRB.or(0x80);
+            pia1SlowTimer = 0;
         }
 
         /* Check for GIME timer related interrupts */

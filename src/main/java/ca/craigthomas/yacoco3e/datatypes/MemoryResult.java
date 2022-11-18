@@ -11,10 +11,10 @@ package ca.craigthomas.yacoco3e.datatypes;
 public class MemoryResult
 {
     /* The number of bytes that were read */
-    private int bytesConsumed;
+    public int bytesConsumed;
 
     /* The result of the memory operation */
-    private UnsignedWord result;
+    public UnsignedWord value;
 
     public MemoryResult() {
         this(0, new UnsignedWord());
@@ -22,25 +22,7 @@ public class MemoryResult
 
     public MemoryResult(int bytesConsumed, UnsignedWord result) {
         this.bytesConsumed = bytesConsumed;
-        this.result = result;
-    }
-
-    /**
-     * Returns the number of bytes consumed.
-     *
-     * @return the number of bytes consumed
-     */
-    public int getBytesConsumed() {
-        return bytesConsumed;
-    }
-
-    /**
-     * Returns the result of the memory operation.
-     *
-     * @return the result of the memory operation
-     */
-    public UnsignedWord get() {
-        return result;
+        this.value = result;
     }
 
     /**
@@ -49,6 +31,6 @@ public class MemoryResult
      * @return a string representation of the memory result
      */
     public String toString() {
-        return String.format("[%d bytes read, %s]", bytesConsumed, result.toString());
+        return String.format("[%d bytes read, %s]", bytesConsumed, value.toString());
     }
 }

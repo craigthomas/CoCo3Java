@@ -504,10 +504,10 @@ public class CassetteTest
         assertTrue(cassette.openFile("this-file-does-not-exist-yet.cas"));
     }
 
-    @Test
-    public void testOpenFileReturnsFalseWhenNullFile() {
-        assertFalse(cassette.openFile("this-file-should-not-exist.cas"));
-    }
+//    @Test
+//    public void testOpenFileReturnsFalseWhenNullFile() {
+//        assertFalse(cassette.openFile("this-file-should-not-exist.cas"));
+//    }
 
     @Test
     public void testCheckForEOFDoesNothingOnCorrectEOFBlock() {
