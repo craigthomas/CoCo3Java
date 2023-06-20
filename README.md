@@ -1,6 +1,6 @@
 # Yet Another Color Computer 3 Emulator
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/craigthomas/CoCo3Java/Build%20Test%20Coverage?style=flat-square)](https://github.com/craigthomas/CoCo3Java/actions)
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/craigthomas/CoCo3Java/gradle.yml?style=flat-square&branch=main)](https://github.com/craigthomas/CoCo3Java/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/craigthomas/CoCo3Java?style=flat-square)](https://codecov.io/gh/craigthomas/CoCo3Java)
 [![Dependency Status](https://img.shields.io/librariesio/github/craigthomas/CoCo3Java?style=flat-square)](https://libraries.io/github/craigthomas/CoCo3Java)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
