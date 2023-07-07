@@ -17,8 +17,14 @@ import java.util.logging.Logger;
  */
 public class IO
 {
+    /**
+     * Private constructor to hide implicit public one.
+     */
+    private IO() {
+    }
+
     // The logger for the class
-    private final static Logger LOGGER = Logger.getLogger(Memory.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(IO.class.getName());
 
     /**
      * Loads a stream into an array of bytes.
@@ -29,7 +35,7 @@ public class IO
     public static byte[] loadStream(InputStream stream) {
         if (stream == null) {
             LOGGER.severe("Error reading input stream: stream is empty");
-            return null;
+            return new byte[0];
         }
 
         try {
@@ -54,7 +60,7 @@ public class IO
             return data;
         } catch (Exception e) {
             LOGGER.severe("Error reading from stream: " + e.getMessage());
-            return null;
+            return new byte[0];
         }
     }
 

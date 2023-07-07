@@ -211,7 +211,7 @@ public class DiskDrive
                 return readTrack();
 
             default:
-                throw new RuntimeException("getDataRegister unrecognized command " + currentCommand);
+                return new UnsignedByte();
         }
     }
 
@@ -471,9 +471,9 @@ public class DiskDrive
     /**
      * Positions the drive read/write head to track 0. The verify
      * flag will verify that the restore completed. Note however,
-     * that the verify will always be ignored.
+     * that verify will always be ignored.
      *
-     * @param verify whether a verify should be run
+     * @param verify whether verify should be run
      */
     public void restore(boolean verify) {
         currentTrack = 0;
@@ -484,9 +484,9 @@ public class DiskDrive
     /**
      * Seeks to the track specified in the data register. The verify
      * flag will verify that the seek completed. Note however, that
-     * the verify will always be ignored.
+     * verify will always be ignored.
      *
-     * @param verify whether a verify should be run
+     * @param verify whether verify should be run
      */
     public void seek(boolean verify) {
         int trackToSeek = dataRegisterIn.getShort();

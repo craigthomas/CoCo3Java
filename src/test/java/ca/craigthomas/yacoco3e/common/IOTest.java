@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Craig Thomas
+ * Copyright (C) 2022 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.common;
@@ -17,17 +17,17 @@ public class IOTest
     private String testStreamFileBytes = "This is a test";
 
     @Test
-    public void testLoadStreamReturnsNullOnNull() {
+    public void testLoadStreamReturnsZeroLengthArrayOnNull() {
         byte[] result = IO.loadStream(null);
-        assertNull(result);
+        assertEquals(0, result.length);
     }
 
     @Test
-    public void testLoadStreamReturnsNullOnClosedStream() throws IOException {
+    public void testLoadStreamReturnsZeroLengthArrayOnClosedStream() throws IOException {
         InputStream stream = getClass().getClassLoader().getResourceAsStream("test_stream_file.bin");
         stream.close();
         byte[] result = IO.loadStream(stream);
-        assertNull(result);
+        assertEquals(0, result.length);
     }
 
     @Test

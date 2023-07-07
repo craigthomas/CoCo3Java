@@ -1,16 +1,16 @@
 /*
- * Copyright (C) 2018 Craig Thomas
+ * Copyright (C) 2023 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.common;
 
+import java.util.Arrays;
+
 /**
  * A Field is used to store information of variable size. Fields
  * typically have two sections:
- *
- * - a gap at the beginning with a specific size
- * - a data section with a specific size
- *
+ *  -  a gap at the beginning with a specific size
+ *   - a data section with a specific size
  * The Field class is typically used within a DiskSector. Class
  * methods exist to manage the gap, store the current position
  * in the field, and read or write bytes into a gap or data. Some
@@ -19,9 +19,9 @@ package ca.craigthomas.yacoco3e.common;
 public class Field
 {
     // Holds bytes relating to the data portion of a field
-    private byte [] data;
+    private final byte [] data;
     // Holds gap information
-    private int gapSize;
+    private final int gapSize;
     // Where the field is currently pointing to
     private int pointer;
     // A save state value for the pointer during push or pop
@@ -29,7 +29,7 @@ public class Field
     // How many bytes are used in the field
     private int usedSize;
     // How many bytes the field was initialized to
-    private short expected;
+    private final short expected;
 
     /**
      * A constructor for a field that will generate a field with
@@ -91,14 +91,14 @@ public class Field
     }
 
     /**
-     * Reads the current byte of data pointed to by the pointer.
+     * Reads the current byte of data pointed to by the pointer. Advances the pointer to
+     * the next byte.
      *
      * @return the current byte
      */
     public byte read() {
-        byte result = data[pointer];
         pointer++;
-        return result;
+        return data[pointer - 1];
     }
 
     /**
@@ -117,11 +117,7 @@ public class Field
      * @return true if more bytes can be read or written
      */
     public boolean hasMoreBytes() {
-        if (usedSize != -1 && pointer >= usedSize) {
-            return false;
-        }
-
-        return pointer < data.length;
+        return (usedSize == -1 || pointer < usedSize) && pointer < data.length;
     }
 
     /**
@@ -135,9 +131,7 @@ public class Field
      * Fills the data portion with zeros.
      */
     public void zeroFill() {
-        for (int i=0; i < data.length; i++) {
-            data[i] = 0;
-        }
+        Arrays.fill(data, (byte) 0);
     }
 
     /**

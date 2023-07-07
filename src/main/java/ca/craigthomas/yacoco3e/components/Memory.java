@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2022 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 import static ca.craigthomas.yacoco3e.common.IO.copyByteArrayToShortArray;
-import static ca.craigthomas.yacoco3e.common.IO.loadStream;
 
 /**
  * The Memory class controls access to and from memory locations in the memory
@@ -41,7 +40,7 @@ public class Memory
 
     protected static final int TOTAL_PAGES = 0x3F;
 
-    private int totalSize;
+    private final int totalSize;
 
     public Memory() {
         this(MEM_512K);
@@ -310,7 +309,7 @@ public class Memory
      * @param mode the mode to operate in
      */
     public void setROMMode(UnsignedByte mode) {
-        romMode = mode;
+        romMode.set(mode);
     }
 
     /**

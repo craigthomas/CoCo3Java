@@ -51,7 +51,7 @@ public class UnsignedByte
      * @return a new UnsignedByte with the twos compliment value
      */
     public UnsignedByte twosCompliment() {
-        return new UnsignedByte((~value + 1));
+        return new UnsignedByte(~value + 1);
     }
 
     /**
@@ -62,6 +62,7 @@ public class UnsignedByte
     public UnsignedByte inverse() {
         return new UnsignedByte(~value);
     }
+
     /**
      * Returns true if the specified mask results in a non-zero value when
      * ANDed to the current value of the byte.
@@ -81,6 +82,11 @@ public class UnsignedByte
     public void add(int value) {
         this.value += value;
         and(0xFF);
+    }
+
+    public boolean signedAdditionOverflow(UnsignedByte byte2) {
+        int signedResult = this.getSignedShort() + byte2.getSignedShort();
+        return signedResult > 127 || signedResult < -127;
     }
 
     /**
@@ -120,6 +126,16 @@ public class UnsignedByte
     }
 
     /**
+     * Convenience function allowing to set the value of the byte
+     * using an integer value.
+     *
+     * @param value the value to make the byte
+     */
+    public void set(int value) {
+        this.value = new UnsignedByte(value).getShort();
+    }
+
+    /**
      * Returns a copy of the unsigned byte.
      *
      * @return a copy of the unsigned byte
@@ -135,6 +151,10 @@ public class UnsignedByte
      */
     public void set(UnsignedByte value) {
         this.value = value.getShort();
+    }
+
+    public boolean equalsInt(int value) {
+        return this.value == value;
     }
 
     public String toString() {

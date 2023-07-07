@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2022 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -434,12 +434,16 @@ public class Emulator extends Thread
 
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
+                if (this.trace) {
+                    System.out.print(ioController.regs.toString() + " | ");
+                }
+
                 try {
                     if (remainingTicks > 0) {
                         operationTicks = cpu.executeInstruction();
                         remainingTicks -= operationTicks;
                     }
-                } catch (IllegalIndexedPostbyteException e) {
+                } catch (MalformedInstructionException e) {
                     System.out.println(e.getMessage());
                     status = EmulatorStatus.PAUSED;
                 }
@@ -451,14 +455,13 @@ public class Emulator extends Thread
                 cpu.serviceInterrupts();
 
                 /* Check to see if we should trace the output */
-                if (trace) {
-                    System.out.print("PC:" + cpu.getLastPC() + " | OP:"
-                            + cpu.getLastOperand() + " | " + cpu.getOpShortDesc());
-                    if (verbose) {
-                        System.out.print(" | " + ioController.regs);
+                if (this.trace) {
+//                    System.out.print("PC:" + cpu.getLastPC() + " | OP:"
+//                            + cpu.getLastOperand() + " | " + cpu.instruction.getShortDescription());
+                    if (cpu.instruction != null) {
+                        System.out.print(cpu.instruction.getShortDescription());
+                        System.out.println();
                     }
-                    System.out.print(" | " + cpu.getOpLongDesc());
-                    System.out.println();
                 }
             }
         }
