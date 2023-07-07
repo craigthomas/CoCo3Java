@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2023 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.datatypes;
 
 import ca.craigthomas.yacoco3e.common.IO;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -123,7 +124,7 @@ public class ConfigFile
             return null;
         }
 
-        Yaml configYaml = new Yaml(new Constructor(ConfigFile.class));
+        Yaml configYaml = new Yaml(new Constructor(ConfigFile.class, new LoaderOptions()));
         InputStream stream = IO.openInputStream(filename);
         if (stream == null) {
             return null;
