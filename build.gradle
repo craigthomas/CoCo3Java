@@ -24,7 +24,7 @@ repositories {
 
 dependencies {
     implementation 'commons-io:commons-io:2.16.1'
-    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'org.apache.commons:commons-lang3:3.16.0'
     implementation 'com.beust:jcommander:1.82'
     implementation 'org.yaml:snakeyaml:2.2'
     testImplementation 'junit:junit:4.13.2'
