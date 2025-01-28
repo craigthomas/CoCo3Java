@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.listeners;
@@ -8,7 +8,6 @@ import ca.craigthomas.yacoco3e.components.Cassette;
 import ca.craigthomas.yacoco3e.components.Emulator;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,7 +17,7 @@ import java.awt.event.ActionListener;
  */
 public class RecordCassetteMenuItemActionListener extends AbstractFileChooserListener implements ActionListener
 {
-    private Emulator emulator;
+    private final Emulator emulator;
 
     private static final String FILE_CHOOSER_TITLE = "Create Cassette File";
     private static final String CASSETTE_FILE = "Cassette Files (*.cas)";

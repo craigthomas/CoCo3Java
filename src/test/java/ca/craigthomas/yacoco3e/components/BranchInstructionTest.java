@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -13,7 +13,6 @@ import static org.junit.Assert.*;
 
 public class BranchInstructionTest {
     private IOController io;
-    private InstructionBundle bundle;
     private CPU cpu;
     private RegisterSet regs;
     private Memory memory;
@@ -24,10 +23,8 @@ public class BranchInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        MemoryResult memoryResult = new MemoryResult(2, new UnsignedWord(0x000A));
         io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
-        bundle = new InstructionBundle(memoryResult, io);
     }
 
     @Test
@@ -88,7 +85,7 @@ public class BranchInstructionTest {
     public void testBranchToSubroutineSavesPCAndReturnsTrue() {
         regs.s.set(0x0200);
         regs.pc.set(0xBEEF);
-        assertTrue(BranchInstruction.branchToSubroutine(bundle));
+        assertTrue(BranchInstruction.branchToSubroutine(io));
         assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).getShort());
         assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).getShort());
     }
@@ -112,19 +109,19 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnHighReturnsTrueIfBothCarryAndZeroNotSet() {
-        assertTrue(BranchInstruction.branchOnHigh(bundle));
+        assertTrue(BranchInstruction.branchOnHigh(io));
     }
 
     @Test
     public void testBranchOnHighReturnsFalseIfCarrySet() {
         regs.cc.or(CC_C);
-        assertFalse(BranchInstruction.branchOnHigh(bundle));
+        assertFalse(BranchInstruction.branchOnHigh(io));
     }
 
     @Test
     public void testBranchOnHighReturnsFalseIfZeroSet() {
         regs.cc.or(CC_Z);
-        assertFalse(BranchInstruction.branchOnHigh(bundle));
+        assertFalse(BranchInstruction.branchOnHigh(io));
     }
 
     @Test
@@ -153,25 +150,25 @@ public class BranchInstructionTest {
     @Test
     public void testBranchOnLowerReturnsTrueIfCarrySet() {
         regs.cc.or(CC_C);
-        assertTrue(BranchInstruction.branchOnLower(bundle));
+        assertTrue(BranchInstruction.branchOnLower(io));
     }
 
     @Test
     public void testBranchOnLowerReturnsTrueIfZeroSet() {
         regs.cc.or(CC_Z);
-        assertTrue(BranchInstruction.branchOnLower(bundle));
+        assertTrue(BranchInstruction.branchOnLower(io));
     }
 
     @Test
     public void testBranchOnLowerReturnsTrueIfZeroAndCarrySet() {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_C);
-        assertTrue(BranchInstruction.branchOnLower(bundle));
+        assertTrue(BranchInstruction.branchOnLower(io));
     }
 
     @Test
     public void testBranchOnLowerReturnsFalseIfCarryAndZeroClear() {
-        assertFalse(BranchInstruction.branchOnLower(bundle));
+        assertFalse(BranchInstruction.branchOnLower(io));
     }
 
     @Test
@@ -217,13 +214,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnCarryClearReturnsTrueIfCarryClear() {
-        assertTrue(BranchInstruction.branchOnCarryClear(bundle));
+        assertTrue(BranchInstruction.branchOnCarryClear(io));
     }
 
     @Test
     public void testBranchOnCarryClearReturnsFalseIfCarrySet() {
         regs.cc.or(CC_C);
-        assertFalse(BranchInstruction.branchOnCarryClear(bundle));
+        assertFalse(BranchInstruction.branchOnCarryClear(io));
     }
 
     @Test
@@ -243,13 +240,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnCarrySetReturnsFalseIfCarryClear() {
-        assertFalse(BranchInstruction.branchOnCarrySet(bundle));
+        assertFalse(BranchInstruction.branchOnCarrySet(io));
     }
 
     @Test
     public void testBranchOnCarrySetReturnsTrueIfCarrySet() {
         regs.cc.or(CC_C);
-        assertTrue(BranchInstruction.branchOnCarrySet(bundle));
+        assertTrue(BranchInstruction.branchOnCarrySet(io));
     }
 
     @Test
@@ -269,13 +266,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnNotEqualReturnsTrueIfZeroClear() {
-        assertTrue(BranchInstruction.branchOnNotEqual(bundle));
+        assertTrue(BranchInstruction.branchOnNotEqual(io));
     }
 
     @Test
     public void testBranchOnNotEqualReturnsFalseIfZeroSet() {
         regs.cc.or(CC_Z);
-        assertFalse(BranchInstruction.branchOnNotEqual(bundle));
+        assertFalse(BranchInstruction.branchOnNotEqual(io));
     }
 
     @Test
@@ -295,13 +292,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnEqualReturnsFalseIfZeroClear() {
-        assertFalse(BranchInstruction.branchOnEqual(bundle));
+        assertFalse(BranchInstruction.branchOnEqual(io));
     }
 
     @Test
     public void testBranchOnEqualReturnsTrueIfZeroSet() {
         regs.cc.or(CC_Z);
-        assertTrue(BranchInstruction.branchOnEqual(bundle));
+        assertTrue(BranchInstruction.branchOnEqual(io));
     }
 
     @Test
@@ -321,13 +318,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnOverflowClearReturnsTrueIfOverflowClear() {
-        assertTrue(BranchInstruction.branchOnOverflowClear(bundle));
+        assertTrue(BranchInstruction.branchOnOverflowClear(io));
     }
 
     @Test
     public void testBranchOnOverflowClearReturnsFalseIfOverflowSet() {
         regs.cc.or(CC_V);
-        assertFalse(BranchInstruction.branchOnOverflowClear(bundle));
+        assertFalse(BranchInstruction.branchOnOverflowClear(io));
     }
 
     @Test
@@ -347,13 +344,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnOverflowSetReturnsFalseIfOverflowClear() {
-        assertFalse(BranchInstruction.branchOnOverflowSet(bundle));
+        assertFalse(BranchInstruction.branchOnOverflowSet(io));
     }
 
     @Test
     public void testBranchOnOverflowSetReturnsTrueIfOverflowSet() {
         regs.cc.or(CC_V);
-        assertTrue(BranchInstruction.branchOnOverflowSet(bundle));
+        assertTrue(BranchInstruction.branchOnOverflowSet(io));
     }
 
     @Test
@@ -373,13 +370,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnPlusReturnsTrueIfNegativeClear() {
-        assertTrue(BranchInstruction.branchOnPlus(bundle));
+        assertTrue(BranchInstruction.branchOnPlus(io));
     }
 
     @Test
     public void testBranchOnPlusReturnsFalseIfNegativeSet() {
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnPlus(bundle));
+        assertFalse(BranchInstruction.branchOnPlus(io));
     }
 
     @Test
@@ -399,13 +396,13 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnMinusReturnsFalseIfNegativeClear() {
-        assertFalse(BranchInstruction.branchOnMinus(bundle));
+        assertFalse(BranchInstruction.branchOnMinus(io));
     }
 
     @Test
     public void testBranchOnMinusReturnsTrueIfNegativeSet() {
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnMinus(bundle));
+        assertTrue(BranchInstruction.branchOnMinus(io));
     }
 
     @Test
@@ -427,24 +424,24 @@ public class BranchInstructionTest {
     public void testBranchOnGreaterThanEqualZeroReturnsTrueIfNegativeOverflowSet() {
         regs.cc.or(CC_V);
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnGreaterThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnGreaterThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanEqualZeroReturnsTrueIfNegativeOverflowClear() {
-        assertTrue(BranchInstruction.branchOnGreaterThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnGreaterThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanEqualZeroReturnsFalseIfNegativeSetOverflowClear() {
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnGreaterThanEqualZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanEqualZeroReturnsFalseIfNegativeClearOverflowSet() {
         regs.cc.or(CC_V);
-        assertFalse(BranchInstruction.branchOnGreaterThanEqualZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanEqualZero(io));
     }
 
     @Test
@@ -481,26 +478,26 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchOnLessThanZeroReturnsFalseWhenNegativeOverflowClear() {
-        assertFalse(BranchInstruction.branchOnLessThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnLessThanZero(io));
     }
 
     @Test
     public void testBranchOnLessThanZeroReturnsFalseWhenNegativeOverflowSet() {
         regs.cc.or(CC_V);
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnLessThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnLessThanZero(io));
     }
 
     @Test
     public void testBranchOnLessThanZeroReturnsTrueWhenNegativeSetOverflowClear() {
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnLessThanZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanZero(io));
     }
 
     @Test
     public void testBranchOnLessThanZeroReturnsTrueWhenNegativeClearOverflowSet() {
         regs.cc.or(CC_V);
-        assertTrue(BranchInstruction.branchOnLessThanZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanZero(io));
     }
 
     @Test
@@ -538,7 +535,7 @@ public class BranchInstructionTest {
     @Test
     public void testBranchOnGreaterThanZeroReturnsFalseIfZeroSet() {
         regs.cc.or(CC_Z);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
@@ -546,45 +543,45 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_V);
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsFalseIfZeroOverflowSetNegativeClear() {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_V);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsFalseIfZeroNegativeSetOverflowClear() {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsTrueIfZeroNegativeOverflowClear() {
-        assertTrue(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertTrue(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsTrueIfZeroClearNegativeOverflowSet() {
         regs.cc.or(CC_V);
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertTrue(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsFalseIfZeroNegativeClearOverflowSet() {
         regs.cc.or(CC_V);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
     public void testBranchOnGreaterThanZeroReturnsFalseIfZeroOverflowClearNegativeSet() {
         regs.cc.or(CC_N);
-        assertFalse(BranchInstruction.branchOnGreaterThanZero(bundle));
+        assertFalse(BranchInstruction.branchOnGreaterThanZero(io));
     }
 
     @Test
@@ -658,7 +655,7 @@ public class BranchInstructionTest {
     @Test
     public void testBranchOnLessThanEqualZeroReturnsTrueIfZeroSetNegativeOverflowClear() {
         regs.cc.or(CC_Z);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
@@ -666,45 +663,45 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_N);
         regs.cc.or(CC_V);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsTrueIfZeroSetNegativeSetOverflowClear() {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsTrueIfZeroSetNegativeClearOverflowSet() {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_V);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsFalseIfZeroClearNegativeOverflowClear() {
-        assertFalse(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertFalse(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsFalseIfZeroClearNegativeOverflowSet() {
         regs.cc.or(CC_N);
         regs.cc.or(CC_V);
-        assertFalse(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertFalse(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsTrueIfZeroClearNegativeClearOverflowSet() {
         regs.cc.or(CC_V);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
     public void testBranchOnLessThanEqualZeroReturnsTrueIfZeroClearNegativeSetOverflowClear() {
         regs.cc.or(CC_N);
-        assertTrue(BranchInstruction.branchOnLessThanEqualZero(bundle));
+        assertTrue(BranchInstruction.branchOnLessThanEqualZero(io));
     }
 
     @Test
@@ -738,6 +735,7 @@ public class BranchInstructionTest {
     public void testBranchOnLessThanZeroCalledIfZeroOverflowSetNegativeClear() throws MalformedInstructionException {
         regs.cc.or(CC_Z);
         regs.cc.or(CC_V);
+        io.writeWord(0x0000, 0x2F1F);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
         assertEquals(0x0021, regs.pc.getInt());

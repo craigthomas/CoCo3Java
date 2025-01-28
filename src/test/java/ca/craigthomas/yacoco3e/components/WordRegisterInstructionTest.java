@@ -29,7 +29,7 @@ public class WordRegisterInstructionTest {
 
     @Test(expected = MalformedInstructionException.class)
     public void testWordRegisterInstructionThrowsRuntimeExceptionWithUnsupportedRegister() throws MalformedInstructionException {
-        WordRegisterInstruction instruction = new WordRegisterInstruction(0, 0, "None", 0, null, Register.PC);
+        WordRegisterInstruction instruction = new WordRegisterInstruction(0, 0, "None", AddressingMode.INHERENT, null, Register.PC);
         instruction.call(new MemoryResult(2, new UnsignedWord(0xA000)), io);
     }
 

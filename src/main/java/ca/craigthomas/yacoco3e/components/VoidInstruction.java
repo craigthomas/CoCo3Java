@@ -1,15 +1,10 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.MemoryResult;
-import ca.craigthomas.yacoco3e.datatypes.Register;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
-
-import java.util.function.Function;
+import ca.craigthomas.yacoco3e.datatypes.*;
 
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.INDEXED;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_E;
@@ -22,360 +17,327 @@ import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_E;
  */
 public class VoidInstruction extends Instruction
 {
-    protected Function<InstructionBundle, Void> operation;
-    protected boolean isRTI;
+    @FunctionalInterface
+    public interface VoidInterface
+    {
+        void apply(IOController io, UnsignedByte memoryByte, UnsignedWord address);
+    }
+
+    protected VoidInterface operation;
 
     public VoidInstruction(int opcode,
                            int ticks,
                            String mnemonic,
-                           int addressingMode,
-                           Function<InstructionBundle, Void> operation,
-                           boolean isByteSize,
-                           boolean isRTI
+                           AddressingMode addressingMode,
+                           VoidInterface operation
     ) {
         this.opcodeValue = opcode;
         this.mnemonic = mnemonic;
         this.ticks = ticks;
         this.addressingMode = addressingMode;
         this.operation = operation;
-        this.isRTI = isRTI;
-        this.immediateByte = isByteSize;
     }
 
-    public int call(MemoryResult memoryResult, IOController io) {
-        operation.apply(new InstructionBundle(memoryResult, io));
-        if (isRTI) {
+    public int call(IOController io) {
+        operation.apply(io, byteRead, wordRead);
+        if (mnemonic.equals("RTI")) {
             return 6 + (io.regs.cc.isMasked(CC_E) ? 9 : 0);
         }
-        return addressingMode == INDEXED ? ticks + memoryResult.bytesConsumed : ticks;
+        return addressingMode == INDEXED ? ticks + numBytesRead : ticks;
     }
 
     /**
      * Waits for an interrupt to occur.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void sync(InstructionBundle bundle) {
-        return null;
+    public static void sync(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
     }
 
     /**
      * Jumps to the specified address.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void unconditionalJump(InstructionBundle bundle) {
-        bundle.io.regs.pc = bundle.memoryResult.value;
-        return null;
+    public static void unconditionalJump(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.pc.set(address);
     }
 
     /**
      * Pushes machine state onto the stack, and waits for an interrupt.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void callAndWaitForInterrupt(InstructionBundle bundle) {
-        bundle.io.regs.cc.and(bundle.memoryResult.value.getHigh().getShort());
-        bundle.io.regs.cc.or(CC_E);
-        bundle.io.pushStack(Register.S, bundle.io.regs.pc);
-        bundle.io.pushStack(Register.S, bundle.io.regs.u);
-        bundle.io.pushStack(Register.S, bundle.io.regs.y);
-        bundle.io.pushStack(Register.S, bundle.io.regs.x);
-        bundle.io.pushStack(Register.S, bundle.io.regs.dp);
-        bundle.io.pushStack(Register.S, bundle.io.regs.b);
-        bundle.io.pushStack(Register.S, bundle.io.regs.a);
-        bundle.io.pushStack(Register.S, bundle.io.regs.cc);
-        return null;
+    public static void callAndWaitForInterrupt(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.cc.and(memoryByte);
+        io.regs.cc.or(CC_E);
+        io.pushStack(Register.S, io.regs.pc);
+        io.pushStack(Register.S, io.regs.u);
+        io.pushStack(Register.S, io.regs.y);
+        io.pushStack(Register.S, io.regs.x);
+        io.pushStack(Register.S, io.regs.dp);
+        io.pushStack(Register.S, io.regs.b);
+        io.pushStack(Register.S, io.regs.a);
+        io.pushStack(Register.S, io.regs.cc);
     }
 
     /**
      * Restores register flags from the stack.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void returnFromInterrupt(InstructionBundle bundle) {
-        bundle.io.regs.cc = bundle.io.popStack(Register.S);
-        if (bundle.io.regs.cc.isMasked(CC_E)) {
-            bundle.io.regs.a = bundle.io.popStack(Register.S);
-            bundle.io.regs.b = bundle.io.popStack(Register.S);
-            bundle.io.regs.dp = bundle.io.popStack(Register.S);
-            bundle.io.regs.x = new UnsignedWord(bundle.io.popStack(Register.S), bundle.io.popStack(Register.S));
-            bundle.io.regs.y = new UnsignedWord(bundle.io.popStack(Register.S), bundle.io.popStack(Register.S));
-            bundle.io.regs.u = new UnsignedWord(bundle.io.popStack(Register.S), bundle.io.popStack(Register.S));
+    public static void returnFromInterrupt(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.cc.set(io.popStack(Register.S));
+        if (io.regs.cc.isMasked(CC_E)) {
+            io.regs.a.set(io.popStack(Register.S));
+            io.regs.b.set(io.popStack(Register.S));
+            io.regs.dp.set(io.popStack(Register.S));
+            io.regs.x.set(new UnsignedWord(io.popStack(Register.S), io.popStack(Register.S)));
+            io.regs.y.set(new UnsignedWord(io.popStack(Register.S), io.popStack(Register.S)));
+            io.regs.u.set(new UnsignedWord(io.popStack(Register.S), io.popStack(Register.S)));
         }
-        bundle.io.regs.pc = new UnsignedWord(bundle.io.popStack(Register.S), bundle.io.popStack(Register.S));
-        return null;
+        io.regs.pc.set(new UnsignedWord(io.popStack(Register.S), io.popStack(Register.S)));
     }
 
     /**
      * Restores the program counter from the stack.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void returnFromSubroutine(InstructionBundle bundle) {
-        bundle.io.regs.pc = new UnsignedWord(bundle.io.popStack(Register.S), bundle.io.popStack(Register.S));
-        return null;
+    public static void returnFromSubroutine(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.pc.set(new UnsignedWord(io.popStack(Register.S), io.popStack(Register.S)));
     }
 
     /**
      * Does nothing (nop).
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void noOperation(InstructionBundle bundle) {
-        return null;
+    public static void noOperation(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
     }
 
     /**
      * Jumps to the specified address, pushing the value of the PC onto the S
      * stack before jumping.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void jumpToSubroutine(InstructionBundle bundle) {
-        bundle.io.pushStack(Register.S, bundle.io.regs.pc);
-        bundle.io.regs.pc.set(bundle.memoryResult.value);
-        return null;
+    public static void jumpToSubroutine(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.pushStack(Register.S, io.regs.pc);
+        io.regs.pc.set(address);
     }
 
     /**
      * Saves all registers to the stack, and jumps to the memory location
      * read at the specified address.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void softwareInterrupt(InstructionBundle bundle) {
-        bundle.io.regs.cc.or(CC_E);
-        bundle.io.pushStack(Register.S, bundle.io.regs.pc);
-        bundle.io.pushStack(Register.S, bundle.io.regs.u);
-        bundle.io.pushStack(Register.S, bundle.io.regs.y);
-        bundle.io.pushStack(Register.S, bundle.io.regs.x);
-        bundle.io.pushStack(Register.S, bundle.io.regs.dp);
-        bundle.io.pushStack(Register.S, bundle.io.regs.b);
-        bundle.io.pushStack(Register.S, bundle.io.regs.a);
-        bundle.io.pushStack(Register.S, bundle.io.regs.cc);
-        bundle.io.regs.pc = bundle.io.readWord(Instruction.SWI);
-        return null;
+    public static void softwareInterrupt(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.cc.or(CC_E);
+        io.pushStack(Register.S, io.regs.pc);
+        io.pushStack(Register.S, io.regs.u);
+        io.pushStack(Register.S, io.regs.y);
+        io.pushStack(Register.S, io.regs.x);
+        io.pushStack(Register.S, io.regs.dp);
+        io.pushStack(Register.S, io.regs.b);
+        io.pushStack(Register.S, io.regs.a);
+        io.pushStack(Register.S, io.regs.cc);
+        io.regs.pc.set(io.readWord(Instruction.SWI));
     }
 
     /**
      * Saves all registers to the stack, and jumps to the memory location
      * read at the specified address.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void softwareInterrupt2(InstructionBundle bundle) {
-        bundle.io.regs.cc.or(CC_E);
-        bundle.io.pushStack(Register.S, bundle.io.regs.pc);
-        bundle.io.pushStack(Register.S, bundle.io.regs.u);
-        bundle.io.pushStack(Register.S, bundle.io.regs.y);
-        bundle.io.pushStack(Register.S, bundle.io.regs.x);
-        bundle.io.pushStack(Register.S, bundle.io.regs.dp);
-        bundle.io.pushStack(Register.S, bundle.io.regs.b);
-        bundle.io.pushStack(Register.S, bundle.io.regs.a);
-        bundle.io.pushStack(Register.S, bundle.io.regs.cc);
-        bundle.io.regs.pc = bundle.io.readWord(Instruction.SWI2);
-        return null;
+    public static void softwareInterrupt2(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.cc.or(CC_E);
+        io.pushStack(Register.S, io.regs.pc);
+        io.pushStack(Register.S, io.regs.u);
+        io.pushStack(Register.S, io.regs.y);
+        io.pushStack(Register.S, io.regs.x);
+        io.pushStack(Register.S, io.regs.dp);
+        io.pushStack(Register.S, io.regs.b);
+        io.pushStack(Register.S, io.regs.a);
+        io.pushStack(Register.S, io.regs.cc);
+        io.regs.pc.set(io.readWord(Instruction.SWI2));
     }
 
     /**
      * Saves all registers to the stack, and jumps to the memory location
      * read at the specified address.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static Void softwareInterrupt3(InstructionBundle bundle) {
-        bundle.io.regs.cc.or(CC_E);
-        bundle.io.pushStack(Register.S, bundle.io.regs.pc);
-        bundle.io.pushStack(Register.S, bundle.io.regs.u);
-        bundle.io.pushStack(Register.S, bundle.io.regs.y);
-        bundle.io.pushStack(Register.S, bundle.io.regs.x);
-        bundle.io.pushStack(Register.S, bundle.io.regs.dp);
-        bundle.io.pushStack(Register.S, bundle.io.regs.b);
-        bundle.io.pushStack(Register.S, bundle.io.regs.a);
-        bundle.io.pushStack(Register.S, bundle.io.regs.cc);
-        bundle.io.regs.pc.set(bundle.io.readWord(Instruction.SWI3));
-        return null;
+    public static void softwareInterrupt3(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.regs.cc.or(CC_E);
+        io.pushStack(Register.S, io.regs.pc);
+        io.pushStack(Register.S, io.regs.u);
+        io.pushStack(Register.S, io.regs.y);
+        io.pushStack(Register.S, io.regs.x);
+        io.pushStack(Register.S, io.regs.dp);
+        io.pushStack(Register.S, io.regs.b);
+        io.pushStack(Register.S, io.regs.a);
+        io.pushStack(Register.S, io.regs.cc);
+        io.regs.pc.set(io.readWord(Instruction.SWI3));
     }
 
     /**
      * Exchanges the contents of one register with another. The registers to exchange
-     * depend on the postbyte that is read within the memoryResult passed to the
-     * function in the bundle.
-     *
-     * @param bundle the InstructionBundle that contains information to process
+     * depend on the post byte that is read.
      */
-    public static Void exchangeRegister(InstructionBundle bundle) {
-        UnsignedByte postByte = bundle.memoryResult.value.getHigh();
+    public static void exchangeRegister(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
         UnsignedWord temp = new UnsignedWord();
         UnsignedByte tempByte = new UnsignedByte();
-        switch (postByte.getShort()) {
+        switch (memoryByte.getShort()) {
             /* A:B <-> X */
             case 0x01:
             case 0x10:
-                temp.set(bundle.io.regs.x);
-                bundle.io.regs.x = bundle.io.regs.getD();
-                bundle.io.regs.setD(temp);
+                temp.set(io.regs.x);
+                io.regs.x.set(io.regs.getD());
+                io.regs.setD(temp);
                 break;
 
             /* A:B <-> Y */
             case 0x02:
             case 0x20:
-                temp.set(bundle.io.regs.y);
-                bundle.io.regs.y = bundle.io.regs.getD();
-                bundle.io.regs.setD(temp);
+                temp.set(io.regs.y);
+                io.regs.y.set(io.regs.getD());
+                io.regs.setD(temp);
                 break;
 
             /* A:B <-> U */
             case 0x03:
             case 0x30:
-                temp.set(bundle.io.regs.u);
-                bundle.io.regs.u = bundle.io.regs.getD();
-                bundle.io.regs.setD(temp);
+                temp.set(io.regs.u);
+                io.regs.u.set(io.regs.getD());
+                io.regs.setD(temp);
                 break;
 
             /* A:B <-> S */
             case 0x04:
             case 0x40:
-                temp.set(bundle.io.regs.s);
-                bundle.io.regs.s = bundle.io.regs.getD();
-                bundle.io.regs.setD(temp);
+                temp.set(io.regs.s);
+                io.regs.s.set(io.regs.getD());
+                io.regs.setD(temp);
                 break;
 
             /* A:B <-> PC */
             case 0x05:
             case 0x50:
-                temp.set(bundle.io.regs.pc);
-                bundle.io.regs.pc = bundle.io.regs.getD();
-                bundle.io.regs.setD(temp);
+                temp.set(io.regs.pc);
+                io.regs.pc.set(io.regs.getD());
+                io.regs.setD(temp);
                 break;
 
             /* X <-> Y */
             case 0x12:
             case 0x21:
-                temp.set(bundle.io.regs.x);
-                bundle.io.regs.x = bundle.io.regs.y.copy();
-                bundle.io.regs.y = temp;
+                temp.set(io.regs.x);
+                io.regs.x.set(io.regs.y);
+                io.regs.y.set(temp);
                 break;
 
             /* X <-> U */
             case 0x13:
             case 0x31:
-                temp.set(bundle.io.regs.x);
-                bundle.io.regs.x = bundle.io.regs.u.copy();
-                bundle.io.regs.u = temp;
+                temp.set(io.regs.x);
+                io.regs.x.set(io.regs.u);
+                io.regs.u.set(temp);
                 break;
 
             /* X <-> S */
             case 0x14:
             case 0x41:
-                temp.set(bundle.io.regs.x);
-                bundle.io.regs.x = bundle.io.regs.s.copy();
-                bundle.io.regs.s = temp;
+                temp.set(io.regs.x);
+                io.regs.x.set(io.regs.s);
+                io.regs.s.set(temp);
                 break;
 
             /* X <-> PC */
             case 0x15:
             case 0x51:
-                temp.set(bundle.io.regs.x);
-                bundle.io.regs.x = bundle.io.regs.pc.copy();
-                bundle.io.regs.pc = temp;
+                temp.set(io.regs.x);
+                io.regs.x.set(io.regs.pc);
+                io.regs.pc.set(temp);
                 break;
 
             /* Y <-> U */
             case 0x23:
             case 0x32:
-                temp.set(bundle.io.regs.y);
-                bundle.io.regs.y = bundle.io.regs.u.copy();
-                bundle.io.regs.u = temp;
+                temp.set(io.regs.y);
+                io.regs.y.set(io.regs.u);
+                io.regs.u.set(temp);
                 break;
 
             /* Y <-> S */
             case 0x24:
             case 0x42:
-                temp.set(bundle.io.regs.s);
-                bundle.io.regs.s = bundle.io.regs.y.copy();
-                bundle.io.regs.y = temp;
+                temp.set(io.regs.s);
+                io.regs.s.set(io.regs.y);
+                io.regs.y.set(temp);
                 break;
 
             /* Y <-> PC */
             case 0x25:
             case 0x52:
-                temp.set(bundle.io.regs.y);
-                bundle.io.regs.y = bundle.io.regs.pc.copy();
-                bundle.io.regs.pc = temp;
+                temp.set(io.regs.y);
+                io.regs.y.set(io.regs.pc);
+                io.regs.pc.set(temp);
                 break;
 
             /* U <-> S */
             case 0x34:
             case 0x43:
-                temp.set(bundle.io.regs.u);
-                bundle.io.regs.u = bundle.io.regs.s.copy();
-                bundle.io.regs.s = temp;
+                temp.set(io.regs.u);
+                io.regs.u.set(io.regs.s);
+                io.regs.s.set(temp);
                 break;
 
             /* U <-> PC */
             case 0x35:
             case 0x53:
-                temp.set(bundle.io.regs.u);
-                bundle.io.regs.u = bundle.io.regs.pc.copy();
-                bundle.io.regs.pc = temp;
+                temp.set(io.regs.u);
+                io.regs.u.set(io.regs.pc);
+                io.regs.pc.set(temp);
                 break;
 
             /* S <-> PC */
             case 0x45:
             case 0x54:
-                temp.set(bundle.io.regs.s);
-                bundle.io.regs.s = bundle.io.regs.pc.copy();
-                bundle.io.regs.pc = temp;
+                temp.set(io.regs.s);
+                io.regs.s.set(io.regs.pc);
+                io.regs.pc.set(temp);
                 break;
 
             /* A <-> B */
             case 0x89:
             case 0x98:
-                tempByte.set(bundle.io.regs.a);
-                bundle.io.regs.a = bundle.io.regs.b.copy();
-                bundle.io.regs.b = tempByte;
+                tempByte.set(io.regs.a);
+                io.regs.a.set(io.regs.b);
+                io.regs.b.set(tempByte);
                 break;
 
             /* A <-> CC */
             case 0x8A:
             case 0xA8:
-                tempByte.set(bundle.io.regs.a);
-                bundle.io.regs.a = bundle.io.regs.cc.copy();
-                bundle.io.regs.cc = tempByte;
+                tempByte.set(io.regs.a);
+                io.regs.a.set(io.regs.cc);
+                io.regs.cc.set(tempByte);
                 break;
 
             /* A <-> DP */
             case 0x8B:
             case 0xB8:
-                tempByte.set(bundle.io.regs.a);
-                bundle.io.regs.a = bundle.io.regs.dp.copy();
-                bundle.io.regs.dp = tempByte;
+                tempByte.set(io.regs.a);
+                io.regs.a.set(io.regs.dp);
+                io.regs.dp.set(tempByte);
                 break;
 
             /* B <-> CC */
             case 0x9A:
             case 0xA9:
-                tempByte.set(bundle.io.regs.b);
-                bundle.io.regs.b = bundle.io.regs.cc.copy();
-                bundle.io.regs.cc = tempByte;
+                tempByte.set(io.regs.b);
+                io.regs.b.set(io.regs.cc);
+                io.regs.cc.set(tempByte);
                 break;
 
             /* B <-> DP */
             case 0x9B:
             case 0xB9:
-                tempByte.set(bundle.io.regs.b);
-                bundle.io.regs.b = bundle.io.regs.dp.copy();
-                bundle.io.regs.dp = tempByte;
+                tempByte.set(io.regs.b);
+                io.regs.b.set(io.regs.dp);
+                io.regs.dp.set(tempByte);
                 break;
 
             /* CC <-> DP */
             case 0xAB:
             case 0xBA:
-                tempByte.set(bundle.io.regs.cc);
-                bundle.io.regs.cc = bundle.io.regs.dp.copy();
-                bundle.io.regs.dp = tempByte;
+                tempByte.set(io.regs.cc);
+                io.regs.cc.set(io.regs.dp);
+                io.regs.dp.set(tempByte);
                 break;
 
             /* Self to self - ignored */
@@ -392,228 +354,224 @@ public class VoidInstruction extends Instruction
                 break;
 
             default:
-                throw new RuntimeException("Illegal register exchange " + postByte);
+                throw new RuntimeException("Illegal register exchange " + memoryByte);
         }
-        return null;
     }
 
     /**
      * Transfers the value of one register to another. The register to transfer
-     * to and from is encoded by the postByte read by memoryResult.
-     *
-     * @param bundle the InstructionBundle with the information to process
+     * to and from is encoded by the post byte read.
      */
-    public static Void transferRegister(InstructionBundle bundle) {
-        UnsignedByte postByte = bundle.memoryResult.value.getHigh();
-        switch (postByte.getShort()) {
+    public static void transferRegister(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        switch (memoryByte.getShort()) {
             /* A:B -> X */
             case 0x01:
-                bundle.io.regs.x = bundle.io.regs.getD();
+                io.regs.x.set(io.regs.getD());
                 break;
 
             /* A:B -> Y */
             case 0x02:
-                bundle.io.regs.y = bundle.io.regs.getD();
+                io.regs.y.set(io.regs.getD());
                 break;
 
             /* A:B -> U */
             case 0x03:
-                bundle.io.regs.u = bundle.io.regs.getD();
+                io.regs.u.set(io.regs.getD());
                 break;
 
             /* A:B -> S */
             case 0x04:
-                bundle.io.regs.s = bundle.io.regs.getD();
+                io.regs.s.set(io.regs.getD());
                 break;
 
             /* A:B -> PC */
             case 0x05:
-                bundle.io.regs.pc = bundle.io.regs.getD();
+                io.regs.pc.set(io.regs.getD());
                 break;
 
             /* X -> A:B */
             case 0x10:
-                bundle.io.regs.setD(bundle.io.regs.x);
+                io.regs.setD(io.regs.x);
                 break;
 
             /* X -> Y */
             case 0x12:
-                bundle.io.regs.y = bundle.io.regs.x.copy();
+                io.regs.y.set(io.regs.x);
                 break;
 
             /* X -> U */
             case 0x13:
-                bundle.io.regs.u = bundle.io.regs.x.copy();
+                io.regs.u.set(io.regs.x);
                 break;
 
             /* X -> S */
             case 0x14:
-                bundle.io.regs.s = bundle.io.regs.x.copy();
+                io.regs.s.set(io.regs.x);
                 break;
 
             /* X -> PC */
             case 0x15:
-                bundle.io.regs.pc = bundle.io.regs.x.copy();
+                io.regs.pc.set(io.regs.x);
                 break;
 
             /* Y -> A:B */
             case 0x20:
-                bundle.io.regs.setD(bundle.io.regs.y.copy());
+                io.regs.setD(io.regs.y);
                 break;
 
             /* Y -> X */
             case 0x21:
-                bundle.io.regs.x = bundle.io.regs.y.copy();
+                io.regs.x.set(io.regs.y);
                 break;
 
             /* Y -> U */
             case 0x23:
-                bundle.io.regs.u = bundle.io.regs.y.copy();
+                io.regs.u.set(io.regs.y);
                 break;
 
             /* Y -> S */
             case 0x24:
-                bundle.io.regs.s = bundle.io.regs.y.copy();
+                io.regs.s.set(io.regs.y);
                 break;
 
             /* Y -> PC */
             case 0x25:
-                bundle.io.regs.pc = bundle.io.regs.y.copy();
+                io.regs.pc.set(io.regs.y);
                 break;
 
             /* U -> A:B */
             case 0x30:
-                bundle.io.regs.setD(bundle.io.regs.u.copy());
+                io.regs.setD(io.regs.u);
                 break;
 
             /* U -> X */
             case 0x31:
-                bundle.io.regs.x = bundle.io.regs.u.copy();
+                io.regs.x.set(io.regs.u);
                 break;
 
             /* U -> Y */
             case 0x32:
-                bundle.io.regs.y = bundle.io.regs.u.copy();
+                io.regs.y.set(io.regs.u);
                 break;
 
             /* U -> S */
             case 0x34:
-                bundle.io.regs.s = bundle.io.regs.u.copy();
+                io.regs.s.set(io.regs.u);
                 break;
 
             /* U -> PC */
             case 0x35:
-                bundle.io.regs.pc = bundle.io.regs.u.copy();
+                io.regs.pc.set(io.regs.u);
                 break;
 
             /* S -> A:B */
             case 0x40:
-                bundle.io.regs.setD(bundle.io.regs.s.copy());
+                io.regs.setD(io.regs.s);
                 break;
 
             /* S -> X */
             case 0x41:
-                bundle.io.regs.x = bundle.io.regs.s.copy();
+                io.regs.x.set(io.regs.s);
                 break;
 
             /* S -> Y */
             case 0x42:
-                bundle.io.regs.y = bundle.io.regs.s.copy();
+                io.regs.y.set(io.regs.s);
                 break;
 
             /* S -> U */
             case 0x43:
-                bundle.io.regs.u = bundle.io.regs.s.copy();
+                io.regs.u.set(io.regs.s);
                 break;
 
             /* S -> PC */
             case 0x45:
-                bundle.io.regs.pc = bundle.io.regs.s.copy();
+                io.regs.pc.set(io.regs.s);
                 break;
 
             /* PC -> A:B */
             case 0x50:
-                bundle.io.regs.setD(bundle.io.regs.pc.copy());
+                io.regs.setD(io.regs.pc);
                 break;
 
             /* PC -> X */
             case 0x51:
-                bundle.io.regs.x = bundle.io.regs.pc.copy();
+                io.regs.x.set(io.regs.pc);
                 break;
 
             /* PC -> Y */
             case 0x52:
-                bundle.io.regs.y = bundle.io.regs.pc.copy();
+                io.regs.y.set(io.regs.pc);
                 break;
 
             /* PC -> U */
             case 0x53:
-                bundle.io.regs.u = bundle.io.regs.pc.copy();
+                io.regs.u.set(io.regs.pc);
                 break;
 
             /* PC -> S */
             case 0x54:
-                bundle.io.regs.s = bundle.io.regs.pc.copy();
+                io.regs.s.set(io.regs.pc);
                 break;
 
             /* A -> B */
             case 0x89:
-                bundle.io.regs.b = bundle.io.regs.a.copy();
+                io.regs.b.set(io.regs.a);
                 break;
 
             /* A -> CC */
             case 0x8A:
-                bundle.io.regs.cc = bundle.io.regs.a.copy();
+                io.regs.cc.set(io.regs.a);
                 break;
 
             /* A -> DP */
             case 0x8B:
-                bundle.io.regs.dp = bundle.io.regs.a.copy();
+                io.regs.dp.set(io.regs.a);
                 break;
 
             /* B -> A */
             case 0x98:
-                bundle.io.regs.a = bundle.io.regs.b.copy();
+                io.regs.a.set(io.regs.b);
                 break;
 
             /* B -> CC */
             case 0x9A:
-                bundle.io.regs.cc = bundle.io.regs.b.copy();
+                io.regs.cc.set(io.regs.b);
                 break;
 
             /* B -> DP */
             case 0x9B:
-                bundle.io.regs.dp = bundle.io.regs.b.copy();
+                io.regs.dp.set(io.regs.b);
                 break;
 
             /* CC -> A */
             case 0xA8:
-                bundle.io.regs.a = bundle.io.regs.cc.copy();
+                io.regs.a.set(io.regs.cc);
                 break;
 
             /* CC -> B */
             case 0xA9:
-                bundle.io.regs.b = bundle.io.regs.cc.copy();
+                io.regs.b.set(io.regs.cc);
                 break;
 
             /* CC -> DP */
             case 0xAB:
-                bundle.io.regs.dp = bundle.io.regs.cc.copy();
+                io.regs.dp.set(io.regs.cc);
                 break;
 
             /* DP -> A */
             case 0xB8:
-                bundle.io.regs.a = bundle.io.regs.dp.copy();
+                io.regs.a.set(io.regs.dp);
                 break;
 
             /* DP -> B */
             case 0xB9:
-                bundle.io.regs.b = bundle.io.regs.dp.copy();
+                io.regs.b.set(io.regs.dp);
                 break;
 
             /* DP -> CC */
             case 0xBA:
-                bundle.io.regs.cc = bundle.io.regs.dp.copy();
+                io.regs.cc.set(io.regs.dp);
                 break;
 
             /* Self to self - ignored */
@@ -630,8 +588,7 @@ public class VoidInstruction extends Instruction
                 break;
 
             default:
-                throw new RuntimeException("Illegal register transfer " + postByte);
+                throw new RuntimeException("Illegal register transfer " + memoryByte);
         }
-        return null;
     }
 }

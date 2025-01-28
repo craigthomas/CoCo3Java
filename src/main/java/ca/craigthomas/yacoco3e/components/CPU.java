@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -7,7 +7,6 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.*;
 
 /**
  * Implements an MC6809E microprocessor.
@@ -36,41 +35,9 @@ public class CPU
      * @return the number of ticks taken up by the instruction
      */
     public int executeInstruction() throws MalformedInstructionException {
-        MemoryResult memoryResult;
         UnsignedWord opWord = io.readWord(io.regs.pc);
-        UnsignedByte operand = opWord.getHigh();
-        lastPC = io.regs.pc.copy();
-        lastOperand = operand.copy();
-        io.incrementPC();
         instruction = InstructionTable.get(opWord);
-
-        if (instruction.opcodeValue > 255) {
-            io.incrementPC();
-        }
-
-        switch (instruction.addressingMode) {
-            case IMMEDIATE:
-                memoryResult = instruction.immediateByte ? io.getImmediateByte() : io.getImmediateWord();
-                break;
-
-            case INDEXED:
-                memoryResult = io.getIndexed();
-                break;
-
-            case DIRECT:
-                memoryResult = io.getDirect();
-                break;
-
-            case EXTENDED:
-                memoryResult = io.getExtended();
-                break;
-
-            default:
-                memoryResult = new MemoryResult();
-                break;
-        }
-
-        return instruction.call(memoryResult, io);
+        return instruction.execute(io);
     }
 
     /**

@@ -4,6 +4,7 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.datatypes.AddressingMode;
 import ca.craigthomas.yacoco3e.datatypes.MemoryResult;
 import ca.craigthomas.yacoco3e.datatypes.Register;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
@@ -29,7 +30,7 @@ public class WordRegisterInstruction extends Instruction
     public WordRegisterInstruction(int opcode,
                                    int ticks,
                                    String mnemonic,
-                                   int addressingMode,
+                                   AddressingMode addressingMode,
                                    Function<InstructionBundle, UnsignedWord> operation,
                                    Register register
     ) {

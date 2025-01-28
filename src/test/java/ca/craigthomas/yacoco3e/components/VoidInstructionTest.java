@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -29,7 +29,7 @@ public class VoidInstructionTest {
 
     @Test
     public void testUnconditionalJumpCorrect() {
-        VoidInstruction.unconditionalJump(new InstructionBundle(new MemoryResult(0x02, new UnsignedWord(0xBEEF)), io));
+        VoidInstruction.unconditionalJump(io, null, new UnsignedWord(0xBEEF));
         assertEquals(0xBEEF, regs.pc.getInt());
     }
 
@@ -60,10 +60,9 @@ public class VoidInstructionTest {
 
     @Test
     public void testJumpToSubroutineSavesPCSetsPCReturnsCorrect() {
-        MemoryResult memoryResult = new MemoryResult(0, new UnsignedWord(0xCAFE));
         regs.s.set(0x0200);
         regs.pc.set(0xBEEF);
-        VoidInstruction.jumpToSubroutine(new InstructionBundle(memoryResult, io));
+        VoidInstruction.jumpToSubroutine(io, null, new UnsignedWord(0xCAFE));
         assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).getShort());
         assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).getShort());
         assertEquals(0xCAFE, regs.pc.getInt());

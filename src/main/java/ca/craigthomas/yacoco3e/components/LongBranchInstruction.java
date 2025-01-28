@@ -1,14 +1,10 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.*;
-
 import java.util.function.Function;
-
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
 
 /**
  * The Opcode class stores information related to a specific machine operation.
@@ -21,22 +17,20 @@ public class LongBranchInstruction extends BranchInstruction
     public LongBranchInstruction(int opcode,
                                  int ticks,
                                  String mnemonic,
-                                 Function<InstructionBundle, Boolean> operation
+                                 Function<IOController, Boolean> operation
     ) {
         super(opcode, ticks, mnemonic, operation);
         this.opcodeValue = opcode;
         this.mnemonic = mnemonic;
         this.ticks = ticks;
         this.operation = operation;
-        this.addressingMode = IMMEDIATE;
-        this.immediateByte = false;
+        this.isByteSized = false;
     }
 
     @Override
-    public int call(MemoryResult memoryResult, IOController io) {
-        if (operation.apply(new InstructionBundle(memoryResult, io)).equals(true)) {
-            UnsignedWord offset = memoryResult.value;
-            io.regs.pc.add(offset.isNegative() ? offset.getSignedInt() : offset.getInt());
+    public int call(IOController io) {
+        if (operation.apply(io).equals(true)) {
+            io.regs.pc.add(wordRead.isNegative() ? wordRead.getSignedInt() : wordRead.getInt());
             return ticks + 1;
         }
         return ticks;

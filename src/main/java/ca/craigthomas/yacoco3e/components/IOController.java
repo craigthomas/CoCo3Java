@@ -1044,6 +1044,9 @@ public class IOController
         writeWord(new UnsignedWord(address), new UnsignedWord(value));
     }
 
+    public void writeWord(UnsignedWord address, int value) {
+        writeWord(address, new UnsignedWord(value));
+    }
     /**
      * Writes an UnsignedWord to the specified memory address.
      *
@@ -1103,21 +1106,6 @@ public class IOController
         return result;
     }
 
-    /**
-     * Reads a single byte at the current value that is the program
-     * counter. Will store the byte in the high byte of the resultant
-     * word.
-     *
-     * @return a MemoryResult with the data from the PC location
-     */
-    public MemoryResult getImmediateByte() {
-        UnsignedByte theByte = readByte(regs.pc);
-        regs.incrementPC();
-        return new MemoryResult(
-                1,
-                new UnsignedWord(theByte, new UnsignedByte())
-        );
-    }
 
     /**
      * Given the current registers, will return the value that is
