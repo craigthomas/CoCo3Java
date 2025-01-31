@@ -40,20 +40,22 @@ public class ByteRegisterInstruction extends Instruction
         this.operation = operation;
         this.register = register;
         this.isByteSized = true;
+        this.isValidInstruction = true;
+        this.addressRead = new UnsignedWord();
     }
 
     public int call(IOController io) throws MalformedInstructionException {
         switch(register) {
             case A:
-                operation.apply(io, io.regs.a, byteRead, wordRead);
+                operation.apply(io, io.regs.a, byteRead, addressRead);
                 break;
 
             case B:
-                operation.apply(io, io.regs.b, byteRead, wordRead);
+                operation.apply(io, io.regs.b, byteRead, addressRead);
                 break;
 
             case CC:
-                operation.apply(io, io.regs.cc, byteRead, wordRead);
+                operation.apply(io, io.regs.cc, byteRead, addressRead);
                 break;
 
             default:
@@ -89,8 +91,8 @@ public class ByteRegisterInstruction extends Instruction
      * Performs a logical OR of the byte register and the value.
      */
     public static void logicalOr(IOController io, UnsignedByte registerByte, UnsignedByte memoryByte, UnsignedWord address) {
-        io.regs.cc.and(~(CC_N | CC_V | CC_Z));
         registerByte.or(memoryByte);
+        io.regs.cc.and(~(CC_N | CC_V | CC_Z));
         io.regs.cc.or(registerByte.isZero() ? CC_Z : 0);
         io.regs.cc.or(registerByte.isNegative() ? CC_N : 0);
     }
@@ -106,8 +108,8 @@ public class ByteRegisterInstruction extends Instruction
      * Performs a logical AND of the byte register and the value.
      */
     public static void logicalAnd(IOController io, UnsignedByte registerByte, UnsignedByte memoryByte, UnsignedWord address) {
-        io.regs.cc.and(~(CC_N | CC_V | CC_Z));
         registerByte.and(memoryByte);
+        io.regs.cc.and(~(CC_N | CC_V | CC_Z));
         io.regs.cc.or(registerByte.isZero() ? CC_Z : 0);
         io.regs.cc.or(registerByte.isNegative() ? CC_N : 0);
     }
@@ -124,9 +126,9 @@ public class ByteRegisterInstruction extends Instruction
      * Adds the specified value to the specified register.
      */
     public static void addByte(IOController io, UnsignedByte registerByte, UnsignedByte memoryByte, UnsignedWord address) {
-        io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C | CC_H));
         int signedResult = registerByte.getSignedShort() + memoryByte.getSignedShort();
         UnsignedByte result = new UnsignedByte(registerByte.getShort() + memoryByte.getShort());
+        io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C | CC_H));
         io.regs.cc.or(((registerByte.getShort() ^ memoryByte.getShort() ^ result.getShort()) & 0x10) > 0 ? CC_H : 0);
         io.regs.cc.or(result.isZero() ? CC_Z : 0);
         io.regs.cc.or(result.isNegative() ? CC_N : 0);
@@ -388,9 +390,8 @@ public class ByteRegisterInstruction extends Instruction
      * bit.
      */
     public static void logicalShiftRight(IOController io, UnsignedByte registerByte, UnsignedByte memoryByte, UnsignedWord address) {
-        boolean bit0 = registerByte.isMasked(0x80);
+        boolean bit0 = registerByte.isMasked(0x1);
         registerByte.shiftRight();
-        registerByte.and(~0x80);
         io.regs.cc.and(~(CC_N | CC_Z | CC_C));
         io.regs.cc.or(bit0 ? CC_C : 0);
         io.regs.cc.or(registerByte.isZero() ? CC_Z : 0);

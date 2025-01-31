@@ -25,6 +25,7 @@ public class VoidInstructionTest {
         io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
+        io.regs.pc.set(0);
     }
 
     @Test

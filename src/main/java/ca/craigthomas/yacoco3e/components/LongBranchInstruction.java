@@ -4,6 +4,8 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
+import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
+
 import java.util.function.Function;
 
 /**
@@ -25,6 +27,7 @@ public class LongBranchInstruction extends BranchInstruction
         this.ticks = ticks;
         this.operation = operation;
         this.isByteSized = false;
+        this.addressRead = new UnsignedWord();
     }
 
     @Override

@@ -88,7 +88,7 @@ public class UnsignedByte
      * @param x the additional value to add
      */
     public void add(int x) {
-        value = (short) (value + (x & 0xFF));
+        value = (short) ((value + (x & 0xFF)) & 0xFF);
     }
 
     public void shiftRight() {
@@ -100,7 +100,7 @@ public class UnsignedByte
     }
 
     public void compliment() {
-        value = (short) ~value;
+        value = (short) (~value & 0xFF);
     }
 
     /**

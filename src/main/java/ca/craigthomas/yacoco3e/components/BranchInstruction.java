@@ -31,6 +31,8 @@ public class BranchInstruction extends Instruction
         this.operation = operation;
         this.addressingMode = AddressingMode.IMMEDIATE;
         this.isByteSized = true;
+        this.isValidInstruction = true;
+        this.addressRead = new UnsignedWord();
     }
 
     public int call(IOController io) {

@@ -85,7 +85,7 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
-    public void testNegateAWorksCorrect() throws MalformedInstructionException {
+    public void testNegateAIntegration() throws MalformedInstructionException {
         regs.a.set(0x01);
         io.writeByte(0x0000, 0x40);
         cpu.executeInstruction();
@@ -93,14 +93,139 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
+    public void testNegateACorrect() {
+        regs.a.set(0xFC);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(0x04, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_V));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
+    }
+
+    @Test
+    public void testNegateAAllOnes() {
+        regs.a.set(0xFF);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(1, regs.a.getShort());
+    }
+
+    @Test
+    public void testNegateAOne() {
+        regs.a.set(1);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(0xFF, regs.a.getShort());
+    }
+
+    @Test
+    public void testNegateASetsOverflowFlag() {
+        regs.a.set(1);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testNegateASetsNegativeFlag() {
+        regs.a.set(1);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertTrue(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testNegateAEdgeCase() {
+        regs.a.set(0x80);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(0x80, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+        assertTrue(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testNegateAEdgeCase1() {
+        regs.a.set(0);
+        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(0, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_Z));
+    }
+
+    @Test
     public void testComplimentAWorksCorrectly() throws MalformedInstructionException {
         regs.a.set(0xAA);
         io.writeByte(0x0000, 0x43);
         cpu.executeInstruction();
-        assertEquals(new UnsignedByte(0x55), regs.a);
+        assertEquals(0x55, regs.a.getShort());
         assertTrue(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_Z));
+    }
+
+    @Test
+    public void testComplementAAllOnes() {
+        regs.a.set(0xFF);
+        ByteRegisterInstruction.compliment(io, regs.a, null, null);
+        assertEquals(0, regs.a.getShort());
+    }
+
+    @Test
+    public void testComplementAOne() {
+        regs.a.set(1);
+        ByteRegisterInstruction.compliment(io, regs.a, null, null);
+        assertEquals(0xFE, regs.a.getShort());
+    }
+
+    @Test
+    public void testComplementASetsCarryFlag() {
+        regs.a.set(1);
+        ByteRegisterInstruction.compliment(io, regs.a, null, null);
+        assertTrue(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testComplementASetsNegativeFlagCorrect() {
+        regs.a.set(1);
+        ByteRegisterInstruction.compliment(io, regs.a, null, null);
+        assertTrue(regs.cc.isMasked(CC_N));
+
+        io.writeByte(0xCAFE, 0xFE);
+        ByteInstruction.compliment(io, new UnsignedByte(0xFE), new UnsignedWord(0xCAFE));
+        assertFalse(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testComplementASetsZeroFlagCorrect() {
+        regs.a.set(0xFF);
+        ByteRegisterInstruction.compliment(io, regs.a, null, null);
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_Z));
+    }
+
+    @Test
+    public void testLogicalShiftARightMovesOneBitCorrect() {
+        regs.a.set(2);
+        ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
+        assertEquals(1, regs.a.getShort());
+        assertFalse(io.regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testLogicalShiftRightAMovesOneBitToZero() {
+        regs.a.set(1);
+        ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
+        assertEquals(0, regs.a.getShort());
+        assertTrue(io.regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testLogicalShiftRightASetsZeroBit() {
+        regs.a.set(1);
+        ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
+        assertEquals(0, regs.a.getShort());
+        assertTrue(io.regs.cc.isMasked(CC_Z));
+        assertTrue(io.regs.cc.isMasked(CC_C));
     }
 
     @Test
@@ -455,7 +580,8 @@ public class ByteRegisterInstructionTest {
 
     @Test
     public void testLoadByteRegisterSetsZero() {
-        ByteRegisterInstruction.loadByteRegister(io, regs.a, new UnsignedByte(0xFF), null);
+        regs.a.set(0xFF);
+        ByteRegisterInstruction.loadByteRegister(io, regs.a, new UnsignedByte(0), null);
         assertEquals(0x00, regs.a.getShort());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -1199,7 +1325,7 @@ public class ByteRegisterInstructionTest {
 
     @Test
     public void testAddByteRegression1() {
-        regs.a.set(0x59);
+        regs.a.set(0xF9);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x08), null);
         assertEquals(0x01, regs.a.getShort());
         assertFalse(regs.cc.isMasked(CC_Z));

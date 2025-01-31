@@ -6,6 +6,7 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
+import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.INDEXED;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_E;
 
@@ -36,10 +37,13 @@ public class VoidInstruction extends Instruction
         this.ticks = ticks;
         this.addressingMode = addressingMode;
         this.operation = operation;
+        this.isByteSized = true;
+        this.isValidInstruction = true;
+        this.addressRead = new UnsignedWord();
     }
 
     public int call(IOController io) {
-        operation.apply(io, byteRead, wordRead);
+        operation.apply(io, byteRead, addressRead);
         if (mnemonic.equals("RTI")) {
             return 6 + (io.regs.cc.isMasked(CC_E) ? 9 : 0);
         }

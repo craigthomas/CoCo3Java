@@ -800,8 +800,16 @@ public class InstructionTable
      * @return the Opcode object associated with the opcode read
      */
     public static Instruction get(UnsignedWord operand) {
-        return operand.isMasked(0x1100) ? COMPARE_INSTRUCTIONS[operand.getLow().getShort()] :
-                    operand.isMasked(0x1000) ? EXTENDED_INSTRUCTIONS[operand.getLow().getShort()] :
-                        INSTRUCTIONS[operand.getHigh().getShort()];
+        int value = operand.getInt();
+
+        if ((value & 0xFF00) == 0x1000) {
+            return EXTENDED_INSTRUCTIONS[value & 0x00FF];
+        }
+
+        if ((value & 0xFF00) == 0x1100) {
+            return COMPARE_INSTRUCTIONS[value & 0x00FF];
+        }
+
+        return INSTRUCTIONS[(value & 0xFF00) >> 8];
     }
 }

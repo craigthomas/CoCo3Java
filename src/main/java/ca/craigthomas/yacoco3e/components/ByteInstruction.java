@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
-
-import java.util.function.Function;
 
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.INDEXED;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
@@ -38,10 +36,12 @@ public class ByteInstruction extends Instruction
         this.ticks = ticks;
         this.operation = operation;
         this.isByteSized = true;
+        this.isValidInstruction = true;
+        this.addressRead = new UnsignedWord();
     }
 
     public int call(IOController io) {
-        operation.apply(io, byteRead, wordRead);
+        operation.apply(io, byteRead, addressRead);
         return ticks + ((addressingMode == INDEXED) ? numBytesRead : 0);
     }
 
@@ -96,9 +96,8 @@ public class ByteInstruction extends Instruction
      * bit.
      */
     public static void logicalShiftRight(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
-        boolean bit0 = memoryByte.isMasked(0x80);
+        boolean bit0 = memoryByte.isMasked(0x1);
         memoryByte.shiftRight();
-        memoryByte.and(~0x80);
         io.regs.cc.and(~(CC_N | CC_Z | CC_C));
         io.regs.cc.or(bit0 ? CC_C : 0);
         io.regs.cc.or(memoryByte.isZero() ? CC_Z : 0);
