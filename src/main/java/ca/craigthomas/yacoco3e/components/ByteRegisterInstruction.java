@@ -342,13 +342,10 @@ public class ByteRegisterInstruction extends Instruction
         boolean carry = io.regs.cc.isMasked(CC_C);
 
         registerByte.shiftLeft();
+        registerByte.or(carry ? 1 : 0);
         io.regs.cc.and(~(CC_N | CC_Z | CC_C | CC_V));
         io.regs.cc.or(bit7 ? CC_C : 0);
-        registerByte.or(carry ? 1 : 0);
-        io.regs.cc.or(CC_V);
-        if (bit7 == bit6) {
-            io.regs.cc.and(~CC_V);
-        }
+        io.regs.cc.or(bit7 ^ bit6 ? CC_V : 0);
         io.regs.cc.or(registerByte.isZero() ? CC_Z : 0);
         io.regs.cc.or(registerByte.isNegative() ? CC_N : 0);
     }

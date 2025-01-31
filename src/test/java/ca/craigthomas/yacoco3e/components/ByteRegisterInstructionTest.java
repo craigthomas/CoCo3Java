@@ -245,11 +245,67 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
+    public void testRotateRightABit0IntoCarry() throws MalformedInstructionException {
+        regs.a.set(1);
+        io.writeByte(0x0000, 0x46);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testRotateRightACarryIntoBit7() throws MalformedInstructionException {
+        regs.a.set(0);
+        regs.cc.or(CC_C);
+        io.writeByte(0x0000, 0x46);
+        cpu.executeInstruction();
+        assertEquals(0x80, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
     public void testArithmeticShiftRightACorrect() throws MalformedInstructionException {
         regs.a.set(0x85);
         io.writeByte(0x0000, 0x47);
         cpu.executeInstruction();
         assertEquals(new UnsignedByte(0xC2), regs.a);
+    }
+
+    @Test
+    public void testArithmeticShiftRightABit7Remains() throws MalformedInstructionException {
+        regs.a.set(0x80);
+        io.writeByte(0x0000, 0x47);
+        cpu.executeInstruction();
+        assertEquals(0xC0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testArithmeticShiftRightABit0IntoCarry() throws MalformedInstructionException {
+        regs.a.set(1);
+        io.writeByte(0x0000, 0x47);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testArithmeticShiftRightABit0andBit7Correct() throws MalformedInstructionException {
+        regs.a.set(0x81);
+        io.writeByte(0x0000, 0x47);
+        cpu.executeInstruction();
+        assertEquals(0xC0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_C));
     }
 
     @Test
@@ -261,6 +317,42 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
+    public void testArithmeticShiftLeftASetsCarry() throws MalformedInstructionException {
+        regs.a.set(0x80);
+        io.writeByte(0x0000, 0x48);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testArithmeticShiftLeftASetsNegative() throws MalformedInstructionException {
+        regs.a.set(0x40);
+        io.writeByte(0x0000, 0x48);
+        cpu.executeInstruction();
+        assertEquals(0x80, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testArithmeticShiftLeftANoOverflow() throws MalformedInstructionException {
+        regs.a.set(1);
+        io.writeByte(0x0000, 0x48);
+        cpu.executeInstruction();
+        assertEquals(2, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
     public void testRotateLeftACorrect() throws MalformedInstructionException {
         regs.a.set(0x01);
         io.writeByte(0x0000, 0x49);
@@ -269,11 +361,71 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
+    public void testRotateLeftASetsCarryZeroOverflow() throws MalformedInstructionException {
+        regs.a.set(0x80);
+        io.writeByte(0x0000, 0x49);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testRotateLeftAShiftsCarryIntoBit0() throws MalformedInstructionException {
+        regs.a.set(0);
+        regs.cc.or(CC_C);
+        io.writeByte(0x0000, 0x49);
+        cpu.executeInstruction();
+        assertEquals(1, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testRotateLeftASetsNegative() throws MalformedInstructionException {
+        regs.a.set(0x40);
+        io.writeByte(0x0000, 0x49);
+        cpu.executeInstruction();
+        assertEquals(0x80, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+
+    @Test
     public void testDecrementACorrect() throws MalformedInstructionException {
         regs.a.set(0x01);
         io.writeByte(0x0000, 0x4A);
         cpu.executeInstruction();
         assertEquals(new UnsignedByte(0x00), regs.a);
+    }
+
+    @Test
+    public void testDecrementASetsZero() throws MalformedInstructionException {
+        regs.a.set(0x01);
+        io.writeByte(0x0000, 0x4A);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testDecrementASetsOverflow() throws MalformedInstructionException {
+        regs.a.set(0);
+        io.writeByte(0x0000, 0x4A);
+        cpu.executeInstruction();
+        assertEquals(0xFF, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
     }
 
     @Test
@@ -285,6 +437,27 @@ public class ByteRegisterInstructionTest {
     }
 
     @Test
+    public void testIncrementASetsZeroOverflow() throws MalformedInstructionException {
+        regs.a.set(0xFF);
+        io.writeByte(0x0000, 0x4C);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testIncrementASetsNegative() throws MalformedInstructionException {
+        regs.a.set(0x7F);
+        io.writeByte(0x0000, 0x4C);
+        cpu.executeInstruction();
+        assertEquals(0x80, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
     public void testTestACorrect() throws MalformedInstructionException {
         regs.a.set(0x80);
         io.writeByte(0x0000, 0x4D);
@@ -292,6 +465,16 @@ public class ByteRegisterInstructionTest {
         assertEquals(new UnsignedByte(0x80), regs.a);
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testTestASetsZero() throws MalformedInstructionException {
+        regs.a.set(0);
+        io.writeByte(0x0000, 0x4D);
+        cpu.executeInstruction();
+        assertEquals(0, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
     }
 
     // No operation for instruction 0x4E
