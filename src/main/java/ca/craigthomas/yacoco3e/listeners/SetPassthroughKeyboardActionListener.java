@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.listeners;
 
-import ca.craigthomas.yacoco3e.components.EmulatedKeyboard;
 import ca.craigthomas.yacoco3e.components.Emulator;
 import ca.craigthomas.yacoco3e.components.PassthroughKeyboard;
 
@@ -17,9 +16,9 @@ import java.awt.event.ActionListener;
  */
 public class SetPassthroughKeyboardActionListener extends AbstractFileChooserListener implements ActionListener
 {
-    private Emulator emulator;
-    private JRadioButtonMenuItem emulated;
-    private JRadioButtonMenuItem passthrough;
+    private final Emulator emulator;
+    private final JRadioButtonMenuItem emulated;
+    private final JRadioButtonMenuItem passthrough;
 
     public SetPassthroughKeyboardActionListener(Emulator emulator, JRadioButtonMenuItem passthrough, JRadioButtonMenuItem emulated) {
         super();

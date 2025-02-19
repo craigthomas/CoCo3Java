@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -7,7 +7,6 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.*;
 
 /**
  * Implements an MC6809E microprocessor.
@@ -15,15 +14,13 @@ import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.*;
 public class CPU
 {
     /* CPU Internal Variables */
-    private UnsignedWord lastPC;
-    private UnsignedByte lastOperand;
     private final IOController io;
     public Instruction instruction;
 
     /* Interrupt request flags */
-    private boolean fireIRQ;
-    private boolean fireFIRQ;
-    private boolean fireNMI;
+    protected boolean fireIRQ;
+    protected boolean fireFIRQ;
+    protected boolean fireNMI;
 
     public CPU(IOController ioController) {
         io = ioController;
@@ -36,41 +33,9 @@ public class CPU
      * @return the number of ticks taken up by the instruction
      */
     public int executeInstruction() throws MalformedInstructionException {
-        MemoryResult memoryResult;
-        UnsignedWord opWord = io.readWord(io.regs.pc);
-        UnsignedByte operand = opWord.getHigh();
-        lastPC = io.regs.pc.copy();
-        lastOperand = operand.copy();
-        io.incrementPC();
-        instruction = InstructionTable.get(opWord);
-
-        if (instruction.opcodeValue > 255) {
-            io.incrementPC();
-        }
-
-        switch (instruction.addressingMode) {
-            case IMMEDIATE:
-                memoryResult = instruction.immediateByte ? io.getImmediateByte() : io.getImmediateWord();
-                break;
-
-            case INDEXED:
-                memoryResult = io.getIndexed();
-                break;
-
-            case DIRECT:
-                memoryResult = io.getDirect();
-                break;
-
-            case EXTENDED:
-                memoryResult = io.getExtended();
-                break;
-
-            default:
-                memoryResult = new MemoryResult();
-                break;
-        }
-
-        return instruction.call(memoryResult, io);
+        UnsignedWord op = io.readWord(io.regs.pc);
+        instruction = InstructionTable.get(op);
+        return instruction.execute(io);
     }
 
     /**
@@ -89,7 +54,7 @@ public class CPU
         io.regs.cc.or(CC_E);
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_I);
-        io.regs.pc.set(io.readWord(new UnsignedWord(0xFFF8)));
+        io.regs.pc.set(io.readWord(0xFFF8));
     }
 
     /**
@@ -103,7 +68,7 @@ public class CPU
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_F);
         io.regs.cc.or(CC_I);
-        io.regs.pc.set(io.readWord(new UnsignedWord(0xFFF6)));
+        io.regs.pc.set(io.readWord(0xFFF6));
     }
 
     /**
@@ -123,7 +88,32 @@ public class CPU
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_I);
         io.regs.cc.or(CC_F);
-        io.regs.pc.set(io.readWord(new UnsignedWord(0xFFFC)));
+        io.regs.pc.set(io.readWord(0xFFFC));
+    }
+
+    /**
+     * Check to see if there was any interrupt request. If so, execute the code associated
+     * with it.
+     */
+    public void serviceInterrupts() {
+        if (fireIRQ | fireFIRQ | fireNMI) {
+            io.waitForIRQ = false;
+        }
+
+        if (fireIRQ) {
+            interruptRequest();
+            fireIRQ = false;
+        }
+
+        if (fireFIRQ) {
+            fastInterruptRequest();
+            fireFIRQ = false;
+        }
+
+        if (fireNMI) {
+            nonMaskableInterruptRequest();
+            fireNMI = false;
+        }
     }
 
     /**
@@ -133,35 +123,6 @@ public class CPU
         fireIRQ = true;
     }
 
-    public boolean irqWaiting() {
-        return fireIRQ;
-    }
-
-    public void clearIRQ() {
-        fireIRQ = false;
-    }
-
-    /**
-     * Check to see if there was any interrupt request. If so, execute the code associated
-     * with it.
-     */
-    public void serviceInterrupts() {
-        if (fireIRQ) {
-            interruptRequest();
-            clearIRQ();
-        }
-
-        if (fireFIRQ) {
-            fastInterruptRequest();
-            clearFIRQ();
-        }
-
-        if (fireNMI) {
-            nonMaskableInterruptRequest();
-            clearNMI();
-        }
-    }
-
     /**
      * Schedules a fast interrupt to occur.
      */
@@ -169,27 +130,11 @@ public class CPU
         fireFIRQ = true;
     }
 
-    public boolean firqWaiting() {
-        return fireFIRQ;
-    }
-
-    public void clearFIRQ() {
-        fireFIRQ = false;
-    }
-
     /**
      * Schedules a non-maskable interrupt to occur.
      */
     public void scheduleNMI() {
         fireNMI = true;
-    }
-
-    public boolean nmiWaiting() {
-        return fireNMI;
-    }
-
-    public void clearNMI() {
-        fireNMI = false;
     }
 
     public void reset() {

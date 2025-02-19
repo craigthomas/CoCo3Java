@@ -127,7 +127,7 @@ public class JV1Disk implements VirtualDisk
 
                 // Read the next 256 bytes and save it to the data array
                 for (int i = 0; i < 256; i++) {
-                    data[pointer] = (byte) track.readData(logicalSector).getShort();
+                    data[pointer] = (byte) track.readData(logicalSector);
                     pointer++;
                 }
             }

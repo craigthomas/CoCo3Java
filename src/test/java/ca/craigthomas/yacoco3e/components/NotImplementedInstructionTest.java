@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -10,6 +10,6 @@ public class NotImplementedInstructionTest {
     @Test(expected = MalformedInstructionException.class)
     public void testNotImplementedInstructionThrowsRuntimeExceptionWithUnsupportedRegister() throws MalformedInstructionException {
         NotImplementedInstruction instruction = new NotImplementedInstruction(0);
-        instruction.call(null, null);
+        instruction.call(null);
     }
 }

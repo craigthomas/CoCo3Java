@@ -1,16 +1,11 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.MemoryResult;
-import ca.craigthomas.yacoco3e.datatypes.Register;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
+import ca.craigthomas.yacoco3e.datatypes.*;
 
-import java.util.function.Function;
-
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.INDEXED;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_N;
@@ -23,46 +18,53 @@ import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_N;
  */
 public class WordRegisterInstruction extends Instruction
 {
-    protected Function<InstructionBundle, UnsignedWord> operation;
+    @FunctionalInterface
+    public interface WordRegisterInterface
+    {
+        void apply(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD);
+    }
+
+    protected WordRegisterInterface operation;
     protected Register register;
 
     public WordRegisterInstruction(int opcode,
                                    int ticks,
                                    String mnemonic,
-                                   int addressingMode,
-                                   Function<InstructionBundle, UnsignedWord> operation,
+                                   AddressingMode addressingMode,
+                                   WordRegisterInterface operation,
                                    Register register
     ) {
         this.opcodeValue = opcode;
         this.mnemonic = mnemonic;
         this.addressingMode = addressingMode;
-        this.immediateByte = false;
+        this.isByteSized = false;
+        this.isValidInstruction = true;
         this.ticks = ticks;
         this.operation = operation;
         this.register = register;
+        this.addressRead = new UnsignedWord();
     }
 
-    public int call(MemoryResult memoryResult, IOController io) throws MalformedInstructionException {
-        UnsignedWord word2 = (addressingMode == IMMEDIATE) ? memoryResult.value : io.readWord(memoryResult.value);
+    public int call(IOController io) throws MalformedInstructionException {
         switch(register) {
             case D:
-                io.regs.setD(operation.apply(new InstructionBundle(memoryResult, io, io.regs.getD(), word2)));
+                operation.apply(io, io.regs.getD(), wordRead, addressRead, true);
                 break;
 
             case S:
-                io.regs.s.set(operation.apply(new InstructionBundle(memoryResult, io, io.regs.s, word2)));
+                operation.apply(io, io.regs.s, wordRead, addressRead, false);
                 break;
 
             case U:
-                io.regs.u.set(operation.apply(new InstructionBundle(memoryResult, io, io.regs.u, word2)));
+                operation.apply(io, io.regs.u, wordRead, addressRead, false);
                 break;
 
             case X:
-                io.regs.x.set(operation.apply(new InstructionBundle(memoryResult, io, io.regs.x, word2)));
+                operation.apply(io, io.regs.x, wordRead, addressRead, false);
                 break;
 
             case Y:
-                io.regs.y.set(operation.apply(new InstructionBundle(memoryResult, io, io.regs.y, word2)));
+                operation.apply(io, io.regs.y, wordRead, addressRead, false);
                 break;
 
             default:
@@ -70,125 +72,117 @@ public class WordRegisterInstruction extends Instruction
                         "Register " + register + " unsupported for WordRegisterInstruction"
                 );
         }
-        return (addressingMode == INDEXED) ? ticks + memoryResult.bytesConsumed : ticks;
+        return (addressingMode == INDEXED) ? ticks + numBytesRead : ticks;
+    }
+
+    /**
+     * Sets the register to the specified value. Since the D register is a special register,
+     * we have to flag whether we are setting the value on it using isD.
+     */
+    public static void setRegister(IOController io, UnsignedWord register, UnsignedWord value, boolean isD) {
+        if (isD) {
+            io.regs.setD(value);
+        } else {
+            register.set(value);
+        }
     }
 
     /**
      * Loads the effective address into the specified register.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord loadEffectiveAddressXY(InstructionBundle bundle) {
-        bundle.io.regs.cc.and(~(CC_Z));
-        bundle.io.regs.cc.or(bundle.memoryResult.value.isZero() ? CC_Z : 0);
-        return bundle.memoryResult.value;
+    public static void loadEffectiveAddressXY(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        io.regs.cc.and(~(CC_Z));
+        io.regs.cc.or(address.isZero() ? CC_Z : 0);
+        setRegister(io, register, address, isD);
     }
 
     /**
      * Loads the effective address into the specified register.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord loadEffectiveAddressUS(InstructionBundle bundle) {
-        return bundle.memoryResult.value;
+    public static void loadEffectiveAddressUS(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        setRegister(io, register, address, isD);
     }
 
     /**
      * Adds B to X and returns the sum.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord addBtoX(InstructionBundle bundle) {
-        return new UnsignedWord(bundle.io.regs.x.getInt() + bundle.io.regs.b.getShort());
+    public static void addBtoX(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        setRegister(io, register, new UnsignedWord(io.regs.x.getInt() + io.regs.b.getShort()), isD);
     }
 
     /**
      * Performs an unsigned integer multiplication between A and B.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord multiply(InstructionBundle bundle) {
-        UnsignedWord result = new UnsignedWord(bundle.io.regs.a.getShort() * bundle.io.regs.b.getShort());
-        bundle.io.regs.cc.and(~(CC_Z | CC_C));
-        bundle.io.regs.cc.or(result.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(result.isMasked(0x80) ? CC_C : 0);
-        return result;
+    public static void multiply(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        UnsignedWord result = new UnsignedWord(io.regs.a.getShort() * io.regs.b.getShort());
+        io.regs.cc.and(~(CC_Z | CC_C));
+        io.regs.cc.or(result.isZero() ? CC_Z : 0);
+        io.regs.cc.or(result.isMasked(0x80) ? CC_C : 0);
+        setRegister(io, register, result, isD);
     }
 
     /**
      * Subtracts the word value from the specified word.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord subtractWord(InstructionBundle bundle) {
-        boolean word1WasNegative = bundle.word1.isNegative();
-        boolean word2WasNegative = bundle.word2.isNegative();
-        bundle.io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C));
-        bundle.io.regs.cc.or(bundle.word1.getInt() < bundle.word2.getInt() ? CC_C : 0);
-        bundle.word1 = new UnsignedWord(bundle.word1.getInt() + bundle.word2.twosCompliment().getInt());
-        bundle.io.regs.cc.or(bundle.word1.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(bundle.word1.isNegative() ? CC_N : 0);
-        boolean overflow = (!word1WasNegative && word2WasNegative && bundle.word1.isNegative()) || (word1WasNegative && !word2WasNegative && !bundle.word1.isNegative());
-        bundle.io.regs.cc.or(overflow ? CC_V : 0);
-        return bundle.word1;
+    public static void subtractWord(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        boolean word1WasNegative = register.isNegative();
+        boolean word2WasNegative = memoryWord.isNegative();
+        io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C));
+        io.regs.cc.or(register.getInt() < memoryWord.getInt() ? CC_C : 0);
+        UnsignedWord result = new UnsignedWord(register.getInt() + memoryWord.twosCompliment().getInt());
+        io.regs.cc.or(result.isZero() ? CC_Z : 0);
+        io.regs.cc.or(result.isNegative() ? CC_N : 0);
+        boolean overflow = (!word1WasNegative && word2WasNegative && result.isNegative()) || (word1WasNegative && !word2WasNegative && !result.isNegative());
+        io.regs.cc.or(overflow ? CC_V : 0);
+        setRegister(io, register, result, isD);
     }
 
     /**
      * Adds the specified word value to the word.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord addWord(InstructionBundle bundle) {
-        bundle.io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C));
-        bundle.io.regs.cc.or(((bundle.word1.getInt() + bundle.word2.getInt()) & 0x10000) > 0 ? CC_C : 0);
-        int signedResult = bundle.word1.getSignedInt() + bundle.word2.getSignedInt();
-        bundle.word1 = new UnsignedWord(bundle.word1.getInt() + bundle.word2.getInt());
-        bundle.io.regs.cc.or(bundle.word1.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(bundle.word1.isNegative() ? CC_N : 0);
-        bundle.io.regs.cc.or(signedResult > 32767 || signedResult < -32767 ? CC_V : 0);
-        return bundle.word1;
+    public static void addWord(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        io.regs.cc.and(~(CC_N | CC_V | CC_Z | CC_C));
+        io.regs.cc.or(((register.getInt() + memoryWord.getInt()) & 0x10000) > 0 ? CC_C : 0);
+        int signedResult = register.getSignedInt() + memoryWord.getSignedInt();
+        UnsignedWord result = new UnsignedWord(register.getInt() + memoryWord.getInt());
+        io.regs.cc.or(result.isZero() ? CC_Z : 0);
+        io.regs.cc.or(result.isNegative() ? CC_N : 0);
+        io.regs.cc.or(signedResult > 32767 || signedResult < -32767 ? CC_V : 0);
+        setRegister(io, register, result, isD);
     }
 
     /**
      * Compares the two words and sets the appropriate register sets.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord compareWord(InstructionBundle bundle) {
-        boolean word1WasNegative = bundle.word1.isNegative();
-        boolean word2WasNegative = bundle.word2.isNegative();
-        bundle.io.regs.cc.and(~(CC_N | CC_Z | CC_V | CC_C));
-        bundle.io.regs.cc.or(bundle.word1.getInt() < bundle.word2.getInt() ? CC_C : 0);
-        UnsignedWord result = new UnsignedWord(bundle.word1.getInt() + bundle.word2.twosCompliment().getInt());
-        bundle.io.regs.cc.or(result.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(result.isNegative() ? CC_N : 0);
+    public static void compareWord(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        boolean word1WasNegative = register.isNegative();
+        boolean word2WasNegative = memoryWord.isNegative();
+        io.regs.cc.and(~(CC_N | CC_Z | CC_V | CC_C));
+        io.regs.cc.or(register.getInt() < memoryWord.getInt() ? CC_C : 0);
+        UnsignedWord result = new UnsignedWord(register.getInt() + memoryWord.twosCompliment().getInt());
+        io.regs.cc.or(result.isZero() ? CC_Z : 0);
+        io.regs.cc.or(result.isNegative() ? CC_N : 0);
         boolean overflow = (!word1WasNegative && word2WasNegative && result.isNegative()) || (word1WasNegative && !word2WasNegative && !result.isNegative());
-        bundle.io.regs.cc.or(overflow ? CC_V : 0);
-        return bundle.word1;
+        io.regs.cc.or(overflow ? CC_V : 0);
     }
 
     /**
      * Loads the word into the specified register.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord loadWordRegister(InstructionBundle bundle) {
-        bundle.io.regs.cc.and(~(CC_V | CC_N | CC_Z));
-        bundle.io.regs.cc.or(bundle.word2.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(bundle.word2.isNegative() ? CC_N : 0);
-        return bundle.word2;
+    public static void loadWordRegister(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        io.regs.cc.and(~(CC_V | CC_N | CC_Z));
+        io.regs.cc.or(memoryWord.isZero() ? CC_Z : 0);
+        io.regs.cc.or(memoryWord.isNegative() ? CC_N : 0);
+        setRegister(io, register, memoryWord, isD);
     }
 
     /**
      * Stores the register in the memory location.
-     *
-     * @param bundle the InstructionBundle that contains information to process
      */
-    public static UnsignedWord storeWordRegister(InstructionBundle bundle) {
-        bundle.io.writeWord(bundle.memoryResult.value, bundle.word1);
-        bundle.io.regs.cc.and(~(CC_V | CC_N | CC_Z));
-        bundle.io.regs.cc.or(bundle.word1.isZero() ? CC_Z : 0);
-        bundle.io.regs.cc.or(bundle.word1.isNegative() ? CC_N : 0);
-        return bundle.word1;
+    public static void storeWordRegister(IOController io, UnsignedWord register, UnsignedWord memoryWord, UnsignedWord address, boolean isD) {
+        io.regs.cc.and(~(CC_V | CC_N | CC_Z));
+        io.regs.cc.or(register.isZero() ? CC_Z : 0);
+        io.regs.cc.or(register.isNegative() ? CC_N : 0);
+        io.writeWord(address, register);
     }
 }

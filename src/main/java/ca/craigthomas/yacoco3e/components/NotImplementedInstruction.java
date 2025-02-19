@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.MemoryResult;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 /**
@@ -16,10 +15,11 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 public class NotImplementedInstruction extends Instruction
 {
     public NotImplementedInstruction(int opcode) {
+        this.isValidInstruction = false;
         this.opcodeValue = opcode;
     }
 
-    public int call(MemoryResult memoryResult, IOController io) throws MalformedInstructionException {
+    public int call(IOController io) throws MalformedInstructionException {
         throw new MalformedInstructionException("Instruction not implemented - opcode " + new UnsignedByte(opcodeValue));
     }
 }

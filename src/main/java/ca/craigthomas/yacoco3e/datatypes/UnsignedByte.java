@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.datatypes;
@@ -14,12 +14,22 @@ public class UnsignedByte
     /* The underlying value of the byte */
     private short value;
 
+    /**
+     * Convenience constructor initializing the byte value to zero
+     */
     public UnsignedByte() {
         this(0);
     }
 
-    public UnsignedByte(int value) {
-        this.value = (short) (value & 0xFF);
+    /**
+     * Constructor that initializes the byte value to the specified
+     * value. The value is clipped so that only the lower 8-bits
+     * of the integer value.
+     *
+     * @param x the value to initialize the byte to
+     */
+    public UnsignedByte(int x) {
+        value = (short) (x & 0xFF);
     }
 
     /**
@@ -39,11 +49,9 @@ public class UnsignedByte
      * @return the signed short value of the byte
      */
     public short getSignedShort() {
-        if (isMasked(0x80)) {
-            return (short) (int)-(twosCompliment().getShort());
-        }
-        return getShort();
+        return (isMasked(0x80)) ? (short) -(twosCompliment().getShort()) : getShort();
     }
+
     /**
      * Returns a new UnsignedByte that is the twos compliment
      * value of the current byte.
@@ -77,16 +85,22 @@ public class UnsignedByte
     /**
      * Adds the specified value to the current byte.
      *
-     * @param value the additional value to add
+     * @param x the additional value to add
      */
-    public void add(int value) {
-        this.value += value;
-        and(0xFF);
+    public void add(int x) {
+        value = (short) ((value + (x & 0xFF)) & 0xFF);
     }
 
-    public boolean signedAdditionOverflow(UnsignedByte byte2) {
-        int signedResult = this.getSignedShort() + byte2.getSignedShort();
-        return signedResult > 127 || signedResult < -127;
+    public void shiftRight() {
+        value = (short) ((value >> 1) & 0xFF);
+    }
+
+    public void shiftLeft() {
+        value = (short) ((value << 1) & 0xFF);
+    }
+
+    public void compliment() {
+        value = (short) (~value & 0xFF);
     }
 
     /**
@@ -95,7 +109,11 @@ public class UnsignedByte
      * @param mask the mask to apply
      */
     public void and(int mask) {
-        value &= mask;
+        value = (short) (value & (mask & 0xFF));
+    }
+
+    public void and(UnsignedByte mask) {
+        and(mask.getShort());
     }
 
     /**
@@ -104,7 +122,11 @@ public class UnsignedByte
      * @param mask the mask to apply
      */
     public void or(int mask) {
-        value |= mask;
+        value = (short) (value | (mask & 0xFF));
+    }
+
+    public void or(UnsignedByte mask) {
+        or(mask.getShort());
     }
 
     /**
@@ -129,10 +151,10 @@ public class UnsignedByte
      * Convenience function allowing to set the value of the byte
      * using an integer value.
      *
-     * @param value the value to make the byte
+     * @param x the value to make the byte
      */
-    public void set(int value) {
-        this.value = new UnsignedByte(value).getShort();
+    public void set(int x) {
+        value = (short) (x & 0xFF);
     }
 
     /**
@@ -141,16 +163,16 @@ public class UnsignedByte
      * @return a copy of the unsigned byte
      */
     public UnsignedByte copy() {
-        return new UnsignedByte(getShort());
+        return new UnsignedByte(value);
     }
 
     /**
      * Sets the value for this byte.
      *
-     * @param value the new byte value to set
+     * @param x the new byte value to set
      */
-    public void set(UnsignedByte value) {
-        this.value = value.getShort();
+    public void set(UnsignedByte x) {
+        value = x.getShort();
     }
 
     public boolean equalsInt(int value) {
@@ -173,6 +195,6 @@ public class UnsignedByte
 
     @Override
     public int hashCode() {
-        return (int) value;
+        return value;
     }
 }

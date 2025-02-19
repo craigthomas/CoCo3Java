@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -16,6 +16,7 @@ public class WordRegisterInstructionTest {
     private RegisterSet regs;
     private CPU cpu;
     private int extendedAddress;
+    private UnsignedWord address;
 
     @Before
     public void setUp() {
@@ -25,36 +26,41 @@ public class WordRegisterInstructionTest {
         io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
+        address = new UnsignedWord(0xA000);
+        io.regs.pc.set(0);
     }
 
     @Test(expected = MalformedInstructionException.class)
     public void testWordRegisterInstructionThrowsRuntimeExceptionWithUnsupportedRegister() throws MalformedInstructionException {
-        WordRegisterInstruction instruction = new WordRegisterInstruction(0, 0, "None", 0, null, Register.PC);
-        instruction.call(new MemoryResult(2, new UnsignedWord(0xA000)), io);
+        WordRegisterInstruction instruction = new WordRegisterInstruction(0, 0, "None", AddressingMode.INHERENT, null, Register.PC);
+        instruction.call(io);
     }
 
     @Test
     public void testStoreWordRegisterWorksCorrectly() {
-        UnsignedWord address = new UnsignedWord(0xA000);
-        MemoryResult memoryResult = new MemoryResult(2, address);
-        regs.s.set(new UnsignedWord(0xBEEF));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.s));
-        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
+        regs.s.set(0xBEEF);
+        WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
+        assertEquals(0xBEEF, io.readWord(address).getInt());
 
-        io.writeWord(address, new UnsignedWord());
-        regs.u.set(new UnsignedWord(0xBEEF));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.u));
-        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
+        io.writeWord(address, 0);
+        regs.u.set(0xBEEF);
+        WordRegisterInstruction.storeWordRegister(io, regs.u, null, address, false);
+        assertEquals(0xBEEF, io.readWord(address).getInt());
 
-        io.writeWord(address, new UnsignedWord());
-        regs.y.set(new UnsignedWord(0xBEEF));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.y));
-        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
+        io.writeWord(address, 0);
+        regs.y.set(0xBEEF);
+        WordRegisterInstruction.storeWordRegister(io, regs.y, null, address, false);
+        assertEquals(0xBEEF, io.readWord(address).getInt());
 
-        io.writeWord(address, new UnsignedWord());
+        io.writeWord(address, 0);
         regs.x.set(new UnsignedWord(0xBEEF));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.x));
-        assertEquals(new UnsignedWord(0xBEEF), io.readWord(address));
+        WordRegisterInstruction.storeWordRegister(io, regs.x, null, address, false);
+        assertEquals(0xBEEF, io.readWord(address).getInt());
+
+        io.writeWord(address, 0);
+        regs.setD(0xBEEF);
+        WordRegisterInstruction.storeWordRegister(io, regs.getD(), null, address, true);
+        assertEquals(0xBEEF, io.readWord(address).getInt());
     }
 
     @Test
@@ -86,18 +92,19 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testStoreWordRegisterSetsZero() {
-        regs.s.set(new UnsignedWord(0x0));
-        MemoryResult memoryResult = new MemoryResult(2, new UnsignedWord(0xA000));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.s));
+        io.writeWord(address, 0xA000);
+        regs.s.set(0);
+        WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
+        assertEquals(0, io.readWord(address).getInt());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
 
     @Test
     public void testStoreWordRegisterSetsNegative() {
-        regs.s.set(new UnsignedWord(0x8100));
-        MemoryResult memoryResult = new MemoryResult(2, new UnsignedWord(0xA000));
-        WordRegisterInstruction.storeWordRegister(new InstructionBundle(memoryResult, io, regs.s));
+        regs.s.set(0x8100);
+        WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
+        assertEquals(0x8100, io.readWord(address).getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -244,7 +251,7 @@ public class WordRegisterInstructionTest {
     public void testABXWorksCorrectly() throws MalformedInstructionException {
         regs.b.set(0x08);
         regs.x.set(0x0020);
-        io.writeByte(0x0000, 0x3A);
+        io.writeByte(0, 0x3A);
         cpu.executeInstruction();
         assertEquals(0x0028, regs.x.getInt());
     }
@@ -285,21 +292,27 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testLoadWordRegisterSetsZero() {
-        WordRegisterInstruction.loadWordRegister(new InstructionBundle(io, new UnsignedWord(0x0000), new UnsignedWord(0x0000)));
+        io.regs.u.set(0xFFFF);
+        WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x0000), null, false);
+        assertEquals(0, io.regs.u.getInt());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
 
     @Test
     public void testLoadWordRegisterSetsNegative() {
-        WordRegisterInstruction.loadWordRegister(new InstructionBundle(io, new UnsignedWord(0x0000), new UnsignedWord(0x8100)));
+        io.regs.u.set(0xFFFF);
+        WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x8100), null, false);
+        assertEquals(0x8100, io.regs.u.getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
 
     @Test
     public void testLoadWordRegisterSetsNegativeZero() {
-        WordRegisterInstruction.loadWordRegister(new InstructionBundle(io, new UnsignedWord(0x0000), new UnsignedWord(0x8000)));
+        io.regs.u.set(0xFFFF);
+        WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x8000), null, false);
+        assertEquals(0x8000, io.regs.u.getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -500,7 +513,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testCompareWordWorksCorrectly() {
-        WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0x021A), new UnsignedWord(0x072E)));
+        io.regs.u.set(0x021A);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0x072E), null, false);
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_V));
         assertTrue(regs.cc.isMasked(CC_N));
@@ -509,21 +523,24 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testCompareWordSetsZero() {
-        WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0x021A), new UnsignedWord(0x021A)));
+        io.regs.u.set(0x021A);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0x021A), null, false);
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
 
     @Test
     public void testCompareWordSetsNegative() {
-        WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0x0001), new UnsignedWord(0x0002)));
+        io.regs.u.set(0x0001);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0x0002), null, false);
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
     }
 
     @Test
     public void testCompareWordSetsOverflow() {
-        WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0x8000), new UnsignedWord(0x7FFE)));
+        io.regs.u.set(0x8000);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0x7FFE), null, false);
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -532,7 +549,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testCompareWordSetsOverflow1() {
-        WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0x8000), new UnsignedWord(0x7FFF)));
+        io.regs.u.set(0x8000);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0x7FFF), null, false);
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -541,8 +559,9 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testCompareWordRegression1() {
-        UnsignedWord result = WordRegisterInstruction.compareWord(new InstructionBundle(io, new UnsignedWord(0xFE00), new UnsignedWord(0xF800)));
-        assertEquals(0xFE00, result.getInt());
+        io.regs.u.set(0xFE00);
+        WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0xF800), null, false);
+        assertEquals(0xFE00, io.regs.u.getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -864,8 +883,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testAddWordWorksCorrectly() {
-        UnsignedWord result = WordRegisterInstruction.addWord(new InstructionBundle(io, new UnsignedWord(0x0101), new UnsignedWord(0x0101)));
-        assertEquals(0x0202, result.getInt());
+        WordRegisterInstruction.addWord(io, new UnsignedWord(0x0101), new UnsignedWord(0x0101), null, true);
+        assertEquals(0x0202, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -874,8 +893,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testAddWordSetsNegativeOverflow() {
-        UnsignedWord result = WordRegisterInstruction.addWord(new InstructionBundle(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x0001)));
-        assertEquals(0x8000, result.getInt());
+        WordRegisterInstruction.addWord(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x0001), null, true);
+        assertEquals(0x8000, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -884,8 +903,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testAddWordSetsZeroOverflowCarry() {
-        UnsignedWord result = WordRegisterInstruction.addWord(new InstructionBundle(io, new UnsignedWord(0xFFFF), new UnsignedWord(0x0001)));
-        assertEquals(0x0000, result.getInt());
+        WordRegisterInstruction.addWord(io, new UnsignedWord(0xFFFF), new UnsignedWord(0x0001), null, true);
+        assertEquals(0x0000, io.regs.getD().getInt());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -948,8 +967,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDWorksSetsOverflow() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0x8000), new UnsignedWord(0x7FFF)));
-        assertEquals(0x01, result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x8000), new UnsignedWord(0x7FFF), null, true);
+        assertEquals(0x01, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -958,8 +977,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDWorksSetsCarry() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x8000)));
-        assertEquals(0xFFFF, result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x8000), null, true);
+        assertEquals(0xFFFF, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -968,8 +987,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDWorksCorrectly() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0x6A00), new UnsignedWord(0x2700)));
-        assertEquals(0x4300, result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x6A00), new UnsignedWord(0x2700), null, true);
+        assertEquals(0x4300, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -978,8 +997,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDWorksSetsZero() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0x0001), new UnsignedWord(0x0001)));
-        assertEquals(0x0000, result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x0001), new UnsignedWord(0x0001), null, true);
+        assertEquals(0x0000, io.regs.getD().getInt());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -988,8 +1007,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDWorksSetsNegativeSetsCarry() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0x8000), new UnsignedWord(0x8001)));
-        assertEquals(0xFFFF,result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x8000), new UnsignedWord(0x8001), null, true);
+        assertEquals(0xFFFF, io.regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -998,8 +1017,8 @@ public class WordRegisterInstructionTest {
 
     @Test
     public void testSubtractDRegression1() {
-        UnsignedWord result = WordRegisterInstruction.subtractWord(new InstructionBundle(io, new UnsignedWord(0xFE00), new UnsignedWord(0xF800)));
-        assertEquals(0x0600, result.getInt());
+        WordRegisterInstruction.subtractWord(io, new UnsignedWord(0xFE00), new UnsignedWord(0xF800), null, true);
+        assertEquals(0x0600, regs.getD().getInt());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));

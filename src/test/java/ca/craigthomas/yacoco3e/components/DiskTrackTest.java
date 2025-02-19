@@ -36,8 +36,7 @@ public class DiskTrackTest
         track.setCommand(1, DiskCommand.WRITE_SECTOR);
         track.writeData(1, new UnsignedByte(0x11));
         track.setCommand(1, DiskCommand.READ_SECTOR);
-        UnsignedByte result = track.readData(1);
-        assertEquals(new UnsignedByte(0x11), result);
+        assertEquals(0x11, track.readData(1));
     }
 
     @Test

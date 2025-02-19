@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -12,7 +12,6 @@ import static org.junit.Assert.*;
 
 public class PushPopInstructionTest {
     private IOController io;
-    private InstructionBundle bundle;
     private CPU cpu;
     private RegisterSet regs;
     private Memory memory;
@@ -23,10 +22,9 @@ public class PushPopInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        MemoryResult memoryResult = new MemoryResult(2, new UnsignedWord(0x000A));
         io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
-        bundle = new InstructionBundle(memoryResult, io);
+        io.regs.pc.set(0);
     }
 
     @Test

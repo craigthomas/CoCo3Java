@@ -4,11 +4,9 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.MemoryResult;
 import ca.craigthomas.yacoco3e.datatypes.Register;
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
-
-import java.util.function.Function;
 
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
 
@@ -20,13 +18,19 @@ import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
  */
 public class PushPopInstruction extends Instruction
 {
-    protected Function<InstructionBundle, Integer> operation;
+    @FunctionalInterface
+    public interface PushPopInterface
+    {
+        int apply(IOController io, UnsignedByte memoryByte, Register register);
+    }
+
+    protected PushPopInterface operation;
     protected Register register;
 
     public PushPopInstruction(int opcode,
                               int ticks,
                               String mnemonic,
-                              Function<InstructionBundle, Integer> operation,
+                              PushPopInterface operation,
                               Register register
     ) {
         this.opcodeValue = opcode;
@@ -35,65 +39,63 @@ public class PushPopInstruction extends Instruction
         this.operation = operation;
         this.register = register;
         this.addressingMode = IMMEDIATE;
-        this.immediateByte = true;
+        this.isByteSized = true;
+        this.isValidInstruction = true;
+        this.addressRead = new UnsignedWord();
     }
 
-    public int call(MemoryResult memoryResult, IOController io) {
-        int bytes = operation.apply(new InstructionBundle(io, memoryResult.value.getHigh(), register));
-        return ticks + bytes;
+    public int call(IOController io) {
+        return ticks + operation.apply(io, byteRead, register);
     }
 
     /**
      * Pushes the values of one or more registers onto the specified stack
      * according to the post byte (byte1) that is passed. Will return the number
      * of bytes that were pushed onto the stack.
-     *
-     * @param bundle the InstructionBundle that contains information to process
-     * @return the number of bytes pushed
      */
-    public static Integer pushRegsToStack(InstructionBundle bundle) {
+    public static int pushRegsToStack(IOController io, UnsignedByte memoryByte, Register register) {
         int bytes = 0;
-        if (bundle.byte1.isMasked(0x80)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.pc);
+        if (memoryByte.isMasked(0x80)) {
+            io.pushStack(register, io.regs.pc);
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x40)) {
-            if (bundle.register1 == Register.U) {
-                bundle.io.pushStack(bundle.register1, bundle.io.regs.s);
+        if (memoryByte.isMasked(0x40)) {
+            if (register == Register.U) {
+                io.pushStack(register, io.regs.s);
             } else {
-                bundle.io.pushStack(bundle.register1, bundle.io.regs.u);
+                io.pushStack(register, io.regs.u);
             }
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x20)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.y);
+        if (memoryByte.isMasked(0x20)) {
+            io.pushStack(register, io.regs.y);
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x10)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.x);
+        if (memoryByte.isMasked(0x10)) {
+            io.pushStack(register, io.regs.x);
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x08)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.dp);
+        if (memoryByte.isMasked(0x08)) {
+            io.pushStack(register, io.regs.dp);
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x04)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.b);
+        if (memoryByte.isMasked(0x04)) {
+            io.pushStack(register, io.regs.b);
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x02)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.a);
+        if (memoryByte.isMasked(0x02)) {
+            io.pushStack(register, io.regs.a);
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x01)) {
-            bundle.io.pushStack(bundle.register1, bundle.io.regs.cc);
+        if (memoryByte.isMasked(0x01)) {
+            io.pushStack(register, io.regs.cc);
             bytes += 1;
         }
         return bytes;
@@ -102,77 +104,74 @@ public class PushPopInstruction extends Instruction
     /**
      * Pops bytes from a stack back into registers based on a postbyte
      * value. Will return the number of bytes popped from the stack.
-     *
-     * @param bundle the InstructionBundle that contains information to process
-     * @return the number of bytes popped
      */
-    public static Integer pullRegsFromStack(InstructionBundle bundle) {
+    public static int pullRegsFromStack(IOController io, UnsignedByte memoryByte, Register register) {
         int bytes = 0;
 
-        if (bundle.byte1.isMasked(0x01)) {
-            bundle.io.regs.cc.set(bundle.io.popStack(bundle.register1));
+        if (memoryByte.isMasked(0x01)) {
+            io.regs.cc.set(io.popStack(register));
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x02)) {
-            bundle.io.regs.a.set(bundle.io.popStack(bundle.register1));
+        if (memoryByte.isMasked(0x02)) {
+            io.regs.a.set(io.popStack(register));
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x04)) {
-            bundle.io.regs.b.set(bundle.io.popStack(bundle.register1));
+        if (memoryByte.isMasked(0x04)) {
+            io.regs.b.set(io.popStack(register));
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x08)) {
-            bundle.io.regs.dp.set(bundle.io.popStack(bundle.register1));
+        if (memoryByte.isMasked(0x08)) {
+            io.regs.dp.set(io.popStack(register));
             bytes += 1;
         }
 
-        if (bundle.byte1.isMasked(0x10)) {
-            bundle.io.regs.x.set(
+        if (memoryByte.isMasked(0x10)) {
+            io.regs.x.set(
                     new UnsignedWord(
-                            bundle.io.popStack(bundle.register1),
-                            bundle.io.popStack(bundle.register1)
+                            io.popStack(register),
+                            io.popStack(register)
                     )
             );
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x20)) {
-            bundle.io.regs.y.set(
+        if (memoryByte.isMasked(0x20)) {
+            io.regs.y.set(
                     new UnsignedWord(
-                            bundle.io.popStack(bundle.register1),
-                            bundle.io.popStack(bundle.register1)
+                            io.popStack(register),
+                            io.popStack(register)
                     )
             );
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x40)) {
-            if (bundle.register1 == Register.S) {
-                bundle.io.regs.u.set(
+        if (memoryByte.isMasked(0x40)) {
+            if (register == Register.S) {
+                io.regs.u.set(
                         new UnsignedWord(
-                                bundle.io.popStack(bundle.register1),
-                                bundle.io.popStack(bundle.register1)
+                                io.popStack(register),
+                                io.popStack(register)
                         )
                 );
             } else {
-                bundle.io.regs.s.set(
+                io.regs.s.set(
                         new UnsignedWord(
-                                bundle.io.popStack(bundle.register1),
-                                bundle.io.popStack(bundle.register1)
+                                io.popStack(register),
+                                io.popStack(register)
                         )
                 );
             }
             bytes += 2;
         }
 
-        if (bundle.byte1.isMasked(0x80)) {
-            bundle.io.regs.pc.set(
+        if (memoryByte.isMasked(0x80)) {
+            io.regs.pc.set(
                     new UnsignedWord(
-                            bundle.io.popStack(bundle.register1),
-                            bundle.io.popStack(bundle.register1)
+                            io.popStack(register),
+                            io.popStack(register)
                     )
             );
             bytes += 2;

@@ -25,7 +25,7 @@ public class Emulator extends Thread
     private Screen screen;
     private Keyboard keyboard;
     private CPU cpu;
-    private IOController ioController;
+    private IOController io;
     private Cassette cassette;
     private Memory memory;
 
@@ -105,9 +105,9 @@ public class Emulator extends Thread
         keyboard = new EmulatedKeyboard();
         screen = new Screen(builder.scale);
         cassette = new Cassette();
-        ioController = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
-        cpu = new CPU(ioController);
-        ioController.setCPU(cpu);
+        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
+        cpu = new CPU(io);
+        io.setCPU(cpu);
         trace = builder.trace;
         verbose = builder.verbose;
         status = EmulatorStatus.STOPPED;
@@ -192,7 +192,7 @@ public class Emulator extends Thread
         if (drive0 != null) {
             JV1Disk disk = new JV1Disk();
             if (disk.loadFile(drive0)) {
-                ioController.disk[0].loadFromVirtualDisk(disk);
+                io.disk[0].loadFromVirtualDisk(disk);
             }
         }
     }
@@ -202,7 +202,7 @@ public class Emulator extends Thread
      */
     public void reset() {
         memory.resetMemory();
-        ioController.reset();
+        io.reset();
         cpu.reset();
     }
 
@@ -379,7 +379,7 @@ public class Emulator extends Thread
         canvas.removeKeyListener(keyboard);
         canvas.addKeyListener(newKeyboard);
         keyboard = newKeyboard;
-        ioController.setKeyboard(keyboard);
+        io.setKeyboard(keyboard);
     }
 
     /**
@@ -404,7 +404,7 @@ public class Emulator extends Thread
      * 60th of a second time slice.
      */
     public void refreshTicks() {
-        remainingTicks = ioController.tickRefreshAmount;
+        remainingTicks = io.tickRefreshAmount;
     }
 
     /**
@@ -435,13 +435,13 @@ public class Emulator extends Thread
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
                 if (this.trace) {
-                    System.out.print(ioController.regs.toString() + " | ");
+                    System.out.print(io.regs.toString() + " | ");
                 }
 
                 try {
-                    if (remainingTicks > 0) {
+                    if (remainingTicks > 0 && !io.waitForIRQ) {
                         operationTicks = cpu.executeInstruction();
-                        remainingTicks -= operationTicks;
+                        remainingTicks = remainingTicks - operationTicks;
                     }
                 } catch (MalformedInstructionException e) {
                     System.out.println(e.getMessage());
@@ -449,7 +449,9 @@ public class Emulator extends Thread
                 }
 
                 /* Increment timers if necessary */
-                ioController.timerTick(operationTicks);
+                io.timerTick(operationTicks);
+
+//                System.out.print(" new pc: " + ioController.regs.pc);
 
                 /* Fire interrupts if set */
                 cpu.serviceInterrupts();
@@ -460,6 +462,7 @@ public class Emulator extends Thread
 //                            + cpu.getLastOperand() + " | " + cpu.instruction.getShortDescription());
                     if (cpu.instruction != null) {
                         System.out.print(cpu.instruction.getShortDescription());
+                        System.out.print(" new pc: " + io.regs.pc);
                         System.out.println();
                     }
                 }
@@ -492,7 +495,7 @@ public class Emulator extends Thread
     }
 
     public IOController getIOController() {
-        return ioController;
+        return io;
     }
 
     public Cassette getCassette() {

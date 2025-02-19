@@ -196,7 +196,7 @@ public class DiskDrive
      *
      * @return the UnsignedByte of the data register
      */
-    public UnsignedByte getDataRegister() {
+    public int getDataRegister() {
         switch (currentCommand) {
             case READ_SECTOR:
                 return readSector();
@@ -211,7 +211,7 @@ public class DiskDrive
                 return readTrack();
 
             default:
-                return new UnsignedByte();
+                return 0;
         }
     }
 
@@ -541,14 +541,14 @@ public class DiskDrive
      *
      * @return the next byte in the sector
      */
-    public UnsignedByte readSector() {
+    public int readSector() {
         /* Check to make sure the logical sector exists */
         if (currentSector == -1) {
             setRecordNotFound();
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         /* Check to see if there is a data address mark */
@@ -558,7 +558,7 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         /* Check to see if we are ready to read more bytes */
@@ -567,7 +567,7 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         /* Read a byte */
@@ -576,11 +576,11 @@ public class DiskDrive
 
     /**
      * Reads multiple sectors. Will continue reading sectors sequentially until
-     * all of the sectors on the track have been read.
+     * all the sectors on the track have been read.
      *
      * @return the next byte in the sector
      */
-    public UnsignedByte readMultipleSectors() {
+    public int readMultipleSectors() {
         /* Check to see if there is a data address mark */
         if (!tracks[currentTrack].dataAddressMarkFound(currentSector)) {
             statusRegister.or(0x20);
@@ -588,7 +588,7 @@ public class DiskDrive
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         /* Check to see if we are ready to read more bytes from this sector */
@@ -600,7 +600,7 @@ public class DiskDrive
                 setNotBusy();
                 clearDRQ();
                 fireInterrupt();
-                return new UnsignedByte(0);
+                return 0;
             }
             return readMultipleSectors();
         }
@@ -648,14 +648,14 @@ public class DiskDrive
      *
      * @return the byte to output
      */
-    public UnsignedByte readAddress() {
+    public int readAddress() {
         /* Check to see if we are ready to read more bytes */
         if (!tracks[currentTrack].hasMoreIdBytes(currentSector)) {
             currentCommand = DiskCommand.NONE;
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         /* Read an ID byte */
@@ -669,13 +669,13 @@ public class DiskDrive
      *
      * @return the next byte read from the track
      */
-    public UnsignedByte readTrack() {
+    public int readTrack() {
         if (tracks[currentTrack].isReadTrackFinished()) {
             currentCommand = DiskCommand.NONE;
             setNotBusy();
             clearDRQ();
             fireInterrupt();
-            return new UnsignedByte(0);
+            return 0;
         }
 
         return tracks[currentTrack].readTrack();

@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.common;
 
-import ca.craigthomas.yacoco3e.components.Memory;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;

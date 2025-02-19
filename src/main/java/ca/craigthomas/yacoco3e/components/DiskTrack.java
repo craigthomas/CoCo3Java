@@ -62,8 +62,8 @@ public class DiskTrack
      * @param sector the sector to read
      * @return the byte at the current sector location
      */
-    public UnsignedByte readData(int sector) {
-        return new UnsignedByte(sectors[sector].readSectorData());
+    public int readData(int sector) {
+        return sectors[sector].readSectorData();
     }
 
     /**
@@ -72,8 +72,8 @@ public class DiskTrack
      * @param sector the sector read from
      * @return the next byte in the sequence of reading from the specified address
      */
-    public UnsignedByte readAddress(int sector) {
-        return new UnsignedByte(sectors[sector].readAddress());
+    public int readAddress(int sector) {
+        return sectors[sector].readAddress();
     }
 
     /**
@@ -152,17 +152,17 @@ public class DiskTrack
      *
      * @return the next byte from the track
      */
-    public UnsignedByte readTrack() {
+    public int readTrack() {
         if (sectors[currentSector].readTrackFinished()) {
             currentSector++;
             if (currentSector >= sectors.length) {
                 readTrackFinished = true;
-                return new UnsignedByte(0);
+                return 0;
             }
             sectors[currentSector].setCommand(DiskCommand.READ_TRACK);
         }
 
-        UnsignedByte result = new UnsignedByte(sectors[currentSector].readTrack());
+        int result = sectors[currentSector].readTrack();
         if (sectors[currentSector].readTrackFinished()) {
             currentSector++;
             if (currentSector >= sectors.length) {
