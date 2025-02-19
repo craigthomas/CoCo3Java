@@ -72,6 +72,9 @@ public class IOController
     /* GIME FIRQ status */
     public UnsignedByte firqStatus;
 
+    /* Whether the CPU should wait for an interrupt request */
+    public boolean waitForIRQ;
+
     /* The number of ticks to pass in 63.5 microseconds */
     public static final int TIMER_63_5_MICROS = 56;
 
@@ -166,6 +169,7 @@ public class IOController
 
         samClockSpeed = new UnsignedByte();
         tickRefreshAmount = LOW_SPEED_CLOCK_FREQUENCY;
+        waitForIRQ = false;
     }
 
     /**
@@ -1189,7 +1193,7 @@ public class IOController
         memory.disableAllRAMMode();
 
         /* Load PC with Reset Interrupt Vector */
-        regs.pc = readWord(new UnsignedWord(0xFFFE));
+        regs.pc = readWord(0xFFFE);
     }
 
     /**

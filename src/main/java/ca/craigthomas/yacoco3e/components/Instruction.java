@@ -153,7 +153,7 @@ abstract class Instruction
         UnsignedWord r;
         UnsignedWord d;
         UnsignedByte n;
-        UnsignedWord nWord;
+        UnsignedWord w;
         numBytesRead = 1;
 
         /* 5-bit offset - check for signed values */
@@ -248,10 +248,10 @@ abstract class Instruction
             /* n,R -> 16-bit offset from R */
             case 0x09:
                 r = io.getWordRegister(io.getIndexedRegister(postByte));
-                nWord = io.readWord(io.regs.pc);
+                w = io.readWord(io.regs.pc);
                 io.regs.incrementPC();
                 io.regs.incrementPC();
-                addressRead = new UnsignedWord(r.getInt() + nWord.getSignedInt());
+                addressRead = new UnsignedWord(r.getInt() + w.getSignedInt());
                 wordRead = io.readWord(addressRead);
                 byteRead = wordRead.getHigh();
                 numBytesRead = 3;
@@ -280,10 +280,10 @@ abstract class Instruction
             /* n,PC -> 16-bit offset from PC */
             case 0x0D:
                 r = io.getWordRegister(Register.PC);
-                nWord = io.readWord(io.regs.pc);
+                w = io.readWord(io.regs.pc);
                 io.regs.incrementPC();
                 io.regs.incrementPC();
-                addressRead = new UnsignedWord(r.getInt() + nWord.getSignedInt());
+                addressRead = new UnsignedWord(r.getInt() + w.getSignedInt());
                 wordRead = io.readWord(addressRead);
                 byteRead = wordRead.getHigh();
                 numBytesRead = 3;
@@ -345,10 +345,10 @@ abstract class Instruction
             /* [n,R] -> 16-bit offset from R - indirect */
             case 0x19:
                 r = io.getWordRegister(io.getIndexedRegister(postByte));
-                nWord = io.readWord(io.regs.pc);
+                w = io.readWord(io.regs.pc);
                 io.regs.incrementPC();
                 io.regs.incrementPC();
-                addressRead = io.readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
+                addressRead = io.readWord(new UnsignedWord(r.getInt() + w.getSignedInt()));
                 wordRead = io.readWord(addressRead);
                 byteRead = wordRead.getHigh();
                 numBytesRead = 3;
@@ -376,10 +376,10 @@ abstract class Instruction
             /* [n,PC] -> 16-bit offset from PC - indirect */
             case 0x1D:
                 r = io.getWordRegister(Register.PC);
-                nWord = io.readWord(io.regs.pc);
+                w = io.readWord(io.regs.pc);
                 io.regs.incrementPC();
                 io.regs.incrementPC();
-                addressRead = io.readWord(new UnsignedWord(r.getInt() + nWord.getSignedInt()));
+                addressRead = io.readWord(new UnsignedWord(r.getInt() + w.getSignedInt()));
                 wordRead = io.readWord(addressRead);
                 byteRead = wordRead.getHigh();
                 numBytesRead = 3;
@@ -387,10 +387,10 @@ abstract class Instruction
 
             /* [n] -> extended indirect */
             case 0x1F:
-                nWord = io.readWord(io.regs.pc);
+                w = io.readWord(io.regs.pc);
                 io.regs.incrementPC();
                 io.regs.incrementPC();
-                addressRead = io.readWord(nWord);
+                addressRead = io.readWord(w);
                 wordRead = io.readWord(addressRead);
                 byteRead = wordRead.getHigh();
                 numBytesRead = 3;

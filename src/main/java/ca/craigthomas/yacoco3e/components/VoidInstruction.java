@@ -6,7 +6,6 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.IMMEDIATE;
 import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.INDEXED;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_E;
 
@@ -54,6 +53,7 @@ public class VoidInstruction extends Instruction
      * Waits for an interrupt to occur.
      */
     public static void sync(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
+        io.waitForIRQ = true;
     }
 
     /**
@@ -77,6 +77,7 @@ public class VoidInstruction extends Instruction
         io.pushStack(Register.S, io.regs.b);
         io.pushStack(Register.S, io.regs.a);
         io.pushStack(Register.S, io.regs.cc);
+        io.waitForIRQ = true;
     }
 
     /**

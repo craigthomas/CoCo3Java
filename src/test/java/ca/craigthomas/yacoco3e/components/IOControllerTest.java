@@ -327,7 +327,7 @@ public class IOControllerTest
         memory.rom[0x3FF8] = (short) 0xDE;
         memory.rom[0x3FF9] = (short) 0xAD;
 
-        regs.s.set(new UnsignedWord(0x0300));
+        regs.s.set(0x0300);
         io.horizontalBorderTickValue = 999999;
         io.irqEnabled = true;
         io.irqStatus = new UnsignedByte(0x10);
@@ -335,7 +335,7 @@ public class IOControllerTest
         cpu.executeInstruction();
         cpu.serviceInterrupts();
 
-        assertEquals(new UnsignedWord(0xDEAD), io.getWordRegister(Register.PC));
+        assertEquals(0xDEAD, io.getWordRegister(Register.PC).getInt());
     }
 
     @Test

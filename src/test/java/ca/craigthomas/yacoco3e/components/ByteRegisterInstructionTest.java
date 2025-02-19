@@ -2353,4 +2353,53 @@ public class ByteRegisterInstructionTest {
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectly() {
+        regs.a.set(0x64);
+        ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x27), null);
+        ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
+        assertEquals(0x91, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectlyTest2() {
+        regs.a.set(0x80);
+        ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x0A), null);
+        ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
+        assertEquals(0x90, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectlyTest3SetsCarry() {
+        regs.a.set(0xA0);
+        ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x00), null);
+        ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
+        assertEquals(0x00, regs.a.getShort());
+        assertTrue(regs.cc.isMasked(CC_C));
+    }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectlyTest4() {
+        regs.a.set(0x05);
+        ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x06), null);
+        ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
+        assertEquals(0x11, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_N));
+    }
+
+    @Test
+    public void testDecimalAdditionAdjustWorksCorrectlyTest5() {
+        regs.a.set(0x0F);
+        ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x01), null);
+        assertTrue(regs.cc.isMasked(CC_H));
+        ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
+        assertEquals(0x16, regs.a.getShort());
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_N));
+    }
 }

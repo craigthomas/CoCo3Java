@@ -207,6 +207,10 @@ public class Memory
         return new UnsignedByte(rom[0x3FF0 + (address & 0x000F)]);
     }
 
+    public void writeByte(int address, int value) {
+        writeByte(new UnsignedWord(address), new UnsignedByte(value));
+    }
+
     /**
      * Writes an UnsignedByte to the specified memory address. If the system
      * is in a ROM mode, will not write bytes to a ROM location.
@@ -330,6 +334,10 @@ public class Memory
      */
     public void setTaskPAR(int par, UnsignedByte value) {
         taskPAR[par] = value.getShort();
+    }
+
+    public UnsignedByte readByte(int address) {
+        return readByte(new UnsignedWord(address));
     }
 
     /**

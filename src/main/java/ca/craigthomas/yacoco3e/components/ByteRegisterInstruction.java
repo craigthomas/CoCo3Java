@@ -239,9 +239,7 @@ public class ByteRegisterInstruction extends Instruction
         }
         io.regs.a.set(new UnsignedByte(io.regs.a.getShort() + result.getShort()));
         io.regs.cc.or(io.regs.a.isZero() ? CC_Z : 0);
-        io.regs.cc.or(carryPreviouslySet ? CC_C : 0);
-        io.regs.cc.or(result.isNegative() ? CC_N : 0);
-        io.regs.a.set(result);
+        io.regs.cc.or(io.regs.a.isNegative() ? CC_N : 0);
     }
 
 

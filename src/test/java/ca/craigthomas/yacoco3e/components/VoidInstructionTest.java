@@ -29,6 +29,12 @@ public class VoidInstructionTest {
     }
 
     @Test
+    public void testSync() {
+        VoidInstruction.sync(io, null, null);
+        assertTrue(io.waitForIRQ);
+    }
+
+    @Test
     public void testUnconditionalJumpCorrect() {
         VoidInstruction.unconditionalJump(io, null, new UnsignedWord(0xBEEF));
         assertEquals(0xBEEF, regs.pc.getInt());

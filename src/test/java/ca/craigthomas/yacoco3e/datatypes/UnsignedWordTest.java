@@ -35,6 +35,12 @@ public class UnsignedWordTest
     }
 
     @Test
+    public void testAlternateConstructor() {
+        UnsignedWord result = new UnsignedWord(0xC0, new UnsignedByte(0x11));
+        assertEquals(0xC011, result.getInt());
+    }
+
+    @Test
     public void testHighSetsHighByteOnly() {
         UnsignedWord result = new UnsignedWord();
         result.setHigh(new UnsignedByte(0xFF));
