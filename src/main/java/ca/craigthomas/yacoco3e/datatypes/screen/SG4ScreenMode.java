@@ -2,7 +2,9 @@
  * Copyright (C) 2018 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
-package ca.craigthomas.yacoco3e.datatypes;
+package ca.craigthomas.yacoco3e.datatypes.screen;
+
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 import java.awt.*;
 

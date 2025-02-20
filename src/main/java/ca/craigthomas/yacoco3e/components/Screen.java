@@ -4,9 +4,8 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.datatypes.*;
+import ca.craigthomas.yacoco3e.datatypes.screen.*;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class Screen
