@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -21,7 +21,7 @@ public class MemoryTest
 
     @Test
     public void testDefaultConstructorSetsSizeTo512K() {
-        assertEquals(memory.memory.length, Memory.MEM_512K);
+        assertEquals(Memory.MEM_512K, memory.memory.length);
     }
 
     @Test
@@ -34,7 +34,7 @@ public class MemoryTest
     @Test
     public void testWriteByteWritesCorrectByte() {
         memory.writeByte(new UnsignedWord(0xBEEF), new UnsignedByte(0xAB));
-        assertEquals(memory.memory[0x7BEEF], 0xAB);
+        assertEquals(0xAB, memory.memory[0x7BEEF]);
     }
 
     @Test
@@ -72,6 +72,13 @@ public class MemoryTest
     }
 
     @Test
+    public void testSetExecutiveParROMPagesQuirks() {
+        UnsignedByte requestedPage = new UnsignedByte(0x3D);
+        memory.setExecutivePAR(2, requestedPage);
+        assertEquals(0x3E, memory.executivePAR[2]);
+    }
+
+    @Test
     public void testSetTaskPARWorksCorrectly() {
         memory.setTaskPAR(0, new UnsignedByte(0xB1));
         assertEquals(0xB1, memory.taskPAR[0]);
@@ -96,6 +103,13 @@ public class MemoryTest
 
         memory.setTaskPAR(7, new UnsignedByte(0xB8));
         assertEquals(0xB8, memory.taskPAR[7]);
+    }
+
+    @Test
+    public void testSetTaskParROMPagesQuirks() {
+        UnsignedByte requestedPage = new UnsignedByte(0x3D);
+        memory.setTaskPAR(2, requestedPage);
+        assertEquals(0x3E, memory.taskPAR[2]);
     }
 
     @Test
