@@ -16,4 +16,6 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: Codecov
-      uses: codecov/codecov-action@v3.1.0
+      uses: codecov/codecov-action@v4.2.0
+      env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
