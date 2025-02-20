@@ -318,24 +318,61 @@ public class Memory
 
     /**
      * Sets the EXECUTIVE page address register to the specified value.
+     * Note that ROM pages $3C - $3F are a special case - the effective
+     * page written to the par is the high 6 bits of the page requested,
+     * with the bottom two bits of the slot requested.
      *
      * @param par the PAR number to set
      * @param value the value to set it to
      */
     public void setExecutivePAR(int par, UnsignedByte value) {
+        switch (value.getShort()) {
+            case 0x3C:
+            case 0x3D:
+            case 0x3E:
+            case 0x3F:
+                value.and(~0x3);
+                value.or(par & 0x3);
+                break;
+
+            default:
+                break;
+        }
         executivePAR[par] = value.getShort();
     }
 
     /**
      * Sets the TASK page address register to the specified value.
+     * Note that ROM pages $3C - $3F are a special case - the effective
+     * page written to the par is the high 6 bits of the page requested,
+     * with the bottom two bits of the slot requested.
      *
      * @param par the PAR number to set
      * @param value the value to set it to
      */
     public void setTaskPAR(int par, UnsignedByte value) {
+        switch (value.getShort()) {
+            case 0x3C:
+            case 0x3D:
+            case 0x3E:
+            case 0x3F:
+                value.and(~0x3);
+                value.or(par & 0x3);
+                break;
+
+            default:
+                break;
+        }
         taskPAR[par] = value.getShort();
     }
 
+    /**
+     * A convenience function for reading a byte by specifying the address
+     * as an integer instead of an UnsignedWord.
+     *
+     * @param address an integer address to read from
+     * @return an UnsignedByte from the specified location
+     */
     public UnsignedByte readByte(int address) {
         return readByte(new UnsignedWord(address));
     }
