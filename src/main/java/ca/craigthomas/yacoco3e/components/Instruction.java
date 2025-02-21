@@ -60,33 +60,30 @@ abstract class Instruction
             io.incrementPC();
         }
 
-        if (!isValidInstruction) {
-            call(io);
-            return 0;
-        }
+        if (isValidInstruction) {
+            switch (addressingMode) {
+                case IMMEDIATE:
+                    getImmediate(io);
+                    break;
 
-        switch (addressingMode) {
-            case IMMEDIATE:
-                getImmediate(io);
-                break;
+                case INDEXED:
+                    getIndexed(io);
+                    break;
 
-            case INDEXED:
-                getIndexed(io);
-                break;
+                case DIRECT:
+                    getDirect(io);
+                    break;
 
-            case DIRECT:
-                getDirect(io);
-                break;
+                case EXTENDED:
+                    getExtended(io);
+                    break;
 
-            case EXTENDED:
-                getExtended(io);
-                break;
-
-            default:
-                addressRead = new UnsignedWord(0);
-                wordRead = new UnsignedWord(0);
-                byteRead = new UnsignedByte(0);
-                break;
+                default:
+                    addressRead = new UnsignedWord(0);
+                    wordRead = new UnsignedWord(0);
+                    byteRead = new UnsignedByte(0);
+                    break;
+            }
         }
 
         return call(io);

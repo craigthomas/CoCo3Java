@@ -2,11 +2,13 @@
  * Copyright (C) 2018 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
-package ca.craigthomas.yacoco3e.datatypes;
+package ca.craigthomas.yacoco3e.datatypes.screen;
+
+import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 import java.awt.*;
 
-public class G3CScreenMode extends ScreenMode
+public class G2CScreenMode extends ScreenMode
 {
     /* Screen size for the mode */
     private static final int SCREEN_WIDTH = 320;
@@ -14,10 +16,9 @@ public class G3CScreenMode extends ScreenMode
 
     /* Block definitions */
     private static final int BLOCK_WIDTH = 2;
-    private static final int BLOCK_HEIGHT = 2;
-    private static final int BLOCKS_PER_BYTE = 4;
+    private static final int BLOCK_HEIGHT = 3;
 
-    /* Color definitions for graphics G3C mode */
+    /* Color definitions for graphics G2C mode */
     private final Color colors[][] = {
         {
             // Color Mode 0
@@ -37,7 +38,7 @@ public class G3CScreenMode extends ScreenMode
     // The color mode to apply
     private int colorMode;
 
-    public G3CScreenMode(int scale, int colorMode) {
+    public G2CScreenMode(int scale, int colorMode) {
         this.scale = scale;
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
@@ -53,8 +54,8 @@ public class G3CScreenMode extends ScreenMode
 
         int memoryPointer = memoryOffset;
 
-        for (int y = 0; y < 96; y++) {
-            for (int x = 0; x < (128 / BLOCKS_PER_BYTE); x++) {
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 32; x++) {
                 UnsignedByte value = io.readPhysicalByte(memoryPointer);
                 drawCharacter(value, x, y);
                 memoryPointer++;
@@ -74,7 +75,7 @@ public class G3CScreenMode extends ScreenMode
 
     private void drawCharacter(UnsignedByte value, int col, int row) {
         /* Translated position in pixels */
-        int x = 32 + (col * (BLOCK_WIDTH * BLOCKS_PER_BYTE));
+        int x = 32 + (col * 8);
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Pixel 1 */

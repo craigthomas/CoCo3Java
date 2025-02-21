@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
