@@ -51,7 +51,6 @@ public class PIA1b extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        interruptEnabled = newControlRegister.isMasked(0x1);
         controlRegister = new UnsignedByte(
                 newControlRegister.getShort() +
                 (controlRegister.isMasked(0x80) ? 0x80 : 0) +

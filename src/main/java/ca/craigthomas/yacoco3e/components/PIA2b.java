@@ -9,14 +9,16 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 public class PIA2b extends PIA
 {
     protected UnsignedByte vdgOperatingMode;
+    protected IOController io;
 
-    public PIA2b(UnsignedByte newVdgOperatingMode) {
+    public PIA2b(IOController newIO) {
         super();
-        vdgOperatingMode = newVdgOperatingMode;
+        vdgOperatingMode = new UnsignedByte();
+        io = newIO;
     }
 
     /**
-     * In PIA 2 side A, multiple sources are potentiall connected to the various
+     * In PIA 2 side A, multiple sources are potentially connected to the various
      * address lines. 
      *
      * @return the high byte of the keyboard matrix
@@ -34,6 +36,10 @@ public class PIA2b extends PIA
      */
     @Override
     public void setDataRegister(UnsignedByte newDataRegister) {
+        vdgOperatingMode = newDataRegister.copy();
+//        vdgOperatingMode.and(~dataDirectionRegister.getShort());
+        io.updateVideoMode(vdgOperatingMode);
+        dataRegister = newDataRegister.copy();
     }
 
     /**
@@ -44,9 +50,15 @@ public class PIA2b extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        interruptEnabled = newControlRegister.isMasked(0x1);
         controlRegister = new UnsignedByte(newControlRegister.getShort() +
                         (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                         (controlRegister.isMasked(0x40) ? 0x40 : 0));
+        /* Bit 2 = Control whether Data Register or Data Direction Register active */
+        /* Bit 1 = hi/lo edge triggered */
+        /* Bit 0 = FIRQ from cartridge ROM */
+    }
+
+    public UnsignedByte getVDGOperatingMode() {
+        return vdgOperatingMode;
     }
 }

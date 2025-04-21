@@ -16,7 +16,7 @@ public class PIA2a extends PIA
     }
 
     /**
-     * In PIA 2 side A, multiple sources are potentiall connected to the various
+     * In PIA 2 side A, multiple sources are potentially connected to the various
      * address lines.
      *
      * @return the high byte of the keyboard matrix
@@ -46,7 +46,6 @@ public class PIA2a extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        interruptEnabled = newControlRegister.isMasked(0x1);
         controlRegister = new UnsignedByte(newControlRegister.getShort() +
                         (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                         (controlRegister.isMasked(0x40) ? 0x40 : 0));

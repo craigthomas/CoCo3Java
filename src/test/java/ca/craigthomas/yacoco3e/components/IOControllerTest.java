@@ -7,9 +7,6 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-
-import java.awt.event.KeyEvent;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 import static org.junit.Assert.*;
@@ -19,7 +16,6 @@ public class IOControllerTest
     private Memory memory;
     private RegisterSet regs;
     private IOController io;
-    private Keyboard keyboard;
     private Screen screen;
     private Cassette cassette;
     private CPU cpu;
@@ -28,10 +24,9 @@ public class IOControllerTest
     public void setup() throws MalformedInstructionException {
         memory = new Memory();
         regs = new RegisterSet();
-        keyboard = new EmulatedKeyboard();
         screen = new Screen(1);
         cassette = new Cassette();
-        io = new IOController(memory, regs, keyboard, screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
         cpu = new CPU(io);
         io.setCPU(cpu);
     }
@@ -57,9 +52,9 @@ public class IOControllerTest
         result = io.readByte(new UnsignedWord(0xFF21));
         assertEquals(new UnsignedByte(0x77), result);
 
-        io.pia2CRB = new UnsignedByte(0x99AA);
+        io.writeIOByte(new UnsignedWord(0xFF23), new UnsignedByte(0x99));
         result = io.readByte(new UnsignedWord(0xFF23));
-        assertEquals(new UnsignedByte(0x99AA), result);
+        assertEquals(new UnsignedByte(0x99), result);
 
         io.irqStatus = new UnsignedByte(0xBB);
         result = io.readByte(new UnsignedWord(0xFF92));
@@ -81,7 +76,6 @@ public class IOControllerTest
         io.writeByte(new UnsignedWord(0xFF01), new UnsignedByte(0x1));
         UnsignedByte result = io.readByte(new UnsignedWord(0xFF01));
         assertEquals(new UnsignedByte(0x1), result);
-        assertTrue(io.pia1a.interruptEnabled());
     }
 
     @Test
@@ -89,7 +83,6 @@ public class IOControllerTest
         io.writeByte(new UnsignedWord(0xFF03), new UnsignedByte(0x1));
         UnsignedByte result = io.readByte(new UnsignedWord(0xFF03));
         assertEquals(new UnsignedByte(0x1), result);
-        assertTrue(io.pia1b.interruptEnabled());
     }
 
     @Test
@@ -243,7 +236,6 @@ public class IOControllerTest
     @Test
     public void testNoInterruptThrownOnPIAInterruptsIfInterruptsTurnedOff() {
         io.pia1b.timerValue = 99999;
-        io.pia1b.interruptEnabled();
         io.regs.cc.and(~CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1b.timerValue);
@@ -253,7 +245,6 @@ public class IOControllerTest
     public void testInterruptThrownOnPIAInterruptsIfInterruptsTurnedOn() {
         io.pia1b.setControlRegister(new UnsignedByte(0x1));
         io.pia1b.timerValue = 99999;
-        io.pia1b.interruptEnabled();
         io.regs.cc.or(CC_I);
         io.timerTick(1);
         assertEquals(0, io.pia1b.timerValue);
@@ -375,13 +366,13 @@ public class IOControllerTest
     @Test
     public void testWriteByteWritesCorrectByte() {
         io.writeByte(new UnsignedWord(0xBEEF), new UnsignedByte(0xAB));
-        assertEquals(memory.memory[0x7BEEF], 0xAB);
+        assertEquals(0xAB, memory.memory[0x7BEEF]);
     }
 
     @Test
     public void testWriteIOByteWritesCorrectByte() {
         io.writeByte(new UnsignedWord(0xFF00), new UnsignedByte(0xAB));
-        assertEquals(io.ioMemory[0x0], 0xAB);
+        assertEquals(0xAB, io.ioMemory[0x0]);
     }
 
     @Test

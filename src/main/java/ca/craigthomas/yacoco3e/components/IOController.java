@@ -5,7 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
-import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode;
+import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
@@ -44,6 +44,7 @@ public class IOController
     protected PIA1a pia1a;
     protected PIA1b pia1b;
     protected PIA2a pia2a;
+    protected PIA2b pia2b;
 
     /* PIA2 */
     protected UnsignedByte pia2DRA;  /* PIA 2 Data Register A */
@@ -55,7 +56,6 @@ public class IOController
     protected UnsignedByte pia2DDRB;
 
     /* Video mode related functions */
-    protected UnsignedByte vdgOperatingMode;
     protected UnsignedByte samControlBits;
 
     /* GIME IRQ enabled / disabled */
@@ -115,10 +115,14 @@ public class IOController
         this.screen = screen;
         this.cassette = cassette;
 
+        /* Screen controls */
+        samControlBits = new UnsignedByte();
+
         /* PIAs */
         pia1a = new PIA1a(keyboard);
         pia1b = new PIA1b(keyboard);
         pia2a = new PIA2a(cassette);
+        pia2b = new PIA2b(this);
 
         /* Display registers */
         verticalOffsetRegister = new UnsignedWord(0x0400);
@@ -145,9 +149,6 @@ public class IOController
 
         /* Disks */
         diskDriveSelect = 0;
-
-        samControlBits = new UnsignedByte();
-        vdgOperatingMode = new UnsignedByte();
 
         /* Initialize drive data */
         disk = new DiskDrive[NUM_DISK_DRIVES];
@@ -325,13 +326,25 @@ public class IOController
             case 0xFF3D:
                 return pia2a.getControlRegister();
 
-            /* PIA 2 DRB / DDRB */
+            /* PIA 2 Data Register B */
             case 0xFF22:
-                return pia2CRB.isMasked(0x4) ? vdgOperatingMode : pia2DDRB;
+            case 0xFF2A:
+            case 0xFF2E:
+            case 0xFF32:
+            case 0xFF36:
+            case 0xFF3A:
+            case 0xFF3E:
+                return pia2b.getRegister();
 
             /* PIA 2 Control Register B */
             case 0xFF23:
-                return pia2CRB;
+            case 0xFF2B:
+            case 0xFF2F:
+            case 0xFF33:
+            case 0xFF37:
+            case 0xFF3B:
+            case 0xFF3F:
+                return pia2b.getControlRegister();
 
             /* Disk Drive Status Register */
             case 0xFF48:
@@ -491,7 +504,7 @@ public class IOController
             case 0xFF16:
             case 0xFF1A:
             case 0xFF1E:
-                pia1b.setDataRegister(value);
+                pia1b.setRegister(value);
                 break;
 
             /* PIA 1 Control Register B */
@@ -540,13 +553,7 @@ public class IOController
             case 0xFF36:
             case 0xFF3A:
             case 0xFF3E:
-                if (pia2CRB.isMasked(0x4)) {
-                    vdgOperatingMode = value.copy();
-                    vdgOperatingMode.and(pia2DDRB.getShort());
-                    updateVideoMode();
-                } else {
-                    pia2DDRB = value.copy();
-                }
+                pia2b.setRegister(value);
                 break;
 
             /* PIA 2 Control Register B */
@@ -558,10 +565,7 @@ public class IOController
             case 0xFF37:
             case 0xFF3B:
             case 0xFF3F:
-                /* Bit 2 = Control whether Data Register or Data Direction Register active */
-                /* Bit 1 = hi/lo edge triggered */
-                /* Bit 0 = FIRQ from cartridge ROM */
-                pia2CRB = value.copy();
+                pia2b.setControlRegister(value);
                 break;
 
 
@@ -597,7 +601,9 @@ public class IOController
 
             /* Disk Command Register */
             case 0xFF48:
-//                System.out.println("$FF48 - Writing command register drive " +diskDriveSelect + " value " + value);
+            case 0xFF4C:
+            case 0xFF58:
+            case 0xFF5C:
                 disk[diskDriveSelect].executeCommand(value);
                 break;
 
@@ -776,37 +782,37 @@ public class IOController
             /* SAM - Video Display - V0 - Clear */
             case 0xFFC0:
                 samControlBits.and(~0x1);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V0 - Set */
             case 0xFFC1:
                 samControlBits.or(0x1);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Clear */
             case 0xFFC2:
                 samControlBits.and(~0x2);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Set */
             case 0xFFC3:
                 samControlBits.or(0x2);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Clear */
             case 0xFFC4:
                 samControlBits.and(~0x4);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Set */
             case 0xFFC5:
                 samControlBits.or(0x4);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Display Offset Register - Bit 0 - Clear */
@@ -967,62 +973,70 @@ public class IOController
         tickRefreshAmount = (samClockSpeed.isMasked(0x2)) ? HIGH_SPEED_CLOCK_FREQUENCY : LOW_SPEED_CLOCK_FREQUENCY;
     }
 
-    public void updateVideoMode() {
-        ScreenMode.Mode mode = screen.getMode();
+    /**
+     * Sets the Video Display Generator operating mode based on the value of PIA2B
+     * data register, plus the SAM control bits.
+     *
+     * @param vdgOperatingMode the Video Display Generator mode to set
+     */
+    public void updateVideoMode(UnsignedByte vdgOperatingMode) {
+        Mode mode;
         int colorSet = vdgOperatingMode.isMasked(0x8) ? 1 : 0;
-        int vdgBytes = vdgOperatingMode.getShort() & 0x70;
 
-        if (!vdgOperatingMode.isMasked(0x80)) {
-            if (vdgOperatingMode.isMasked(0x10)) {
-                if (samControlBits.equals(new UnsignedByte())) {
-                    mode = ScreenMode.Mode.SG6;
-                }
-            } else {
-                if (samControlBits.equals(new UnsignedByte())) {
-                    mode = ScreenMode.Mode.SG4;
-                    colorSet = 0;
-                }
+        if (vdgOperatingMode.isMasked(0x80)) {
+            switch (samControlBits.getShort()) {
+                case 0x1:
+                    mode = vdgOperatingMode.isMasked(0x10) ? Mode.G1R : Mode.G1C;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x2))) {
-                    mode = ScreenMode.Mode.SG8;
-                    colorSet = 0;                }
+                case 0x2:
+                    mode = Mode.G2C;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x4))) {
-                    mode = ScreenMode.Mode.SG12;
-                    colorSet = 0;
-                }
+                case 0x3:
+                    mode = Mode.G2R;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x6))) {
-                    mode = ScreenMode.Mode.SG24;
-                    colorSet = 0;
-                }
+                case 0x4:
+                    mode = Mode.G3C;
+                    break;
+
+                case 0x5:
+                    mode = Mode.G3R;
+                    break;
+
+                case 0x6:
+                    mode = vdgOperatingMode.isMasked(0x10) ? Mode.G6R : Mode.G6C;
+                    break;
+
+                default:
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    throw new RuntimeException("Unknown screen mode: " + fullMode);
             }
         } else {
-            if (vdgBytes == 0x00 && samControlBits.equals(new UnsignedByte(0x1))) {
-                mode = ScreenMode.Mode.G1C;
-            }
-            if (vdgBytes == 0x10 && samControlBits.equals(new UnsignedByte(0x1))) {
-                mode = ScreenMode.Mode.G1R;
-            }
-            if (vdgBytes == 0x20 && samControlBits.equals(new UnsignedByte(0x2))) {
-                mode = ScreenMode.Mode.G2C;
-            }
-            if (vdgBytes == 0x30 && samControlBits.equals(new UnsignedByte(0x3))) {
-                mode = ScreenMode.Mode.G2R;
-            }
-            if (vdgBytes == 0x40 && samControlBits.equals(new UnsignedByte(0x4))) {
-                mode = ScreenMode.Mode.G3C;
-            }
-            if (vdgBytes == 0x50 && samControlBits.equals(new UnsignedByte(0x5))) {
-                mode = ScreenMode.Mode.G3R;
-            }
-            if (vdgBytes == 0x60 && samControlBits.equals(new UnsignedByte(0x6))) {
-                mode = ScreenMode.Mode.G6C;
-            }
-            if (vdgBytes == 0x70 && samControlBits.equals(new UnsignedByte(0x6))) {
-                mode = ScreenMode.Mode.G6R;
+            switch (samControlBits.getShort()) {
+                case 0x0:
+                    mode = vdgOperatingMode.isMasked(0x20) ? Mode.SG6 : Mode.SG4;
+                    break;
+
+                case 0x2:
+                    mode = Mode.SG8;
+                    break;
+
+                case 0x4:
+                    mode = Mode.SG12;
+                    break;
+
+                case 0x6:
+                    mode = Mode.SG24;
+                    break;
+
+                default:
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    throw new RuntimeException("Unknown screen mode: " + fullMode);
             }
         }
+
         int memoryOffset = screen.getMemoryOffset();
         screen.setMode(mode, colorSet);
         screen.setMemoryOffset(memoryOffset);
@@ -1039,9 +1053,17 @@ public class IOController
         writeWord(new UnsignedWord(address), new UnsignedWord(value));
     }
 
+    /**
+     * Convenience function allowing the address to be a word, while the
+     * value to be an integer, instead of UnsignedWord objects.
+     *
+     * @param address the address to write to
+     * @param value the value to write
+     */
     public void writeWord(UnsignedWord address, int value) {
         writeWord(address, new UnsignedWord(value));
     }
+
     /**
      * Writes an UnsignedWord to the specified memory address.
      *

@@ -11,15 +11,11 @@ public abstract class PIA
     public UnsignedByte controlRegister;
     public UnsignedByte dataRegister;
     public UnsignedByte dataDirectionRegister;
-    protected boolean interruptEnabled;
-    protected boolean interruptTriggered;
 
     public PIA() {
         controlRegister = new UnsignedByte();
         dataDirectionRegister = new UnsignedByte();
         dataRegister = new UnsignedByte();
-        interruptEnabled = false;
-        interruptTriggered = false;
     }
 
     /**
@@ -55,30 +51,12 @@ public abstract class PIA
     }
 
     /**
-     * Returns the status of the interrupt - enabled (true) or disabled (false).
-     *
-     * @return true if the interrupt is enabled, false otherwise
-     */
-    public boolean interruptEnabled() {
-        return interruptEnabled;
-    }
-
-    /**
-     * Returns true if an interrupt has been triggered.
-     *
-     * @return true if an interrupt has been triggered
-     */
-    public boolean isInterruptTriggered() {
-        return interruptTriggered;
-    }
-
-    /**
      * Returns the contents of the control register.
      *
      * @return the contents of the control register
      */
     public UnsignedByte getControlRegister() {
-        return controlRegister;
+        return controlRegister.copy();
     }
 
     /**
@@ -88,15 +66,6 @@ public abstract class PIA
      */
     public void setControlRegister(UnsignedByte newControlRegister) {
         controlRegister = newControlRegister.copy();
-    }
-
-    /**
-     * Perform a logical OR of the value in the control register.
-     *
-     * @param value the value to OR with the control register
-     */
-    public void controlRegisterOr(int value) {
-        controlRegister.or(value);
     }
 
     /**
@@ -123,8 +92,8 @@ public abstract class PIA
     public void setRegister(UnsignedByte newRegisterValue) {
         if (controlRegister.isMasked(0x04)) {
             setDataRegister(newRegisterValue);
-        } else {
-            setDataDirectionRegister(newRegisterValue);
+            return;
         }
+        setDataDirectionRegister(newRegisterValue);
     }
 }
