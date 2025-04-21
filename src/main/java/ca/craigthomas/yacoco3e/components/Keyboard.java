@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -57,16 +57,19 @@ abstract class Keyboard extends KeyAdapter
     protected UnsignedByte column6;
     protected UnsignedByte column7;
 
+    protected UnsignedByte lowByte;
+
     public Keyboard() {
         super();
-        column0 = new UnsignedByte(0);
-        column1 = new UnsignedByte(0);
-        column2 = new UnsignedByte(0);
-        column3 = new UnsignedByte(0);
-        column4 = new UnsignedByte(0);
-        column5 = new UnsignedByte(0);
-        column6 = new UnsignedByte(0);
-        column7 = new UnsignedByte(0);
+        column0 = new UnsignedByte();
+        column1 = new UnsignedByte();
+        column2 = new UnsignedByte();
+        column3 = new UnsignedByte();
+        column4 = new UnsignedByte();
+        column5 = new UnsignedByte();
+        column6 = new UnsignedByte();
+        column7 = new UnsignedByte();
+        lowByte = new UnsignedByte();
     }
 
     @Override
@@ -811,44 +814,60 @@ abstract class Keyboard extends KeyAdapter
     }
 
     /**
+     * Sets the low byte for the keyboard scan.
+     *
+     * @param newLowByte the new byte for the low byte
+     */
+    public void setLowByte(UnsignedByte newLowByte) {
+        lowByte = newLowByte.inverse();
+    }
+
+    /**
+     * Returns the low byte from the keyboard.
+     *
+     * @return the low byte from the keyboard
+     */
+    public UnsignedByte getLowByte() {
+        return lowByte.inverse();
+    }
+
+    /**
      * Return the high byte from the keyboard. The value of DRB strobes a
      * column. If the column number is associated with a keypress, returns
      * the corresponding row.
      *
      * @return the high byte of the keyboard
      */
-    public UnsignedByte getHighByte(UnsignedByte drb) {
-        UnsignedByte iDRB = drb.inverse();
-
-        if (iDRB.isMasked(0x1)) {
+    public UnsignedByte getHighByte() {
+        if (lowByte.isMasked(0x1)) {
             return column0.inverse();
         }
 
-        if (iDRB.isMasked(0x2)) {
+        if (lowByte.isMasked(0x2)) {
             return column1.inverse();
         }
 
-        if (iDRB.isMasked(0x4)) {
+        if (lowByte.isMasked(0x4)) {
             return column2.inverse();
         }
 
-        if (iDRB.isMasked(0x8)) {
+        if (lowByte.isMasked(0x8)) {
             return column3.inverse();
         }
 
-        if (iDRB.isMasked(0x10)) {
+        if (lowByte.isMasked(0x10)) {
             return column4.inverse();
         }
 
-        if (iDRB.isMasked(0x20)) {
+        if (lowByte.isMasked(0x20)) {
             return column5.inverse();
         }
 
-        if (iDRB.isMasked(0x40)) {
+        if (lowByte.isMasked(0x40)) {
             return column6.inverse();
         }
 
-        if (iDRB.isMasked(0x80)) {
+        if (lowByte.isMasked(0x80)) {
             return column7.inverse();
         }
 
