@@ -5,7 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
-import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode;
+import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
@@ -41,12 +41,10 @@ public class IOController
     protected UnsignedByte samDisplayOffsetRegister;
 
     /* PIA1 */
-    protected UnsignedByte pia1DRA;  /* PIA 1 Data Register A */
-    protected UnsignedByte pia1CRA;  /* PIA 1 Control Register A */
-    protected UnsignedByte pia1DDRA; /* PIA 1 Data Direction Register A */
-
-    protected UnsignedByte pia1DRB;
-    protected UnsignedByte pia1CRB;
+    protected PIA1a pia1a;
+    protected PIA1b pia1b;
+    protected PIA2a pia2a;
+    protected PIA2b pia2b;
 
     /* PIA2 */
     protected UnsignedByte pia2DRA;  /* PIA 2 Data Register A */
@@ -58,7 +56,6 @@ public class IOController
     protected UnsignedByte pia2DDRB;
 
     /* Video mode related functions */
-    protected UnsignedByte vdgOperatingMode;
     protected UnsignedByte samControlBits;
 
     /* GIME IRQ enabled / disabled */
@@ -79,11 +76,11 @@ public class IOController
     /* The number of ticks to pass in 63.5 microseconds */
     public static final int TIMER_63_5_MICROS = 56;
 
-    /* The number of ticks to pass before poking disks */
-    public static final int TIMER_DISK_COUNTER = 5000;
-
     /* The number of ticks to pass in 16.6 milliseconds */
     public static final int TIMER_16_6_MILLIS = 14833;
+
+    /* The number of ticks to pass before poking disks */
+    public static final int TIMER_DISK_COUNTER = 5000;
 
     /* The number of ticks that is allowed to be processed in 0.89MHz mode and 1.78 MHz mode */
     public static final int LOW_SPEED_CLOCK_FREQUENCY = 14917;
@@ -106,13 +103,6 @@ public class IOController
 
     public int verticalBorderTickValue;
 
-    /* PIA interrupt values */
-    public int pia1FastTimer;
-    public int pia1SlowTimer;
-
-    public boolean pia1FastTimerEnabled;
-    public boolean pia1SlowTimerEnabled;
-
     public volatile int tickRefreshAmount;
 
 
@@ -125,17 +115,20 @@ public class IOController
         this.screen = screen;
         this.cassette = cassette;
 
+        /* Screen controls */
+        samControlBits = new UnsignedByte();
+
+        /* PIAs */
+        pia1a = new PIA1a(keyboard);
+        pia1b = new PIA1b(keyboard);
+        pia2a = new PIA2a(cassette);
+        pia2b = new PIA2b(this);
+
         /* Display registers */
         verticalOffsetRegister = new UnsignedWord(0x0400);
         samDisplayOffsetRegister = new UnsignedByte(0x0);
 
         /* PIAs */
-        pia1CRA = new UnsignedByte(0);
-        pia1DRA = new UnsignedByte(0);
-        pia1DDRA = new UnsignedByte(0);
-
-        pia1CRB = new UnsignedByte(0);
-        pia1DRB = new UnsignedByte(0);
 
         pia2CRA = new UnsignedByte(0);
         pia2DRA = new UnsignedByte(0);
@@ -146,19 +139,16 @@ public class IOController
         pia2DDRB = new UnsignedByte(0);
 
         /* Interrupts */
-        irqStatus = new UnsignedByte(0);
-        firqStatus = new UnsignedByte(0);
+        irqStatus = new UnsignedByte();
+        firqStatus = new UnsignedByte();
 
         /* Timer related values */
         timerTickThreshold = TIMER_63_5_MICROS;
-        timerResetValue = new UnsignedWord(0);
-        timerValue = new UnsignedWord(0);
+        timerResetValue = new UnsignedWord();
+        timerValue = new UnsignedWord();
 
         /* Disks */
         diskDriveSelect = 0;
-
-        samControlBits = new UnsignedByte();
-        vdgOperatingMode = new UnsignedByte();
 
         /* Initialize drive data */
         disk = new DiskDrive[NUM_DISK_DRIVES];
@@ -272,46 +262,89 @@ public class IOController
         switch (address) {
             /* PIA 1 Data Register A */
             case 0xFF00:
-                /* Clear PIA 1 CRA bits 7 and 6 for interrupts */
-                pia1CRA.and(~0xC0);
-                return keyboard.getHighByte(pia1DRB);
+            case 0xFF04:
+            case 0xFF08:
+            case 0xFF0C:
+            case 0xFF10:
+            case 0xFF14:
+            case 0xFF18:
+            case 0xFF1C:
+                return pia1a.getRegister();
 
             /* PIA 1 Control Register A */
             case 0xFF01:
-                return pia1CRA;
+            case 0xFF05:
+            case 0xFF09:
+            case 0xFF0D:
+            case 0xFF11:
+            case 0xFF15:
+            case 0xFF19:
+            case 0xFF1D:
+                return pia1a.getControlRegister();
 
             /* PIA 1 Data Register B */
             case 0xFF02:
-                /* Clear PIA 1 CRB bits 7 and 6 for interrupts */
-                pia1CRB.and(~0xC0);
-                return pia1DRB;
+            case 0xFF06:
+            case 0xFF0A:
+            case 0xFF0E:
+            case 0xFF12:
+            case 0xFF16:
+            case 0xFF1A:
+            case 0xFF1E:
+                return pia1b.getRegister();
 
             /* PIA 1 Control Register B */
             case 0xFF03:
-                return pia1CRB;
+            case 0xFF07:
+            case 0xFF0B:
+            case 0xFF0F:
+            case 0xFF13:
+            case 0xFF17:
+            case 0xFF1B:
+            case 0xFF1F:
+                return pia1b.getControlRegister();
 
             /* PIA 2 Data Register A */
             case 0xFF20:
-                if (pia2CRA.isMasked(0x4)) {
-                    pia2DRA.and(0);
-
-                    /* Bit 0 = Cassette Data Input */
-                    pia2DRA.or(cassette.nextBit());
-                    return pia2DRA;
-                }
-                return pia2DDRB;
+            case 0xFF24:
+            case 0xFF28:
+            case 0xFF2C:
+            case 0xFF30:
+            case 0xFF34:
+            case 0xFF38:
+            case 0xFF3C:
+                return pia2a.getRegister();
 
             /* PIA 2 Control Register A */
             case 0xFF21:
-                return pia2CRA;
+            case 0xFF25:
+            case 0xFF29:
+            case 0xFF2D:
+            case 0xFF31:
+            case 0xFF35:
+            case 0xFF39:
+            case 0xFF3D:
+                return pia2a.getControlRegister();
 
-            /* PIA 2 DRB / DDRB */
+            /* PIA 2 Data Register B */
             case 0xFF22:
-                return pia2CRB.isMasked(0x4) ? vdgOperatingMode : pia2DDRB;
+            case 0xFF2A:
+            case 0xFF2E:
+            case 0xFF32:
+            case 0xFF36:
+            case 0xFF3A:
+            case 0xFF3E:
+                return pia2b.getRegister();
 
             /* PIA 2 Control Register B */
             case 0xFF23:
-                return pia2CRB;
+            case 0xFF2B:
+            case 0xFF2F:
+            case 0xFF33:
+            case 0xFF37:
+            case 0xFF3B:
+            case 0xFF3F:
+                return pia2b.getControlRegister();
 
             /* Disk Drive Status Register */
             case 0xFF48:
@@ -447,7 +480,7 @@ public class IOController
             case 0xFF14:
             case 0xFF18:
             case 0xFF1C:
-                pia1DRA = value.copy();
+                pia1a.setRegister(value);
                 break;
 
             /* PIA 1 Control Register A */
@@ -459,17 +492,7 @@ public class IOController
             case 0xFF15:
             case 0xFF19:
             case 0xFF1D:
-                /* Bit 0 = IRQ 63.5 microseconds */
-                pia1FastTimerEnabled = value.isMasked(0x1);
-                pia1FastTimer = 0;
-
-                /* Bit 1 = hi/lo edge trigger (ignored) */
-
-                /* Bit 7 = IRQ triggered */
-
-                pia1CRA = new UnsignedByte(value.getShort() +
-                        (pia1CRA.isMasked(0x80) ? 0x80 : 0) +
-                        (pia1CRA.isMasked(0x40) ? 0x40 : 0));
+                pia1a.setControlRegister(value);
                 break;
 
             /* PIA 1 Data Register B */
@@ -481,7 +504,7 @@ public class IOController
             case 0xFF16:
             case 0xFF1A:
             case 0xFF1E:
-                pia1DRB = value.copy();
+                pia1b.setRegister(value);
                 break;
 
             /* PIA 1 Control Register B */
@@ -493,17 +516,7 @@ public class IOController
             case 0xFF17:
             case 0xFF1B:
             case 0xFF1F:
-                /* Bit 0 = IRQ 16 milliseconds */
-                pia1SlowTimerEnabled = value.isMasked(0x1);
-                pia1SlowTimer = 0;
-
-                /* Bit 1 = hi/lo edge trigger (ignored) */
-
-                /* Bit 7 = IRQ triggered */
-
-                pia1CRB = new UnsignedByte(value.getShort() +
-                        (pia1CRB.isMasked(0x80) ? 0x80 : 0) +
-                        (pia1CRB.isMasked(0x40) ? 0x40 : 0));
+                pia1b.setControlRegister(value);
                 break;
 
             /* PIA 2 Data Register A / Data Direction Register A */
@@ -528,17 +541,7 @@ public class IOController
             case 0xFF35:
             case 0xFF39:
             case 0xFF3D:
-                /* Bit 0 = FIRQ from serial I/O port */
-
-                /* Bit 1 = hi/lo edge triggered */
-
-                /* Bit 3 = Cassette Motor Control */
-                if (value.isMasked(0x08)) {
-                    cassette.motorOn();
-                } else {
-                    cassette.motorOff();
-                }
-                pia2CRA = value.copy();
+                pia2a.setControlRegister(value);
                 break;
 
             /* PIA 2 Data Register B / Data Direction Register B */
@@ -550,13 +553,7 @@ public class IOController
             case 0xFF36:
             case 0xFF3A:
             case 0xFF3E:
-                if (pia2CRB.isMasked(0x4)) {
-                    vdgOperatingMode = value.copy();
-                    vdgOperatingMode.and(pia2DDRB.getShort());
-                    updateVideoMode();
-                } else {
-                    pia2DDRB = value.copy();
-                }
+                pia2b.setRegister(value);
                 break;
 
             /* PIA 2 Control Register B */
@@ -568,10 +565,7 @@ public class IOController
             case 0xFF37:
             case 0xFF3B:
             case 0xFF3F:
-                /* Bit 2 = Control whether Data Register or Data Direction Register active */
-                /* Bit 1 = hi/lo edge triggered */
-                /* Bit 0 = FIRQ from cartridge ROM */
-                pia2CRB = value.copy();
+                pia2b.setControlRegister(value);
                 break;
 
 
@@ -607,7 +601,9 @@ public class IOController
 
             /* Disk Command Register */
             case 0xFF48:
-//                System.out.println("$FF48 - Writing command register drive " +diskDriveSelect + " value " + value);
+            case 0xFF4C:
+            case 0xFF58:
+            case 0xFF5C:
                 disk[diskDriveSelect].executeCommand(value);
                 break;
 
@@ -786,37 +782,37 @@ public class IOController
             /* SAM - Video Display - V0 - Clear */
             case 0xFFC0:
                 samControlBits.and(~0x1);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V0 - Set */
             case 0xFFC1:
                 samControlBits.or(0x1);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Clear */
             case 0xFFC2:
                 samControlBits.and(~0x2);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Set */
             case 0xFFC3:
                 samControlBits.or(0x2);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Clear */
             case 0xFFC4:
                 samControlBits.and(~0x4);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Set */
             case 0xFFC5:
                 samControlBits.or(0x4);
-                updateVideoMode();
+                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Display Offset Register - Bit 0 - Clear */
@@ -977,62 +973,70 @@ public class IOController
         tickRefreshAmount = (samClockSpeed.isMasked(0x2)) ? HIGH_SPEED_CLOCK_FREQUENCY : LOW_SPEED_CLOCK_FREQUENCY;
     }
 
-    public void updateVideoMode() {
-        ScreenMode.Mode mode = screen.getMode();
+    /**
+     * Sets the Video Display Generator operating mode based on the value of PIA2B
+     * data register, plus the SAM control bits.
+     *
+     * @param vdgOperatingMode the Video Display Generator mode to set
+     */
+    public void updateVideoMode(UnsignedByte vdgOperatingMode) {
+        Mode mode;
         int colorSet = vdgOperatingMode.isMasked(0x8) ? 1 : 0;
-        int vdgBytes = vdgOperatingMode.getShort() & 0x70;
 
-        if (!vdgOperatingMode.isMasked(0x80)) {
-            if (vdgOperatingMode.isMasked(0x10)) {
-                if (samControlBits.equals(new UnsignedByte())) {
-                    mode = ScreenMode.Mode.SG6;
-                }
-            } else {
-                if (samControlBits.equals(new UnsignedByte())) {
-                    mode = ScreenMode.Mode.SG4;
-                    colorSet = 0;
-                }
+        if (vdgOperatingMode.isMasked(0x80)) {
+            switch (samControlBits.getShort()) {
+                case 0x1:
+                    mode = vdgOperatingMode.isMasked(0x10) ? Mode.G1R : Mode.G1C;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x2))) {
-                    mode = ScreenMode.Mode.SG8;
-                    colorSet = 0;                }
+                case 0x2:
+                    mode = Mode.G2C;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x4))) {
-                    mode = ScreenMode.Mode.SG12;
-                    colorSet = 0;
-                }
+                case 0x3:
+                    mode = Mode.G2R;
+                    break;
 
-                if (samControlBits.equals(new UnsignedByte(0x6))) {
-                    mode = ScreenMode.Mode.SG24;
-                    colorSet = 0;
-                }
+                case 0x4:
+                    mode = Mode.G3C;
+                    break;
+
+                case 0x5:
+                    mode = Mode.G3R;
+                    break;
+
+                case 0x6:
+                    mode = vdgOperatingMode.isMasked(0x10) ? Mode.G6R : Mode.G6C;
+                    break;
+
+                default:
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    throw new RuntimeException("Unknown screen mode: " + fullMode);
             }
         } else {
-            if (vdgBytes == 0x00 && samControlBits.equals(new UnsignedByte(0x1))) {
-                mode = ScreenMode.Mode.G1C;
-            }
-            if (vdgBytes == 0x10 && samControlBits.equals(new UnsignedByte(0x1))) {
-                mode = ScreenMode.Mode.G1R;
-            }
-            if (vdgBytes == 0x20 && samControlBits.equals(new UnsignedByte(0x2))) {
-                mode = ScreenMode.Mode.G2C;
-            }
-            if (vdgBytes == 0x30 && samControlBits.equals(new UnsignedByte(0x3))) {
-                mode = ScreenMode.Mode.G2R;
-            }
-            if (vdgBytes == 0x40 && samControlBits.equals(new UnsignedByte(0x4))) {
-                mode = ScreenMode.Mode.G3C;
-            }
-            if (vdgBytes == 0x50 && samControlBits.equals(new UnsignedByte(0x5))) {
-                mode = ScreenMode.Mode.G3R;
-            }
-            if (vdgBytes == 0x60 && samControlBits.equals(new UnsignedByte(0x6))) {
-                mode = ScreenMode.Mode.G6C;
-            }
-            if (vdgBytes == 0x70 && samControlBits.equals(new UnsignedByte(0x6))) {
-                mode = ScreenMode.Mode.G6R;
+            switch (samControlBits.getShort()) {
+                case 0x0:
+                    mode = vdgOperatingMode.isMasked(0x20) ? Mode.SG6 : Mode.SG4;
+                    break;
+
+                case 0x2:
+                    mode = Mode.SG8;
+                    break;
+
+                case 0x4:
+                    mode = Mode.SG12;
+                    break;
+
+                case 0x6:
+                    mode = Mode.SG24;
+                    break;
+
+                default:
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    throw new RuntimeException("Unknown screen mode: " + fullMode);
             }
         }
+
         int memoryOffset = screen.getMemoryOffset();
         screen.setMode(mode, colorSet);
         screen.setMemoryOffset(memoryOffset);
@@ -1049,9 +1053,17 @@ public class IOController
         writeWord(new UnsignedWord(address), new UnsignedWord(value));
     }
 
+    /**
+     * Convenience function allowing the address to be a word, while the
+     * value to be an integer, instead of UnsignedWord objects.
+     *
+     * @param address the address to write to
+     * @param value the value to write
+     */
     public void writeWord(UnsignedWord address, int value) {
         writeWord(address, new UnsignedWord(value));
     }
+
     /**
      * Writes an UnsignedWord to the specified memory address.
      *
@@ -1212,29 +1224,11 @@ public class IOController
         verticalBorderTickValue += ticks;
 
         /* Check for old interrupts via PIAs */
-        /* Increment pia1FastTimer, trigger IRQ if interrupts on, otherwise just write to pia1CRA */
-        pia1FastTimer += ticks;
-        if (pia1FastTimer >= TIMER_63_5_MICROS) {
-            if (pia1FastTimerEnabled) {
-                if (!regs.cc.isMasked(CC_I) && !pia1CRA.isMasked(0x80)) {
-                    cpu.scheduleIRQ();
-                }
-            }
-            pia1CRA.or(0x80);
-            pia1FastTimer = 0;
-        }
+        /* Increment pia1 FastTimer, trigger IRQ if interrupts on */
+        pia1a.addTicks(ticks, cpu, regs);
 
-        /* Increment pia1SlowTimer, trigger IRQ if interrupts on, otherwise, just write to pia1CRB */
-        pia1SlowTimer += ticks;
-        if (pia1SlowTimer >= TIMER_16_6_MILLIS) {
-            if (pia1SlowTimerEnabled) {
-                if (!regs.cc.isMasked(CC_I) && !pia1CRB.isMasked(0x80)) {
-                    cpu.scheduleIRQ();
-                }
-            }
-            pia1CRB.or(0x80);
-            pia1SlowTimer = 0;
-        }
+        /* Increment pia1 SlowTimer, trigger IRQ if interrupts on */
+        pia1b.addTicks(ticks, cpu, regs);
 
         /* Check for GIME timer related interrupts */
         if (timerTickCounter >= timerTickThreshold) {

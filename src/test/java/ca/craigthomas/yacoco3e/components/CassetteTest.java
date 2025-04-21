@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,17 +20,17 @@ public class CassetteTest
     }
 
     @Test
-    public void testMotorOn() {
+    public void testSetMotorOn() {
         assertFalse(cassette.isMotorOn());
-        cassette.motorOn();
+        cassette.setMotorOn(true);
         assertTrue(cassette.isMotorOn());
     }
 
     @Test
     public void testMotorOff() {
         assertFalse(cassette.isMotorOn());
-        cassette.motorOn();
-        cassette.motorOff();
+        cassette.setMotorOn(true);
+        cassette.setMotorOn(false);
         assertFalse(cassette.isMotorOn());
     }
 
@@ -71,7 +70,7 @@ public class CassetteTest
     @Test
     public void testNextBitReturnsZeroWhenFileButMotorOff() {
         cassette.cassetteBytes = new byte[] {1};
-        cassette.motorOff();
+        cassette.setMotorOn(false);
         for (int i=0; i < 100; i++) {
             assertEquals(0, cassette.nextBit());
         }
@@ -80,7 +79,7 @@ public class CassetteTest
     @Test
     public void testNextBitReturnsZeroWhenFileButNotPlayMode() {
         cassette.cassetteBytes = new byte[] {1};
-        cassette.motorOn();
+        cassette.setMotorOn(true);
         cassette.record();
         for (int i=0; i < 100; i++) {
             assertEquals(0, cassette.nextBit());
@@ -91,7 +90,7 @@ public class CassetteTest
     public void testReadCorrectBitPatterns() {
         cassette.cassetteBytes = new byte[] {0x4D};
         cassette.rewind();
-        cassette.motorOn();
+        cassette.setMotorOn(true);
 
         /* Byte 0, bit 0 = 1 */
         assertEquals(1, cassette.nextBit());
@@ -243,7 +242,7 @@ public class CassetteTest
         cassette.inputBuffer = new byte[2];
         cassette.rewind();
         cassette.record();
-        cassette.motorOn();
+        cassette.setMotorOn(true);
 
         /* Record the pattern F0 */
 
@@ -367,7 +366,7 @@ public class CassetteTest
         cassette.inputBuffer = new byte[2];
         cassette.rewind();
         cassette.record();
-        cassette.motorOn();
+        cassette.setMotorOn(true);
 
         /* Record the pattern F0 */
 

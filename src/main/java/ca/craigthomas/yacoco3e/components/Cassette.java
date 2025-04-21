@@ -67,17 +67,10 @@ public class Cassette
     }
 
     /**
-     * Turns the cassette motor off.
+     * Turns the cassette motor on or off.
      */
-    public void motorOff() {
-        motorOn = false;
-    }
-
-    /**
-     * Turns the cassette motor on.
-     */
-    public void motorOn() {
-        motorOn = true;
+    public void setMotorOn(boolean turnOn) {
+        motorOn = turnOn;
     }
 
     public boolean isMotorOn() {
