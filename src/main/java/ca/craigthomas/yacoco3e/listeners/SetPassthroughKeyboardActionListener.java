@@ -32,10 +32,6 @@ public class SetPassthroughKeyboardActionListener extends AbstractFileChooserLis
         setPassthroughKeyboard();
     }
 
-    /**
-     * Opens a dialog box to prompt the user to choose a cassette file
-     * to open for playback.
-     */
     public void setPassthroughKeyboard() {
         emulator.switchKeyListener(new PassthroughKeyboard());
         emulated.setSelected(false);
