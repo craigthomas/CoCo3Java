@@ -37,7 +37,7 @@ public class Emulator extends Thread
     private JMenuBar menuBar;
 
     /* State variables */
-    private boolean trace;
+    public boolean trace;
     private boolean verbose;
     private volatile EmulatorStatus status;
     private volatile int remainingTicks;
@@ -335,6 +335,18 @@ public class Emulator extends Thread
 
         menuBar.add(keyboardMenu);
 
+        // Debug menu
+        JMenu debugMenu = new JMenu("Debugging");
+        debugMenu.setMnemonic(KeyEvent.VK_U);
+
+        JRadioButtonMenuItem traceMenuItem = new JRadioButtonMenuItem("Trace");
+        traceMenuItem.setSelected(trace);
+        debugMenu.add(traceMenuItem);
+
+        traceMenuItem.addActionListener(new SetTraceActionListener(this, traceMenuItem));
+
+        menuBar.add(debugMenu);
+
         attachCanvas();
     }
 
@@ -451,18 +463,14 @@ public class Emulator extends Thread
                 /* Increment timers if necessary */
                 io.timerTick(operationTicks);
 
-//                System.out.print(" new pc: " + ioController.regs.pc);
-
                 /* Fire interrupts if set */
                 cpu.serviceInterrupts();
 
                 /* Check to see if we should trace the output */
                 if (this.trace) {
-//                    System.out.print("PC:" + cpu.getLastPC() + " | OP:"
-//                            + cpu.getLastOperand() + " | " + cpu.instruction.getShortDescription());
                     if (cpu.instruction != null) {
                         System.out.print(cpu.instruction.getShortDescription());
-                        System.out.print(" new pc: " + io.regs.pc);
+                        System.out.print(" (New PC: " + io.regs.pc + ")");
                         System.out.println();
                     }
                 }
