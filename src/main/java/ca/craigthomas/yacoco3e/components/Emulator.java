@@ -460,11 +460,10 @@ public class Emulator extends Thread
                     status = EmulatorStatus.PAUSED;
                 }
 
-                /* Increment timers if necessary */
-                io.timerTick(operationTicks);
-
-                /* Fire interrupts if set */
-                cpu.serviceInterrupts();
+                /* Check to see if we had an instruction - if it's a SYNC, just add to the timers */
+                if (io.waitForIRQ) {
+                    operationTicks += 1;
+                }
 
                 /* Check to see if we should trace the output */
                 if (this.trace) {
@@ -474,6 +473,12 @@ public class Emulator extends Thread
                         System.out.println();
                     }
                 }
+
+                /* Increment timers if necessary */
+                io.timerTick(operationTicks);
+
+                /* Fire interrupts if set */
+                cpu.serviceInterrupts();
             }
         }
         this.shutdown();
