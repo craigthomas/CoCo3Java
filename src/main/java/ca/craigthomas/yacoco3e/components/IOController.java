@@ -348,22 +348,18 @@ public class IOController
 
             /* Disk Drive Status Register */
             case 0xFF48:
-//                System.out.println("$FF48 - Reading drive " + diskDriveSelect + "  status register " + disk[diskDriveSelect].getStatusRegister());
                 return disk[diskDriveSelect].getStatusRegister();
 
             /* Disk Track Status Register */
             case 0xFF49:
-//                System.out.println("$FF49 - Reading drive " + diskDriveSelect + " track register " + disk[diskDriveSelect].getTrack());
                 return new UnsignedByte(disk[diskDriveSelect].getTrack());
 
             /* Disk Sector Status Register */
             case 0xFF4A:
-//                System.out.println("$FF4A - Reading drive " + diskDriveSelect + " sector register " + disk[diskDriveSelect].getSector());
                 return new UnsignedByte(disk[diskDriveSelect].getSector());
 
             /* Disk Data Register */
             case 0xFF4B:
-//                System.out.println("$FF4B - Reading drive " + diskDriveSelect + " data register " + disk[diskDriveSelect].getDataRegister());
                 return new UnsignedByte(disk[diskDriveSelect].getDataRegister());
 
             /* IRQs Enabled Register */
@@ -571,7 +567,6 @@ public class IOController
 
             /* Disk Drive Control Register */
             case 0xFF40:
-//                System.out.println("$FF40 - Writing control register drive " + diskDriveSelect + " value " + value);
                 /* Bit 2-0 = Disk drive select */
                 diskDriveSelect = (value.isMasked(0x1)) ? 0 : diskDriveSelect;
                 diskDriveSelect = (value.isMasked(0x2)) ? 1 : diskDriveSelect;
@@ -609,19 +604,16 @@ public class IOController
 
             /* Track Status Register */
             case 0xFF49:
-//                System.out.println("$FF49 - Writing track register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setTrack(value);
                 break;
 
             /* Sector Status Register */
             case 0xFF4A:
-//                System.out.println("$FF4A - Writing sector register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setSector(value);
                 break;
 
             /* Disk Data Register */
             case 0xFF4B:
-//                System.out.println("$FF4B - Writing data register drive " + diskDriveSelect + " value " + value);
                 disk[diskDriveSelect].setDataRegister(value);
                 break;
                 
@@ -658,7 +650,6 @@ public class IOController
                 }
 
                 /* Bit 5 = Timer Rate - 0 is 63.5 microseconds, 1 is 70 nanoseconds */
-//                timerTickThreshold = (value.isMasked(0x20)) ? TIMER_63_5_MICROS : TIMER_63_5_MICROS;
                 timerTickThreshold = TIMER_63_5_MICROS;
                 break;
 
@@ -782,37 +773,31 @@ public class IOController
             /* SAM - Video Display - V0 - Clear */
             case 0xFFC0:
                 samControlBits.and(~0x1);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V0 - Set */
             case 0xFFC1:
                 samControlBits.or(0x1);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Clear */
             case 0xFFC2:
                 samControlBits.and(~0x2);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V1 - Set */
             case 0xFFC3:
                 samControlBits.or(0x2);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Clear */
             case 0xFFC4:
                 samControlBits.and(~0x4);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Video Display - V2 - Set */
             case 0xFFC5:
                 samControlBits.or(0x4);
-                updateVideoMode(pia2b.getVDGOperatingMode());
                 break;
 
             /* SAM - Display Offset Register - Bit 0 - Clear */
@@ -922,17 +907,6 @@ public class IOController
                 break;
 
             default:
-                switch(address.getInt()) {
-                    case 0xFFFA:
-                    case 0xFFF2:
-                    case 0xFFF4:
-                        System.out.println("Write to IO address " + address);
-                        break;
-
-                    default:
-                        break;
-                }
-                memory.writeByte(address, value);
                 break;
         }
     }
@@ -1011,7 +985,8 @@ public class IOController
 
                 default:
                     UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
-                    throw new RuntimeException("Unknown screen mode: " + fullMode);
+                    System.out.println("Unknown screen mode: " + fullMode);
+                    return;
             }
         } else {
             switch (samControlBits.getShort()) {
@@ -1033,7 +1008,8 @@ public class IOController
 
                 default:
                     UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
-                    throw new RuntimeException("Unknown screen mode: " + fullMode);
+                    System.out.println("Unknown screen mode: " + fullMode);
+                    return;
             }
         }
 

@@ -44,6 +44,7 @@ public class CPU
      * stored at $FFF8.
      */
     public void interruptRequest() {
+        io.regs.cc.or(CC_E);
         io.pushStack(Register.S, io.regs.pc);
         io.pushStack(Register.S, io.regs.u);
         io.pushStack(Register.S, io.regs.y);
@@ -51,7 +52,6 @@ public class CPU
         io.pushStack(Register.S, io.regs.dp);
         io.pushStack(Register.S, io.regs.b);
         io.pushStack(Register.S, io.regs.a);
-        io.regs.cc.or(CC_E);
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_I);
         io.regs.pc.set(io.readWord(0xFFF8));
@@ -63,8 +63,8 @@ public class CPU
      * $FFF6.
      */
     public void fastInterruptRequest() {
-        io.pushStack(Register.S, io.regs.pc);
         io.regs.cc.and(~CC_E);
+        io.pushStack(Register.S, io.regs.pc);
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_F);
         io.regs.cc.or(CC_I);
@@ -77,6 +77,7 @@ public class CPU
      * stored at $FFFC.
      */
     public void nonMaskableInterruptRequest() {
+        io.regs.cc.or(CC_E);
         io.pushStack(Register.S, io.regs.pc);
         io.pushStack(Register.S, io.regs.u);
         io.pushStack(Register.S, io.regs.y);
@@ -84,7 +85,6 @@ public class CPU
         io.pushStack(Register.S, io.regs.dp);
         io.pushStack(Register.S, io.regs.b);
         io.pushStack(Register.S, io.regs.a);
-        io.regs.cc.or(CC_E);
         io.pushStack(Register.S, io.regs.cc);
         io.regs.cc.or(CC_I);
         io.regs.cc.or(CC_F);

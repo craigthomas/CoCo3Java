@@ -92,19 +92,24 @@ public class BranchInstructionTest {
 
     @Test
     public void testBranchSubroutine() throws MalformedInstructionException {
-        io.writeWord(0x0000, 0x8D1F);
+        io.regs.s.set(0x3000);
+        regs.pc.set(0x1021);
+        io.writeWord(0x1021, 0x8D1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
-        assertEquals(0x02, memory.readByte(io.getWordRegister(Register.S).next()).getShort());
+        assertEquals(0x1042, regs.pc.getInt());
+        assertEquals(0x23, memory.readByte(0x2FFF).getShort());
+        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
     }
 
     @Test
     public void testBranchSubroutineNegativeOffsetCorrect() throws MalformedInstructionException {
-        regs.pc.set(0x0021);
-        io.writeWord(0x0021, 0x8DDD);
+        io.regs.s.set(0x3000);
+        regs.pc.set(0x1021);
+        io.writeWord(0x1021, 0x8DDD);
         cpu.executeInstruction();
-        assertEquals(0x0000, regs.pc.getInt());
-        assertEquals(0x23, memory.readByte(io.getWordRegister(Register.S).next()).getShort());
+        assertEquals(0x1000, regs.pc.getInt());
+        assertEquals(0x23, memory.readByte(0x2FFF).getShort());
+        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
     }
 
     @Test
