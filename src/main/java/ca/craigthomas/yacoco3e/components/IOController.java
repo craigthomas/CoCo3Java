@@ -46,14 +46,8 @@ public class IOController
     protected PIA2a pia2a;
     protected PIA2b pia2b;
 
-    /* PIA2 */
-    protected UnsignedByte pia2DRA;  /* PIA 2 Data Register A */
-    protected UnsignedByte pia2CRA;  /* PIA 2 Control Register A*/
-    protected UnsignedByte pia2DDRA; /* PIA 2 Data Direction Register A */
-
-    protected UnsignedByte pia2DRB;
-    protected UnsignedByte pia2CRB;
-    protected UnsignedByte pia2DDRB;
+    /* Device Selector */
+    protected DeviceSelectorSwitch deviceSelectorSwitch;
 
     /* Video mode related functions */
     protected UnsignedByte samControlBits;
@@ -118,25 +112,18 @@ public class IOController
         /* Screen controls */
         samControlBits = new UnsignedByte();
 
+        /* Device Selector */
+        deviceSelectorSwitch = new DeviceSelectorSwitch();
+
         /* PIAs */
-        pia1a = new PIA1a(keyboard);
-        pia1b = new PIA1b(keyboard);
+        pia1a = new PIA1a(keyboard, deviceSelectorSwitch);
+        pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
         pia2a = new PIA2a(cassette);
         pia2b = new PIA2b(this);
 
         /* Display registers */
         verticalOffsetRegister = new UnsignedWord(0x0400);
         samDisplayOffsetRegister = new UnsignedByte(0x0);
-
-        /* PIAs */
-
-        pia2CRA = new UnsignedByte(0);
-        pia2DRA = new UnsignedByte(0);
-        pia2DDRA = new UnsignedByte(0);
-
-        pia2CRB = new UnsignedByte(0);
-        pia2DRB = new UnsignedByte(0);
-        pia2DDRB = new UnsignedByte(0);
 
         /* Interrupts */
         irqStatus = new UnsignedByte();

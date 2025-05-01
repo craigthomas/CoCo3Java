@@ -12,11 +12,13 @@ import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.CC_I;
 public class PIA1b extends PIA
 {
     protected Keyboard keyboard;
+    protected DeviceSelectorSwitch deviceSelectorSwitch;
     protected int timerValue;
 
-    public PIA1b(Keyboard newKeyboard) {
+    public PIA1b(Keyboard newKeyboard, DeviceSelectorSwitch newDeviceSelectorSwitch) {
         super();
         keyboard = newKeyboard;
+        deviceSelectorSwitch = newDeviceSelectorSwitch;
         timerValue = 0;
     }
 
@@ -56,6 +58,14 @@ public class PIA1b extends PIA
                 (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                 (controlRegister.isMasked(0x40) ? 0x40 : 0)
         );
+
+        // Bit 5=1 - CB2 is an output
+        if (controlRegister.isMasked(0x10)) {
+            // Bit 4=1 - Output a signal directly on CB2 based on Bit 3 value
+            if (controlRegister.isMasked(0x8)) {
+                deviceSelectorSwitch.setCB2(controlRegister.isMasked(0x4));
+            }
+        }
     }
 
     /**
