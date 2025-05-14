@@ -7,6 +7,8 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
 
+import javax.sound.sampled.SourceDataLine;
+
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
 public class IOController
@@ -100,7 +102,7 @@ public class IOController
     public volatile int tickRefreshAmount;
 
 
-    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette) {
+    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette, SourceDataLine audioOutputLine) {
         ioMemory = new short[IO_ADDRESS_SIZE];
         this.memory = memory;
         this.regs = registerSet;
@@ -118,7 +120,7 @@ public class IOController
         /* PIAs */
         pia1a = new PIA1a(keyboard, deviceSelectorSwitch);
         pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
-        pia2a = new PIA2a(cassette);
+        pia2a = new PIA2a(cassette, audioOutputLine);
         pia2b = new PIA2b(this);
 
         /* Display registers */
@@ -219,7 +221,7 @@ public class IOController
      * @return an UnsignedByte from the specified location
      */
     public UnsignedByte readByte(UnsignedWord address) {
-        int intAddress = address.getInt();
+        int intAddress = address.get();
         if (intAddress < 0xFF00) {
             return memory.readByte(address).copy();
         }
@@ -435,7 +437,7 @@ public class IOController
      * @param value the UnsignedByte to write
      */
     public void writeByte(UnsignedWord address, UnsignedByte value) {
-        int intAddress = address.getInt();
+        int intAddress = address.get();
         if (intAddress < 0xFF00) {
             memory.writeByte(address, value);
         } else {
@@ -450,10 +452,10 @@ public class IOController
      * @param value the value to write
      */
     public void writeIOByte(UnsignedWord address, UnsignedByte value) {
-        int intAddress = address.getInt() - 0xFF00;
-        ioMemory[intAddress] = value.getShort();
+        int intAddress = address.get() - 0xFF00;
+        ioMemory[intAddress] = value.get();
 
-        switch (address.getInt()) {
+        switch (address.get()) {
             /* PIA 1 Data Register A */
             case 0xFF00:
             case 0xFF04:
@@ -511,8 +513,9 @@ public class IOController
             case 0xFF34:
             case 0xFF38:
             case 0xFF3C:
+                pia2a.setRegister(value);
                 /* Bits 2-7 = digital analog values */
-                cassette.byteInput(value);
+                // cassette.byteInput(value);
                 break;
 
             /* PIA 2 Control Register A */
@@ -607,7 +610,7 @@ public class IOController
             /* INIT 0 */
             case 0xFF90:
                 /* Bit 1 & 0 = ROM memory mapping */
-                memory.setROMMode(new UnsignedByte(value.getShort() & 0x3));
+                memory.setROMMode(new UnsignedByte(value.get() & 0x3));
 
                 /* Bit 4 = FIRQ - 0 disabled, 1 enabled */
                 firqEnabled = value.isMasked(0x10);
@@ -912,14 +915,14 @@ public class IOController
      */
     public void updateVerticalOffset() {
         if (cocoCompatibleMode) {
-            int newOffset = (verticalOffsetRegister.getHigh().getShort() & 0xE0);
+            int newOffset = (verticalOffsetRegister.getHigh().get() & 0xE0);
             newOffset = newOffset >> 5;
             newOffset *= 65536;
-            newOffset += (samDisplayOffsetRegister.getShort() * 0x200);
-            newOffset += ((verticalOffsetRegister.getLow().getShort() & 0x3F) * 0x04);
+            newOffset += (samDisplayOffsetRegister.get() * 0x200);
+            newOffset += ((verticalOffsetRegister.getLow().get() & 0x3F) * 0x04);
             screen.setMemoryOffset(newOffset);
         } else {
-            screen.setMemoryOffset(verticalOffsetRegister.getInt() << 3);
+            screen.setMemoryOffset(verticalOffsetRegister.get() << 3);
         }
     }
 
@@ -945,7 +948,7 @@ public class IOController
         int colorSet = vdgOperatingMode.isMasked(0x8) ? 1 : 0;
 
         if (vdgOperatingMode.isMasked(0x80)) {
-            switch (samControlBits.getShort()) {
+            switch (samControlBits.get()) {
                 case 0x1:
                     mode = vdgOperatingMode.isMasked(0x10) ? Mode.G1R : Mode.G1C;
                     break;
@@ -971,12 +974,12 @@ public class IOController
                     break;
 
                 default:
-                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.get() + samControlBits.get());
                     System.out.println("Unknown screen mode: " + fullMode);
                     return;
             }
         } else {
-            switch (samControlBits.getShort()) {
+            switch (samControlBits.get()) {
                 case 0x0:
                     mode = vdgOperatingMode.isMasked(0x20) ? Mode.SG6 : Mode.SG4;
                     break;
@@ -994,7 +997,7 @@ public class IOController
                     break;
 
                 default:
-                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.getShort() + samControlBits.getShort());
+                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.get() + samControlBits.get());
                     System.out.println("Unknown screen mode: " + fullMode);
                     return;
             }
@@ -1123,7 +1126,7 @@ public class IOController
      * @return the specified register, UNKNOWN if not a valid code
      */
     public Register getIndexedRegister(UnsignedByte postByte) {
-        int value = postByte.getShort();
+        int value = postByte.get();
         value &= 0x60;
         value = value >> 5;
 

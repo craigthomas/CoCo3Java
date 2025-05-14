@@ -50,7 +50,7 @@ public class PIA2b extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        controlRegister = new UnsignedByte(newControlRegister.getShort() +
+        controlRegister = new UnsignedByte(newControlRegister.get() +
                         (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                         (controlRegister.isMasked(0x40) ? 0x40 : 0));
         /* Bit 2 = Control whether Data Register or Data Direction Register active */

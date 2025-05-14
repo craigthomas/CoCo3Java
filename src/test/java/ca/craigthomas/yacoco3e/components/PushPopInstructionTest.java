@@ -22,7 +22,7 @@ public class PushPopInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, null);
         cpu = new CPU(io);
         io.regs.pc.set(0);
     }

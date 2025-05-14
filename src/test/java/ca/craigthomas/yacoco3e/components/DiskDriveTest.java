@@ -26,7 +26,7 @@ public class DiskDriveTest
         Keyboard keyboard = new EmulatedKeyboard();
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
-        IOController io = new IOController(memory, regs, keyboard, screen, cassette);
+        IOController io = new IOController(memory, regs, keyboard, screen, cassette, null);
         ioSpy = spy(io);
         CPU cpu = new CPU(io);
         ioSpy.setCPU(cpu);

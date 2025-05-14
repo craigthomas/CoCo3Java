@@ -120,7 +120,7 @@ public class SG6ScreenMode extends ScreenMode
         /* Background colors */
         int back = BLACK;
 
-        int color = (value.getShort() & 0xC0) >> 6;
+        int color = (value.get() & 0xC0) >> 6;
         if (colorSet == 1) {
             color = color + 4;
         }

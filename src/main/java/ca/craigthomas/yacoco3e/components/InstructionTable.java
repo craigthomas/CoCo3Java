@@ -800,7 +800,7 @@ public class InstructionTable
      * @return the Opcode object associated with the opcode read
      */
     public static Instruction get(UnsignedWord operand) {
-        int value = operand.getInt();
+        int value = operand.get();
 
         if ((value & 0xFF00) == 0x1000) {
             return EXTENDED_INSTRUCTIONS[value & 0x00FF];

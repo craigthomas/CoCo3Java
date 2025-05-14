@@ -44,7 +44,7 @@ public class CPUIntegrationTest
 
         Screen screen = new Screen(1);
 
-        IOController io = new IOController(memorySpy, registerSpy, new EmulatedKeyboard(), screen, cassetteSpy);
+        IOController io = new IOController(memorySpy, registerSpy, new EmulatedKeyboard(), screen, cassetteSpy, null);
         ioSpy = spy(io);
 
         CPU cpu = new CPU(ioSpy);

@@ -4,7 +4,6 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import static ca.craigthomas.yacoco3e.datatypes.AddressingMode.*;
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 import static org.junit.Assert.*;
 
@@ -23,7 +22,7 @@ public class ByteInstructionTest {
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
-        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, null);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
         io.regs.pc.set(0);
@@ -33,7 +32,7 @@ public class ByteInstructionTest {
     public void testNegateCorrect() {
         io.writeByte(0xCAFE, 0xFC);
         ByteInstruction.negate(io, new UnsignedByte(0xFC), new UnsignedWord(0xCAFE));
-        assertEquals(0x04, io.readByte(0xCAFE).getShort());
+        assertEquals(0x04, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_V));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -44,19 +43,19 @@ public class ByteInstructionTest {
     public void testNegateAllOnes() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.negate(io, new UnsignedByte(0xFF), new UnsignedWord(0xCAFE));
-        assertEquals(1, io.readByte(0xCAFE).getShort());
+        assertEquals(1, io.readByte(0xCAFE).get());
     }
 
     @Test
     public void testNegateOne() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.negate(io, new UnsignedByte(1), new UnsignedWord(0xCAFE));
-        assertEquals(0xFF, io.readByte(0xCAFE).getShort());
+        assertEquals(0xFF, io.readByte(0xCAFE).get());
     }
 
     @Test
     public void testNegateSetsOverflowFlag() {
-        ByteInstruction.negate(io, new UnsignedByte(1), new UnsignedWord(0xCAFE));
+        ByteInstruction.negate(io, new UnsignedByte(0x80), new UnsignedWord(0xCAFE));
         assertTrue(regs.cc.isMasked(CC_V));
     }
 
@@ -70,7 +69,7 @@ public class ByteInstructionTest {
     public void testNegateEdgeCase() {
         io.writeByte(0xCAFE, 0x80);
         ByteInstruction.negate(io, new UnsignedByte(0x80), new UnsignedWord(0xCAFE));
-        assertEquals(0x80, io.readByte(0xCAFE).getShort());
+        assertEquals(0x80, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
         assertTrue(regs.cc.isMasked(CC_C));
@@ -80,7 +79,7 @@ public class ByteInstructionTest {
     public void testNegateEdgeCase1() {
         io.writeByte(0xCAFE, 0x0);
         ByteInstruction.negate(io, new UnsignedByte(0x0), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
         assertFalse(regs.cc.isMasked(CC_C));
@@ -125,7 +124,7 @@ public class ByteInstructionTest {
     public void testComplimentWorksCorrectly() {
         io.writeByte(0xCAFE, 0xE6);
         ByteInstruction.compliment(io, new UnsignedByte(0xE6), new UnsignedWord(0xCAFE));
-        assertEquals(0x19, io.readByte(0xCAFE).getShort());
+        assertEquals(0x19, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -136,14 +135,14 @@ public class ByteInstructionTest {
     public void testComplementAllOnes() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.compliment(io, new UnsignedByte(0xFF), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
     }
 
     @Test
     public void testComplementOne() {
         io.writeByte(0xCAFE, 1);
         ByteInstruction.compliment(io, new UnsignedByte(0x01), new UnsignedWord(0xCAFE));
-        assertEquals(0xFE, io.readByte(0xCAFE).getShort());
+        assertEquals(0xFE, io.readByte(0xCAFE).get());
     }
 
     @Test
@@ -168,7 +167,7 @@ public class ByteInstructionTest {
     public void testComplementSetsZeroFlagCorrect() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.compliment(io, new UnsignedByte(0xFF), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_Z));
     }
 
@@ -207,7 +206,7 @@ public class ByteInstructionTest {
     public void testLogicalShiftRightCorrect() {
         io.writeByte(0xCAFE, 0x9E);
         ByteInstruction.logicalShiftRight(io, new UnsignedByte(0x9E), new UnsignedWord(0xCAFE));
-        assertEquals(0x4F, io.readByte(0xCAFE).getShort());
+        assertEquals(0x4F, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_Z));
@@ -217,7 +216,7 @@ public class ByteInstructionTest {
     public void testLogicalShiftRightMovesOneBitCorrect() {
         io.writeByte(0xCAFE, 0x02);
         ByteInstruction.logicalShiftRight(io, new UnsignedByte(0x2), new UnsignedWord(0xCAFE));
-        assertEquals(1, io.readByte(0xCAFE).getShort());
+        assertEquals(1, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_C));
     }
 
@@ -225,7 +224,7 @@ public class ByteInstructionTest {
     public void testLogicalShiftRightMovesOneBitToZero() {
         io.writeByte(0xCAFE, 0x01);
         ByteInstruction.logicalShiftRight(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
 
@@ -233,7 +232,7 @@ public class ByteInstructionTest {
     public void testLogicalShiftRightSetsZeroBit() {
         io.writeByte(0xCAFE, 0x01);
         ByteInstruction.logicalShiftRight(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
@@ -269,7 +268,7 @@ public class ByteInstructionTest {
     public void testRotateRightMovesOneBitCorrect() {
         io.writeByte(0xCAFE, 0x02);
         ByteInstruction.rotateRight(io, new UnsignedByte(0x02), new UnsignedWord(0xCAFE));
-        assertEquals(1, io.readByte(0xCAFE).getShort());
+        assertEquals(1, io.readByte(0xCAFE).get());
         assertFalse(regs.cc.isMasked(CC_C));
     }
 
@@ -278,7 +277,7 @@ public class ByteInstructionTest {
         regs.cc.or(CC_C);
         io.writeByte(0xCAFE, 0x02);
         ByteInstruction.rotateRight(io, new UnsignedByte(0x02), new UnsignedWord(0xCAFE));
-        assertEquals(0x81, io.readByte(0xCAFE).getShort());
+        assertEquals(0x81, io.readByte(0xCAFE).get());
         assertFalse(regs.cc.isMasked(CC_C));
     }
 
@@ -286,7 +285,7 @@ public class ByteInstructionTest {
     public void testRotateRightMovesOneBitToZero() {
         io.writeByte(0xCAFE, 0x01);
         ByteInstruction.rotateRight(io, new UnsignedByte(0x01), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_C));
     }
 
@@ -294,7 +293,7 @@ public class ByteInstructionTest {
     public void testRotateRightSetsZeroBit() {
         io.writeByte(0xCAFE, 0x01);
         ByteInstruction.rotateRight(io, new UnsignedByte(0x01), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_C));
     }
@@ -304,7 +303,7 @@ public class ByteInstructionTest {
         regs.cc.or(CC_C);
         io.writeByte(0xCAFE, 0x01);
         ByteInstruction.rotateRight(io, new UnsignedByte(0x01), new UnsignedWord(0xCAFE));
-        assertEquals(0x80, io.readByte(0xCAFE).getShort());
+        assertEquals(0x80, io.readByte(0xCAFE).get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_C));
         assertTrue(regs.cc.isMasked(CC_N));
@@ -341,7 +340,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftRightCorrect() {
         io.writeByte(0xCAFE, 0x85);
         ByteInstruction.arithmeticShiftRight(io, new UnsignedByte(0x85), new UnsignedWord(0xCAFE));
-        assertEquals(0xC2, io.readByte(0xCAFE).getShort());
+        assertEquals(0xC2, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -351,7 +350,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftRightOneCorrect() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.arithmeticShiftRight(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -361,7 +360,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftRightHighBitRetained() {
         io.writeByte(0xCAFE, 0x81);
         ByteInstruction.arithmeticShiftRight(io, new UnsignedByte(0x81), new UnsignedWord(0xCAFE));
-        assertEquals(0xC0, io.readByte(0xCAFE).getShort());
+        assertEquals(0xC0, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -371,7 +370,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftRightHighBitRetainedCarryCleared() {
         io.writeByte(0xCAFE, 0x80);
         ByteInstruction.arithmeticShiftRight(io, new UnsignedByte(0x80), new UnsignedWord(0xCAFE));
-        assertEquals(0xC0, io.readByte(0xCAFE).getShort());
+        assertEquals(0xC0, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -408,7 +407,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftLeftCorrect() {
         io.writeByte(0xCAFE, 0x55);
         ByteInstruction.arithmeticShiftLeft(io, new UnsignedByte(0x55), new UnsignedWord(0xCAFE));
-        assertEquals(0xAA, io.readByte(0xCAFE).getShort());
+        assertEquals(0xAA, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_N));
@@ -446,7 +445,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftLeftCorrectSecondTest() {
         io.writeByte(0xCAFE, 0x8A);
         ByteInstruction.arithmeticShiftLeft(io, new UnsignedByte(0x8A), new UnsignedWord(0xCAFE));
-        assertEquals(0x14, io.readByte(0xCAFE).getShort());
+        assertEquals(0x14, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -457,7 +456,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftLeftOneCorrect() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.arithmeticShiftLeft(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0x2, io.readByte(0xCAFE).getShort());
+        assertEquals(0x2, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -468,7 +467,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftLeftHighBitShiftedToCarry() {
         io.writeByte(0xCAFE, 0x81);
         ByteInstruction.arithmeticShiftLeft(io, new UnsignedByte(0x81), new UnsignedWord(0xCAFE));
-        assertEquals(0x2, io.readByte(0xCAFE).getShort());
+        assertEquals(0x2, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -479,7 +478,7 @@ public class ByteInstructionTest {
     public void testArithmeticShiftLeftHighBitShiftedToCarryZeroRemainder() {
         io.writeByte(0xCAFE, 0x80);
         ByteInstruction.arithmeticShiftLeft(io, new UnsignedByte(0x80), new UnsignedWord(0xCAFE));
-        assertEquals(0x0, io.readByte(0xCAFE).getShort());
+        assertEquals(0x0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -490,7 +489,7 @@ public class ByteInstructionTest {
     public void testRotateLeftOneCorrect() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.rotateLeft(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0x2, io.readByte(0xCAFE).getShort());
+        assertEquals(0x2, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -528,7 +527,7 @@ public class ByteInstructionTest {
     public void testRotateLeftSetsCarry() {
         io.writeByte(0xCAFE, 0x80);
         ByteInstruction.rotateLeft(io, new UnsignedByte(0x80), new UnsignedWord(0xCAFE));
-        assertEquals(0x0, io.readByte(0xCAFE).getShort());
+        assertEquals(0x0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_C));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_Z));
@@ -540,7 +539,7 @@ public class ByteInstructionTest {
         io.regs.cc.or(CC_C);
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.rotateLeft(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0x3, io.readByte(0xCAFE).getShort());
+        assertEquals(0x3, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
@@ -551,7 +550,7 @@ public class ByteInstructionTest {
     public void testRotateLeftClearsOverflow() {
         io.writeByte(0xCAFE, 0xC);
         ByteInstruction.rotateLeft(io, new UnsignedByte(0xC0), new UnsignedWord(0xCAFE));
-        assertEquals(0x80, io.readByte(0xCAFE).getShort());
+        assertEquals(0x80, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
@@ -562,7 +561,7 @@ public class ByteInstructionTest {
     public void testDecrementWorksCorrectly() {
         io.writeByte(0xCAFE, 0xC4);
         ByteInstruction.decrement(io, new UnsignedByte(0xC4), new UnsignedWord(0xCAFE));
-        assertEquals(0xC3, io.readByte(0xCAFE).getShort());
+        assertEquals(0xC3, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
@@ -599,7 +598,7 @@ public class ByteInstructionTest {
     public void testDecrementOneCorrect() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.decrement(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0x0, io.readByte(0xCAFE).getShort());
+        assertEquals(0x0, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -609,7 +608,7 @@ public class ByteInstructionTest {
     public void testDecrementZeroCorrect() {
         io.writeByte(0xCAFE, 0x0);
         ByteInstruction.decrement(io, new UnsignedByte(0), new UnsignedWord(0xCAFE));
-        assertEquals(0xFF, io.readByte(0xCAFE).getShort());
+        assertEquals(0xFF, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
@@ -619,7 +618,7 @@ public class ByteInstructionTest {
     public void testDecrementHighValueCorrect() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.decrement(io, new UnsignedByte(0xFF), new UnsignedWord(0xCAFE));
-        assertEquals(0xFE, io.readByte(0xCAFE).getShort());
+        assertEquals(0xFE, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
@@ -629,7 +628,7 @@ public class ByteInstructionTest {
     public void testIncrementOneCorrect() {
         io.writeByte(0xCAFE, 0x1);
         ByteInstruction.increment(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0x2, io.readByte(0xCAFE).getShort());
+        assertEquals(0x2, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -666,7 +665,7 @@ public class ByteInstructionTest {
     public void testIncrementSetsOverflow() {
         io.writeByte(0xCAFE, 0x7F);
         ByteInstruction.increment(io, new UnsignedByte(0x7F), new UnsignedWord(0xCAFE));
-        assertEquals(0x80, io.readByte(0xCAFE).getShort());
+        assertEquals(0x80, io.readByte(0xCAFE).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_N));
@@ -676,7 +675,7 @@ public class ByteInstructionTest {
     public void testIncrementSetsZero() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.increment(io, new UnsignedByte(0xFF), new UnsignedWord(0xCAFE));
-        assertEquals(0x0, io.readByte(0xCAFE).getShort());
+        assertEquals(0x0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_N));
@@ -733,7 +732,7 @@ public class ByteInstructionTest {
     public void testClearWorksCorrect() {
         io.writeByte(0xCAFE, 0xFF);
         ByteInstruction.clear(io, new UnsignedByte(0x1), new UnsignedWord(0xCAFE));
-        assertEquals(0, io.readByte(0xCAFE).getShort());
+        assertEquals(0, io.readByte(0xCAFE).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
     }
 

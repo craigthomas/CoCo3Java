@@ -13,7 +13,7 @@ public class NotImplementedInstructionTest {
 
     @Before
     public void setup() throws MalformedInstructionException {
-        io = new IOController(new Memory(), new RegisterSet(), new EmulatedKeyboard(), new Screen(1), new Cassette());
+        io = new IOController(new Memory(), new RegisterSet(), new EmulatedKeyboard(), new Screen(1), new Cassette(), null);
         CPU cpu = new CPU(io);
         io.setCPU(cpu);
     }

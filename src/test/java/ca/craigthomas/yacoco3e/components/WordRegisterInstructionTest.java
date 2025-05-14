@@ -23,7 +23,7 @@ public class WordRegisterInstructionTest {
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
-        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, null);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
         address = new UnsignedWord(0xA000);
@@ -40,27 +40,27 @@ public class WordRegisterInstructionTest {
     public void testStoreWordRegisterWorksCorrectly() {
         regs.s.set(0xBEEF);
         WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
-        assertEquals(0xBEEF, io.readWord(address).getInt());
+        assertEquals(0xBEEF, io.readWord(address).get());
 
         io.writeWord(address, 0);
         regs.u.set(0xBEEF);
         WordRegisterInstruction.storeWordRegister(io, regs.u, null, address, false);
-        assertEquals(0xBEEF, io.readWord(address).getInt());
+        assertEquals(0xBEEF, io.readWord(address).get());
 
         io.writeWord(address, 0);
         regs.y.set(0xBEEF);
         WordRegisterInstruction.storeWordRegister(io, regs.y, null, address, false);
-        assertEquals(0xBEEF, io.readWord(address).getInt());
+        assertEquals(0xBEEF, io.readWord(address).get());
 
         io.writeWord(address, 0);
         regs.x.set(new UnsignedWord(0xBEEF));
         WordRegisterInstruction.storeWordRegister(io, regs.x, null, address, false);
-        assertEquals(0xBEEF, io.readWord(address).getInt());
+        assertEquals(0xBEEF, io.readWord(address).get());
 
         io.writeWord(address, 0);
         regs.setD(0xBEEF);
         WordRegisterInstruction.storeWordRegister(io, regs.getD(), null, address, true);
-        assertEquals(0xBEEF, io.readWord(address).getInt());
+        assertEquals(0xBEEF, io.readWord(address).get());
     }
 
     @Test
@@ -95,7 +95,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(address, 0xA000);
         regs.s.set(0);
         WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
-        assertEquals(0, io.readWord(address).getInt());
+        assertEquals(0, io.readWord(address).get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -104,7 +104,7 @@ public class WordRegisterInstructionTest {
     public void testStoreWordRegisterSetsNegative() {
         regs.s.set(0x8100);
         WordRegisterInstruction.storeWordRegister(io, regs.s, null, address, false);
-        assertEquals(0x8100, io.readWord(address).getInt());
+        assertEquals(0x8100, io.readWord(address).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -116,7 +116,7 @@ public class WordRegisterInstructionTest {
         regs.b.set(0xBB);
         io.writeWord(0x0000, 0xDD0A);
         cpu.executeInstruction();
-        assertEquals(0xAABB, io.readWord(0x000A).getInt());
+        assertEquals(0xAABB, io.readWord(0x000A).get());
     }
 
     @Test
@@ -126,7 +126,7 @@ public class WordRegisterInstructionTest {
         regs.b.set(0xBB);
         io.writeWord(0x0000, 0xED80);
         cpu.executeInstruction();
-        assertEquals(0xAABB, io.readWord(extendedAddress).getInt());
+        assertEquals(0xAABB, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -136,7 +136,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0xFD);
         io.writeWord(0x0001, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(0xAABB, io.readWord(extendedAddress).getInt());
+        assertEquals(0xAABB, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -144,7 +144,7 @@ public class WordRegisterInstructionTest {
         regs.u.set(0x1234);
         io.writeWord(0x0000, 0xDF0A);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(0x000A).getInt());
+        assertEquals(0x1234, io.readWord(0x000A).get());
     }
 
     @Test
@@ -153,7 +153,7 @@ public class WordRegisterInstructionTest {
         regs.x.set(extendedAddress);
         io.writeWord(0x0000, 0xEF80);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -162,7 +162,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0xFF);
         io.writeWord(0x0001, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -170,7 +170,7 @@ public class WordRegisterInstructionTest {
         regs.x.set(0x1234);
         io.writeWord(0x0000, 0x9F0A);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(0x000A).getInt());
+        assertEquals(0x1234, io.readWord(0x000A).get());
     }
 
     @Test
@@ -179,7 +179,7 @@ public class WordRegisterInstructionTest {
         regs.y.set(extendedAddress);
         io.writeWord(0x0000, 0xAFA0);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -188,7 +188,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0xBF);
         io.writeWord(0x0001, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -197,7 +197,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x109F);
         io.writeByte(0x0002, 0x0A);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(0x000A).getInt());
+        assertEquals(0x1234, io.readWord(0x000A).get());
     }
 
     @Test
@@ -207,7 +207,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10AF);
         io.writeByte(0x0002, 0x80);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -216,7 +216,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10BF);
         io.writeWord(0x0002, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -225,7 +225,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10DF);
         io.writeByte(0x0002, 0x0A);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(0x000A).getInt());
+        assertEquals(0x1234, io.readWord(0x000A).get());
     }
 
     @Test
@@ -235,7 +235,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10EF);
         io.writeByte(0x0002, 0x80);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -244,7 +244,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10FF);
         io.writeWord(0x0002, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(0x1234, io.readWord(extendedAddress).getInt());
+        assertEquals(0x1234, io.readWord(extendedAddress).get());
     }
 
     @Test
@@ -253,7 +253,7 @@ public class WordRegisterInstructionTest {
         regs.x.set(0x0020);
         io.writeByte(0, 0x3A);
         cpu.executeInstruction();
-        assertEquals(0x0028, regs.x.getInt());
+        assertEquals(0x0028, regs.x.get());
     }
 
     @Test
@@ -262,7 +262,7 @@ public class WordRegisterInstructionTest {
         regs.x.set(0x1091);
         io.writeByte(0x0000, 0x3A);
         cpu.executeInstruction();
-        assertEquals(0x10B2, regs.x.getInt());
+        assertEquals(0x10B2, regs.x.get());
     }
 
     @Test
@@ -271,9 +271,9 @@ public class WordRegisterInstructionTest {
         regs.b.set(0x0C);
         io.writeByte(0x0000, 0x3D);
         cpu.executeInstruction();
-        assertEquals(0x0384, regs.getD().getInt());
-        assertEquals(0x03, regs.a.getShort());
-        assertEquals(0x84, regs.b.getShort());
+        assertEquals(0x0384, regs.getD().get());
+        assertEquals(0x03, regs.a.get());
+        assertEquals(0x84, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_C));
@@ -294,7 +294,7 @@ public class WordRegisterInstructionTest {
     public void testLoadWordRegisterSetsZero() {
         io.regs.u.set(0xFFFF);
         WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x0000), null, false);
-        assertEquals(0, io.regs.u.getInt());
+        assertEquals(0, io.regs.u.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -303,7 +303,7 @@ public class WordRegisterInstructionTest {
     public void testLoadWordRegisterSetsNegative() {
         io.regs.u.set(0xFFFF);
         WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x8100), null, false);
-        assertEquals(0x8100, io.regs.u.getInt());
+        assertEquals(0x8100, io.regs.u.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -312,7 +312,7 @@ public class WordRegisterInstructionTest {
     public void testLoadWordRegisterSetsNegativeZero() {
         io.regs.u.set(0xFFFF);
         WordRegisterInstruction.loadWordRegister(io, io.regs.u, new UnsignedWord(0x8000), null, false);
-        assertEquals(0x8000, io.regs.u.getInt());
+        assertEquals(0x8000, io.regs.u.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -323,7 +323,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x10CE);
         io.writeWord(0x0002, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.s.getInt());
+        assertEquals(0xDDDD, regs.s.get());
     }
 
     @Test
@@ -333,7 +333,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0002, 0x0A);
         io.writeWord(0x000A, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.s.getInt());
+        assertEquals(0xDDDD, regs.s.get());
     }
 
     @Test
@@ -344,7 +344,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0002, 0x80);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.s.getInt());
+        assertEquals(0xDDDD, regs.s.get());
     }
 
     @Test
@@ -354,7 +354,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0002, extendedAddress);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.s.getInt());
+        assertEquals(0xDDDD, regs.s.get());
     }
 
     @Test
@@ -363,7 +363,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x108E);
         io.writeWord(0x0002, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.y.getInt());
+        assertEquals(0xDDDD, regs.y.get());
     }
 
     @Test
@@ -373,7 +373,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0002, 0x0A);
         io.writeWord(0x000A, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.y.getInt());
+        assertEquals(0xDDDD, regs.y.get());
     }
 
     @Test
@@ -384,7 +384,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0002, 0x80);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.y.getInt());
+        assertEquals(0xDDDD, regs.y.get());
     }
 
     @Test
@@ -394,7 +394,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0002, extendedAddress);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.y.getInt());
+        assertEquals(0xDDDD, regs.y.get());
     }
 
     @Test
@@ -403,7 +403,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0xCC);
         io.writeWord(0x0001, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.getD().getInt());
+        assertEquals(0xDDDD, regs.getD().get());
     }
 
     @Test
@@ -412,7 +412,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xDC0A);
         io.writeWord(0x000A, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.getD().getInt());
+        assertEquals(0xDDDD, regs.getD().get());
     }
 
     @Test
@@ -422,7 +422,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xEC80);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.getD().getInt());
+        assertEquals(0xDDDD, regs.getD().get());
     }
 
     @Test
@@ -432,7 +432,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.getD().getInt());
+        assertEquals(0xDDDD, regs.getD().get());
     }
 
     @Test
@@ -441,7 +441,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0xCE);
         io.writeWord(0x0001, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.u.getInt());
+        assertEquals(0xDDDD, regs.u.get());
     }
 
     @Test
@@ -450,7 +450,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xDE0A);
         io.writeWord(0x000A, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.u.getInt());
+        assertEquals(0xDDDD, regs.u.get());
     }
 
     @Test
@@ -460,7 +460,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xEE80);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.u.getInt());
+        assertEquals(0xDDDD, regs.u.get());
     }
 
     @Test
@@ -470,7 +470,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.u.getInt());
+        assertEquals(0xDDDD, regs.u.get());
     }
 
     @Test
@@ -479,7 +479,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0x8E);
         io.writeWord(0x0001, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.x.getInt());
+        assertEquals(0xDDDD, regs.x.get());
     }
 
     @Test
@@ -488,7 +488,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x9E0A);
         io.writeWord(0x000A, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.x.getInt());
+        assertEquals(0xDDDD, regs.x.get());
     }
 
     @Test
@@ -498,7 +498,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xAEA0);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.x.getInt());
+        assertEquals(0xDDDD, regs.x.get());
     }
 
     @Test
@@ -508,7 +508,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeWord(extendedAddress, 0xDDDD);
         cpu.executeInstruction();
-        assertEquals(0xDDDD, regs.x.getInt());
+        assertEquals(0xDDDD, regs.x.get());
     }
 
     @Test
@@ -561,7 +561,7 @@ public class WordRegisterInstructionTest {
     public void testCompareWordRegression1() {
         io.regs.u.set(0xFE00);
         WordRegisterInstruction.compareWord(io, io.regs.u, new UnsignedWord(0xF800), null, false);
-        assertEquals(0xFE00, io.regs.u.getInt());
+        assertEquals(0xFE00, io.regs.u.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -833,7 +833,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x30A0);
         io.writeWord(extendedAddress, 0x072E);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.x.getInt());
+        assertEquals(extendedAddress, regs.x.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
     }
 
@@ -844,7 +844,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x3180);
         io.writeWord(extendedAddress, 0x072E);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.y.getInt());
+        assertEquals(extendedAddress, regs.y.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
     }
 
@@ -855,7 +855,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x3180);
         io.writeWord(extendedAddress, 0x072E);
         cpu.executeInstruction();
-        assertEquals(0x0000, regs.y.getInt());
+        assertEquals(0x0000, regs.y.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
     }
 
@@ -866,7 +866,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x3280);
         io.writeWord(extendedAddress, 0x072E);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.s.getInt());
+        assertEquals(extendedAddress, regs.s.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
     }
 
@@ -877,14 +877,14 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x3380);
         io.writeWord(extendedAddress, 0x072E);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.u.getInt());
+        assertEquals(extendedAddress, regs.u.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
     }
 
     @Test
     public void testAddWordWorksCorrectly() {
         WordRegisterInstruction.addWord(io, new UnsignedWord(0x0101), new UnsignedWord(0x0101), null, true);
-        assertEquals(0x0202, io.regs.getD().getInt());
+        assertEquals(0x0202, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -894,7 +894,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testAddWordSetsNegativeOverflow() {
         WordRegisterInstruction.addWord(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x0001), null, true);
-        assertEquals(0x8000, io.regs.getD().getInt());
+        assertEquals(0x8000, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -904,7 +904,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testAddWordSetsZeroOverflowCarry() {
         WordRegisterInstruction.addWord(io, new UnsignedWord(0xFFFF), new UnsignedWord(0x0001), null, true);
-        assertEquals(0x0000, io.regs.getD().getInt());
+        assertEquals(0x0000, io.regs.getD().get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -968,7 +968,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDWorksSetsOverflow() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x8000), new UnsignedWord(0x7FFF), null, true);
-        assertEquals(0x01, io.regs.getD().getInt());
+        assertEquals(0x01, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -978,7 +978,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDWorksSetsCarry() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x7FFF), new UnsignedWord(0x8000), null, true);
-        assertEquals(0xFFFF, io.regs.getD().getInt());
+        assertEquals(0xFFFF, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -988,7 +988,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDWorksCorrectly() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x6A00), new UnsignedWord(0x2700), null, true);
-        assertEquals(0x4300, io.regs.getD().getInt());
+        assertEquals(0x4300, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -998,7 +998,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDWorksSetsZero() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x0001), new UnsignedWord(0x0001), null, true);
-        assertEquals(0x0000, io.regs.getD().getInt());
+        assertEquals(0x0000, io.regs.getD().get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -1008,7 +1008,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDWorksSetsNegativeSetsCarry() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0x8000), new UnsignedWord(0x8001), null, true);
-        assertEquals(0xFFFF, io.regs.getD().getInt());
+        assertEquals(0xFFFF, io.regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -1018,7 +1018,7 @@ public class WordRegisterInstructionTest {
     @Test
     public void testSubtractDRegression1() {
         WordRegisterInstruction.subtractWord(io, new UnsignedWord(0xFE00), new UnsignedWord(0xF800), null, true);
-        assertEquals(0x0600, regs.getD().getInt());
+        assertEquals(0x0600, regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -1031,7 +1031,7 @@ public class WordRegisterInstructionTest {
         io.writeByte(0x0000, 0x83);
         io.writeWord(0x0001, 0x7FFF);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.getD().getInt());
+        assertEquals(0x01, regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1045,7 +1045,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0x9301);
         io.writeWord(0x1001, 0x7FFF);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.getD().getInt());
+        assertEquals(0x01, regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1059,7 +1059,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0000, 0xA380);
         io.writeWord(extendedAddress, 0x7FFF);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.getD().getInt());
+        assertEquals(0x01, regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1073,7 +1073,7 @@ public class WordRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeWord(extendedAddress, 0x7FFF);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.getD().getInt());
+        assertEquals(0x01, regs.getD().get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));

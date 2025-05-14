@@ -79,19 +79,19 @@ public class G2CScreenMode extends ScreenMode
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Pixel 1 */
-        int color = (value.getShort() & 0xC0) >> 6;
+        int color = (value.get() & 0xC0) >> 6;
         drawBlock(x, y, color);
 
         /* Pixel 2 */
-        color = (value.getShort() & 0x30) >> 4;
+        color = (value.get() & 0x30) >> 4;
         drawBlock(x + BLOCK_WIDTH, y, color);
 
         /* Pixel 3 */
-        color = (value.getShort() & 0xC) >> 2;
+        color = (value.get() & 0xC) >> 2;
         drawBlock(x + (BLOCK_WIDTH * 2), y, color);
 
         /* Pixel 4 */
-        color = (value.getShort() & 0x3);
+        color = (value.get() & 0x3);
         drawBlock(x + (BLOCK_WIDTH * 3), y, color);
     }
 }

@@ -7,9 +7,16 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.SourceDataLine;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
@@ -29,6 +36,24 @@ public class Emulator extends Thread
     private Cassette cassette;
     private Memory memory;
 
+    // The audio playback rate
+    private static final int AUDIO_PLAYBACK_RATE = 48000;
+
+    /**
+     * The minimum number of audio samples we want to generate from the DC to
+     * analog converter. Only one voltage can be loaded into the DCA at a time,
+     * which means that all we need to do is load that value into a buffer and
+     * continuously play it. Successive writes into the DCA will replace the
+     * value with a new one, generating a waveform over time. To keep things
+     * fast, we will only generate an audio buffer that lasts 1/60th of a second,
+     * and loop it. Since the audio mixer will be initialized to require
+     * 48000 samples per second, a 1/60th of a second clip will require 800 samples.
+     */
+    public static final int MIN_AUDIO_SAMPLES = 80;
+
+    protected SourceDataLine audioOutputLine;
+    protected AudioFormat audioFormat;
+
     // The Canvas on which all the drawing will take place
     private Canvas canvas;
 
@@ -41,8 +66,8 @@ public class Emulator extends Thread
     private boolean verbose;
     private volatile EmulatorStatus status;
     private volatile int remainingTicks;
-    private Timer timer;
-    private TimerTask timerTask;
+    private Timer screenRefreshTimer;
+    private TimerTask screenRefreshTimerTask;
 
     /* A logger for the emulator */
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
@@ -105,7 +130,21 @@ public class Emulator extends Thread
         keyboard = new EmulatedKeyboard();
         screen = new Screen(builder.scale);
         cassette = new Cassette();
-        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
+
+        audioFormat = new AudioFormat(AUDIO_PLAYBACK_RATE, 8, 1, false, false);
+        DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
+        if (!AudioSystem.isLineSupported(dataLineInfo)) {
+            System.out.println("SourceDataLine type not supported");
+        }
+        try {
+            audioOutputLine = AudioSystem.getSourceDataLine(audioFormat);
+            audioOutputLine.open(audioFormat, MIN_AUDIO_SAMPLES);
+            audioOutputLine.start();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette, audioOutputLine);
         cpu = new CPU(io);
         io.setCPU(cpu);
         trace = builder.trace;
@@ -426,15 +465,15 @@ public class Emulator extends Thread
      */
     public void start() {
         this.reset();
-        timer = new Timer();
-        timerTask = new TimerTask() {
+        screenRefreshTimer = new Timer();
+        screenRefreshTimerTask = new TimerTask() {
             public void run() {
-                refreshTicks();
+//                refreshTicks();
                 screen.refreshScreen();
                 refreshScreen();
             }
         };
-        timer.scheduleAtFixedRate(timerTask, 0L, SCREEN_REFRESH_RATE);
+        screenRefreshTimer.scheduleAtFixedRate(screenRefreshTimerTask, 0L, SCREEN_REFRESH_RATE);
         run();
     }
 
@@ -443,6 +482,8 @@ public class Emulator extends Thread
      */
     public void run() {
         int operationTicks = 0;
+        Instant lastInstant = Instant.now();
+        remainingTicks = IOController.TIMER_63_5_MICROS;
 
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
@@ -450,14 +491,29 @@ public class Emulator extends Thread
                     System.out.print(io.regs.toString() + " | ");
                 }
 
+                lastInstant = Instant.now().truncatedTo(ChronoUnit.MICROS);
+
                 try {
                     if (remainingTicks > 0 && !io.waitForIRQ) {
                         operationTicks = cpu.executeInstruction();
-                        remainingTicks = remainingTicks - operationTicks;
+//                        remainingTicks = remainingTicks - operationTicks;
+                    } else {
+                        System.out.println("System wait");
                     }
                 } catch (MalformedInstructionException e) {
                     System.out.println(e.getMessage());
                     status = EmulatorStatus.PAUSED;
+                }
+
+                float totalInstructionTime = 1.117f * operationTicks;
+                Instant thisInstant = Instant.now();
+                Duration duration = Duration.between(lastInstant, thisInstant);
+                long microSeconds = duration.toNanos() / 1000;
+
+                while (microSeconds <= totalInstructionTime) {
+                    thisInstant = Instant.now();
+                    duration = Duration.between(lastInstant, thisInstant);
+                    microSeconds = duration.toNanos() / 1000;
                 }
 
                 /* Check to see if we had an instruction - if it's a SYNC, just add to the timers */
@@ -489,9 +545,16 @@ public class Emulator extends Thread
      * main container.
      */
     public void shutdown() {
-        timer.cancel();
-        timer.purge();
-        timerTask.cancel();
+        screenRefreshTimer.cancel();
+        screenRefreshTimer.purge();
+        screenRefreshTimerTask.cancel();
+
+        if (audioOutputLine != null) {
+            audioOutputLine.drain();
+            audioOutputLine.stop();
+            audioOutputLine.close();
+        }
+
         container.dispose();
     }
 

@@ -129,7 +129,7 @@ public class SG4ScreenMode extends ScreenMode
         int back = backColor;
 
         if (value.isNegative()) {
-            int color = (value.getShort() & 0x70) >> 4;
+            int color = (value.get() & 0x70) >> 4;
 
             /* Upper Left Bit */
             int on = value.isMasked(0x8) ? 1 : 0;
@@ -147,10 +147,10 @@ public class SG4ScreenMode extends ScreenMode
             on = value.isMasked(0x1) ? 1 : 0;
             drawSG4Block(x + BLOCK_WIDTH, y + BLOCK_HEIGHT, on == 1 ? color : back);
         } else {
-            int intValue = value.getShort() & 0x3F;
+            int intValue = value.get() & 0x3F;
             int character = intValue > SG4_CHARACTERS.length ?
                     intValue - SG4_CHARACTERS.length : intValue;
-            boolean inverse = value.getShort() < SG4_CHARACTERS.length;
+            boolean inverse = value.get() < SG4_CHARACTERS.length;
 
             if (!inverse) {
                 fore = backColor;

@@ -26,7 +26,7 @@ public class IOControllerTest
         regs = new RegisterSet();
         screen = new Screen(1);
         cassette = new Cassette();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, null);
         cpu = new CPU(io);
         io.setCPU(cpu);
     }
@@ -309,7 +309,7 @@ public class IOControllerTest
         cpu.executeInstruction();
         cpu.serviceInterrupts();
 
-        assertEquals(0xDEAD, io.getWordRegister(Register.PC).getInt());
+        assertEquals(0xDEAD, io.getWordRegister(Register.PC).get());
     }
 
     @Test
@@ -387,14 +387,14 @@ public class IOControllerTest
     public void testPushStackWritesToMemoryLocation() {
         regs.s.set(new UnsignedWord(0xA000));
         io.pushStack(Register.S, new UnsignedByte(0x98));
-        assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).getShort());
+        assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).get());
     }
 
     @Test
     public void testPushStackWritesToMemoryLocationUsingUStack() {
         regs.u.set(new UnsignedWord(0xA000));
         io.pushStack(Register.U, new UnsignedByte(0x98));
-        assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).getShort());
+        assertEquals(memory.memory[0x79FFF], new UnsignedByte(0x98).get());
     }
 
     @Test

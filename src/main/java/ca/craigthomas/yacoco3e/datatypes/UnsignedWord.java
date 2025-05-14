@@ -48,8 +48,7 @@ public class UnsignedWord
      * @param high the setHigh byte for the word
      */
     public void setHigh(UnsignedByte high) {
-        value &= 0x00FF;
-        value += (high.getShort() << 8);
+        value = (high.get() << 8) + (value & 0x00FF);
     }
 
     /**
@@ -67,8 +66,7 @@ public class UnsignedWord
      * @param low the low byte for the word
      */
     public void setLow(UnsignedByte low) {
-        value &= 0xFF00;
-        value += low.getShort();
+        value = (value & 0xFF00) + low.get();
     }
 
     /**
@@ -86,18 +84,7 @@ public class UnsignedWord
      * @param value the additional value to add
      */
     public void add(int value) {
-        this.value += value;
-        and(0xFFFF);
-    }
-
-    /**
-     * Returns a new UnsignedWord that is the twos compliment
-     * value of the current Word.
-     *
-     * @return a new UnsignedWord with the twos compliment value
-     */
-    public UnsignedWord twosCompliment() {
-        return new UnsignedWord((~value + 1));
+        this.value = (this.value + value) & 0xFFFF;
     }
 
     /**
@@ -142,7 +129,7 @@ public class UnsignedWord
      * @return True if the signed value of the byte would be negative
      */
     public boolean isNegative() {
-        return isMasked(0x8000);
+        return (value & 0x8000) > 0;
     }
 
     /**
@@ -153,7 +140,7 @@ public class UnsignedWord
      * @return True if applying the mask would result in a non-zero value
      */
     public boolean isMasked(int mask) {
-        return (getInt() & mask) == mask;
+        return (value & mask) == mask;
     }
 
     /**
@@ -171,7 +158,7 @@ public class UnsignedWord
      * @param value the value to set
      */
     public void set(UnsignedWord value) {
-        this.value = value.getInt();
+        this.value = value.get();
     }
 
     /**
@@ -179,7 +166,7 @@ public class UnsignedWord
      *
      * @return the integer representation of the word
      */
-    public int getInt() {
+    public int get() {
         return value;
     }
 
@@ -190,7 +177,7 @@ public class UnsignedWord
      * @return the signed integer representation of the word
      */
     public int getSignedInt() {
-        return (isNegative()) ? -(twosCompliment().getInt()) : value;
+        return ((value & 0x8000) > 0) ? -((~value + 1) & 0xFFFF) : value;
     }
 
     /**
@@ -209,12 +196,12 @@ public class UnsignedWord
 
         UnsignedWord that = (UnsignedWord) o;
 
-        return this.getInt() == that.getInt();
+        return this.get() == that.get();
     }
 
     @Override
     public int hashCode() {
-        return getInt();
+        return get();
     }
 
     @Override

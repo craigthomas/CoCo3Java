@@ -22,7 +22,7 @@ public class CPUTest
     public void setup() throws MalformedInstructionException {
         memory = new Memory();
         regs = new RegisterSet();
-        IOController io = new IOController(memory, regs, new EmulatedKeyboard(), new Screen(1), new Cassette());
+        IOController io = new IOController(memory, regs, new EmulatedKeyboard(), new Screen(1), new Cassette(), null);
         cpu = new CPU(io);
         io.setCPU(cpu);
     }

@@ -50,7 +50,7 @@ public class DiskTrack
      * @param value the value to write to the sector
      */
     public void writeData(int sector, UnsignedByte value) {
-        sectors[sector].writeSectorData((byte) value.getShort());
+        sectors[sector].writeSectorData((byte) value.get());
     }
 
     /**
@@ -115,7 +115,7 @@ public class DiskTrack
      * @param mark the value of the mark
      */
     public void writeDataMark(int sector, UnsignedByte mark) {
-        sectors[sector].writeDataMark((byte) mark.getShort());
+        sectors[sector].writeDataMark((byte) mark.get());
     }
 
     /**
@@ -201,7 +201,7 @@ public class DiskTrack
         }
 
         /* Check to see if we have a byte that has a different interpretation */
-        byte byteValue = (byte) value.getShort();
+        byte byteValue = (byte) value.get();
         if (doubleDensity) {
             switch (byteValue) {
                 case (byte) 0xF5:
@@ -267,6 +267,6 @@ public class DiskTrack
     }
 
     public void writeSectorId(int sector, UnsignedByte value) {
-        sectors[sector].writeId((byte) value.getShort());
+        sectors[sector].writeId((byte) value.get());
     }
 }

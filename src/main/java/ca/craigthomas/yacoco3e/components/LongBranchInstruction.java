@@ -33,7 +33,7 @@ public class LongBranchInstruction extends BranchInstruction
     @Override
     public int call(IOController io) {
         if (operation.apply(io).equals(true)) {
-            io.regs.pc.add(wordRead.isNegative() ? wordRead.getSignedInt() : wordRead.getInt());
+            io.regs.pc.add(wordRead.isNegative() ? wordRead.getSignedInt() : wordRead.get());
             return ticks + 1;
         }
         return ticks;

@@ -112,7 +112,7 @@ public class SG12ScreenMode extends ScreenMode
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Background colors */
-        int color = (value.getShort() & 0x70) >> 4;
+        int color = (value.get() & 0x70) >> 4;
         if (!value.isMasked(0x80)) {
             color = BLACK;
         }

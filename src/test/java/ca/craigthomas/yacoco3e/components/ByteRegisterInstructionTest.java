@@ -23,7 +23,7 @@ public class ByteRegisterInstructionTest {
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
-        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, null);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
     }
@@ -39,7 +39,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x10);
         io.writeWord(0x00, 0x1A01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.cc.getShort());
+        assertEquals(0x11, regs.cc.get());
     }
 
     @Test
@@ -47,7 +47,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x22);
         io.writeWord(0x0000, 0x1A50);
         cpu.executeInstruction();
-        assertEquals(0x72, regs.cc.getShort());
+        assertEquals(0x72, regs.cc.get());
     }
 
     @Test
@@ -55,7 +55,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x10);
         io.writeWord(0x0000, 0x1C11);
         cpu.executeInstruction();
-        assertEquals(0x10, regs.cc.getShort());
+        assertEquals(0x10, regs.cc.get());
     }
 
     @Test
@@ -63,7 +63,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x11);
         io.writeWord(0x0000, 0x1C11);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.cc.getShort());
+        assertEquals(0x11, regs.cc.get());
     }
 
     @Test
@@ -71,8 +71,13 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x81);
         io.writeByte(0x0000, 0x1D);
         cpu.executeInstruction();
-        assertEquals(0xFF, regs.a.getShort());
-        assertEquals(0x81, regs.b.getShort());
+        assertEquals(0xFF, regs.a.get());
+        assertEquals(0x81, regs.b.get());
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_V));
+        assertFalse(regs.cc.isMasked(CC_H));
+        assertFalse(regs.cc.isMasked(CC_Z));
     }
 
     @Test
@@ -80,8 +85,13 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x7F);
         io.writeByte(0x0000, 0x1D);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
-        assertEquals(0x7F, regs.b.getShort());
+        assertEquals(0x00, regs.a.get());
+        assertEquals(0x7F, regs.b.get());
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_V));
+        assertFalse(regs.cc.isMasked(CC_H));
+        assertTrue(regs.cc.isMasked(CC_Z));
     }
 
     @Test
@@ -96,7 +106,7 @@ public class ByteRegisterInstructionTest {
     public void testNegateACorrect() {
         regs.a.set(0xFC);
         ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertEquals(0x04, regs.a.getShort());
+        assertEquals(0x04, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_V));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -107,45 +117,41 @@ public class ByteRegisterInstructionTest {
     public void testNegateAAllOnes() {
         regs.a.set(0xFF);
         ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertEquals(1, regs.a.getShort());
+        assertEquals(1, regs.a.get());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_V));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
     }
 
     @Test
     public void testNegateAOne() {
+        // TODO: fix - overflow flag should not be set
         regs.a.set(1);
         ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertEquals(0xFF, regs.a.getShort());
-    }
-
-    @Test
-    public void testNegateASetsOverflowFlag() {
-        regs.a.set(1);
-        ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertTrue(regs.cc.isMasked(CC_V));
-    }
-
-    @Test
-    public void testNegateASetsNegativeFlag() {
-        regs.a.set(1);
-        ByteRegisterInstruction.negate(io, regs.a, null, null);
+        assertEquals(0xFF, regs.a.get());
+        assertTrue(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_V)); // this should be false
         assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
     }
 
     @Test
     public void testNegateAEdgeCase() {
         regs.a.set(0x80);
         ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
         assertTrue(regs.cc.isMasked(CC_C));
+        assertFalse(regs.cc.isMasked(CC_Z));
     }
 
     @Test
     public void testNegateAEdgeCase1() {
         regs.a.set(0);
         ByteRegisterInstruction.negate(io, regs.a, null, null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
         assertFalse(regs.cc.isMasked(CC_C));
@@ -157,7 +163,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0xAA);
         io.writeByte(0x0000, 0x43);
         cpu.executeInstruction();
-        assertEquals(0x55, regs.a.getShort());
+        assertEquals(0x55, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_Z));
@@ -167,14 +173,14 @@ public class ByteRegisterInstructionTest {
     public void testComplementAAllOnes() {
         regs.a.set(0xFF);
         ByteRegisterInstruction.compliment(io, regs.a, null, null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
     }
 
     @Test
     public void testComplementAOne() {
         regs.a.set(1);
         ByteRegisterInstruction.compliment(io, regs.a, null, null);
-        assertEquals(0xFE, regs.a.getShort());
+        assertEquals(0xFE, regs.a.get());
     }
 
     @Test
@@ -199,7 +205,7 @@ public class ByteRegisterInstructionTest {
     public void testComplementASetsZeroFlagCorrect() {
         regs.a.set(0xFF);
         ByteRegisterInstruction.compliment(io, regs.a, null, null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
     }
 
@@ -207,7 +213,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalShiftARightMovesOneBitCorrect() {
         regs.a.set(2);
         ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
-        assertEquals(1, regs.a.getShort());
+        assertEquals(1, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_C));
     }
 
@@ -215,7 +221,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalShiftRightAMovesOneBitToZero() {
         regs.a.set(1);
         ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
 
@@ -223,7 +229,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalShiftRightASetsZeroBit() {
         regs.a.set(1);
         ByteRegisterInstruction.logicalShiftRight(io, regs.a, null, null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
@@ -249,7 +255,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(1);
         io.writeByte(0x0000, 0x46);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -261,7 +267,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.or(CC_C);
         io.writeByte(0x0000, 0x46);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
@@ -280,7 +286,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         io.writeByte(0x0000, 0x47);
         cpu.executeInstruction();
-        assertEquals(0xC0, regs.a.getShort());
+        assertEquals(0xC0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_C));
@@ -291,7 +297,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(1);
         io.writeByte(0x0000, 0x47);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_C));
@@ -302,7 +308,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x81);
         io.writeByte(0x0000, 0x47);
         cpu.executeInstruction();
-        assertEquals(0xC0, regs.a.getShort());
+        assertEquals(0xC0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_C));
@@ -321,7 +327,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         io.writeByte(0x0000, 0x48);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -333,7 +339,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x40);
         io.writeByte(0x0000, 0x48);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
@@ -345,7 +351,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(1);
         io.writeByte(0x0000, 0x48);
         cpu.executeInstruction();
-        assertEquals(2, regs.a.getShort());
+        assertEquals(2, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -365,7 +371,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         io.writeByte(0x0000, 0x49);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -378,7 +384,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.or(CC_C);
         io.writeByte(0x0000, 0x49);
         cpu.executeInstruction();
-        assertEquals(1, regs.a.getShort());
+        assertEquals(1, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
@@ -390,7 +396,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x40);
         io.writeByte(0x0000, 0x49);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
@@ -411,20 +417,31 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x01);
         io.writeByte(0x0000, 0x4A);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
     }
 
     @Test
-    public void testDecrementASetsOverflow() throws MalformedInstructionException {
+    public void testDecrementARegression1() throws MalformedInstructionException {
         regs.a.set(0);
         io.writeByte(0x0000, 0x4A);
         cpu.executeInstruction();
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testDecrementASetsOverflow() throws MalformedInstructionException {
+        regs.a.set(0x80);
+        io.writeByte(0x0000, 0x4A);
+        cpu.executeInstruction();
+        assertEquals(0x7F, regs.a.get());
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
     }
 
@@ -441,7 +458,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0xFF);
         io.writeByte(0x0000, 0x4C);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -452,9 +469,21 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x7F);
         io.writeByte(0x0000, 0x4C);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
+        assertTrue(regs.cc.isMasked(CC_V));
+    }
+
+    @Test
+    public void testIncrementARegression1() throws MalformedInstructionException {
+        regs.a.set(0x0F);
+        io.writeByte(0x0000, 0x4C);
+        cpu.executeInstruction();
+        assertEquals(0x10, regs.a.get());
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertFalse(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_V));
     }
 
     @Test
@@ -472,7 +501,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0);
         io.writeByte(0x0000, 0x4D);
         cpu.executeInstruction();
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -756,7 +785,7 @@ public class ByteRegisterInstructionTest {
     @Test
     public void testLoadByteRegisterWorksCorrectly() {
         ByteRegisterInstruction.loadByteRegister(io, regs.a, new UnsignedByte(0xAA), null);
-        assertEquals(0xAA, regs.a.getShort());
+        assertEquals(0xAA, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -765,7 +794,7 @@ public class ByteRegisterInstructionTest {
     public void testLoadByteRegisterSetsZero() {
         regs.a.set(0xFF);
         ByteRegisterInstruction.loadByteRegister(io, regs.a, new UnsignedByte(0), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -774,7 +803,7 @@ public class ByteRegisterInstructionTest {
     public void testLoadAImmediateCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x86AB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.a.getShort());
+        assertEquals(0xAB, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -786,7 +815,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x960A);
         io.writeByte(0x000A, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.a.getShort());
+        assertEquals(0xAB, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -798,7 +827,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA680);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.a.getShort());
+        assertEquals(0xAB, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -810,7 +839,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.a.getShort());
+        assertEquals(0xAB, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -822,7 +851,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(new UnsignedWord(0x0), new UnsignedWord(0x970A));
         io.writeByte(0x000A, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(0x100A).getShort());
+        assertEquals(0xBE, io.readByte(0x100A).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -834,7 +863,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA780);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(extendedAddress).getShort());
+        assertEquals(0xBE, io.readByte(extendedAddress).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -846,7 +875,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(extendedAddress).getShort());
+        assertEquals(0xBE, io.readByte(extendedAddress).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -858,7 +887,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(new UnsignedWord(0x0), new UnsignedWord(0xD70A));
         io.writeByte(0x000A, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(0x100A).getShort());
+        assertEquals(0xBE, io.readByte(0x100A).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -870,7 +899,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE780);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(extendedAddress).getShort());
+        assertEquals(0xBE, io.readByte(extendedAddress).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -882,7 +911,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xBE, io.readByte(extendedAddress).getShort());
+        assertEquals(0xBE, io.readByte(extendedAddress).get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -891,7 +920,7 @@ public class ByteRegisterInstructionTest {
     public void testLoadBImmediateCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0xC6AB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.b.getShort());
+        assertEquals(0xAB, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -903,7 +932,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD60A);
         io.writeByte(0x000A, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.b.getShort());
+        assertEquals(0xAB, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -915,7 +944,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE680);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.b.getShort());
+        assertEquals(0xAB, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -927,7 +956,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0xAB);
         cpu.executeInstruction();
-        assertEquals(0xAB, regs.b.getShort());
+        assertEquals(0xAB, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -937,7 +966,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_N);
         regs.a.set(0x0);
         ByteRegisterInstruction.logicalOr(io, regs.a, new UnsignedByte(0x00), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -947,7 +976,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_Z);
         regs.a.set(0x0);
         ByteRegisterInstruction.logicalOr(io, regs.a, new UnsignedByte(0x80), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
     }
@@ -957,7 +986,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x10);
         io.writeWord(0x00, 0x8A01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.a.getShort());
+        assertEquals(0x11, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -967,7 +996,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x10);
         io.writeWord(0x00, 0xCA01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.b.getShort());
+        assertEquals(0x11, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -979,7 +1008,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x00, 0x9A10);
         io.writeByte(0x1010, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.a.getShort());
+        assertEquals(0x11, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -991,7 +1020,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x00, 0xDA10);
         io.writeByte(0x1010, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.b.getShort());
+        assertEquals(0x11, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1003,7 +1032,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x00, 0xAA80);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.a.getShort());
+        assertEquals(0x11, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1015,7 +1044,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x00, 0xEA80);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.b.getShort());
+        assertEquals(0x11, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1027,7 +1056,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.a.getShort());
+        assertEquals(0x11, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1039,7 +1068,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x11, regs.b.getShort());
+        assertEquals(0x11, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1050,7 +1079,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x01);
         io.writeWord(0x0000, 0x8A11);
         cpu.executeInstruction();
-        assertEquals(0x51, regs.a.getShort());
+        assertEquals(0x51, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1060,7 +1089,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x01);
         io.writeWord(0x0000, 0x8A00);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
@@ -1069,7 +1098,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x01);
         io.writeWord(0x0000, 0x8A00);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
@@ -1078,7 +1107,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x01);
         io.writeWord(0x0000, 0xCA00);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.b.getShort());
+        assertEquals(0x01, regs.b.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
@@ -1087,7 +1116,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x00);
         io.writeWord(0x0000, 0xCA00);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1096,31 +1125,31 @@ public class ByteRegisterInstructionTest {
     public void testExclusiveOrWorksCorrectly() {
         regs.a.set(0x0);
         ByteRegisterInstruction.exclusiveOr(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
         regs.a.set(0x0);
         ByteRegisterInstruction.exclusiveOr(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
         regs.a.set(0x1);
         ByteRegisterInstruction.exclusiveOr(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
         regs.a.set(0x1);
         ByteRegisterInstruction.exclusiveOr(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
 
         regs.a.set(0x80);
         ByteRegisterInstruction.exclusiveOr(io, regs.a, new UnsignedByte(0x01), null);
-        assertEquals(0x81, regs.a.getShort());
+        assertEquals(0x81, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
     }
@@ -1130,7 +1159,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x01);
         io.writeWord(0x0000, 0x8801);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1140,7 +1169,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x01);
         io.writeWord(0x0000, 0xC801);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1152,7 +1181,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9801);
         io.writeByte(0x1001, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1164,7 +1193,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD801);
         io.writeByte(0x1001, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1176,7 +1205,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA880);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1188,7 +1217,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE880);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1200,7 +1229,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1212,7 +1241,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -1222,7 +1251,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x00);
         regs.a.set(0x01);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1232,7 +1261,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x01);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x02, regs.a.getShort());
+        assertEquals(0x02, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1242,7 +1271,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x00);
         regs.a.set(0x00);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1252,7 +1281,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x01);
         regs.a.set(0x7F);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x0), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -1262,7 +1291,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x00);
         regs.a.set(0xFF);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x01), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1275,7 +1304,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x00);
         regs.a.set(0x68);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0xA5), null);
-        assertEquals(0x0D, regs.a.getShort());
+        assertEquals(0x0D, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1288,7 +1317,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x30);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0xC3), null);
-        assertEquals(0xF4, regs.a.getShort());
+        assertEquals(0xF4, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1301,7 +1330,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x01);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0xFF), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1314,7 +1343,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(0x00);
         regs.a.set(0x01);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0xFF), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1327,7 +1356,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0xFF);
         ByteRegisterInstruction.addWithCarry(io, regs.a, new UnsignedByte(0x00), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1341,7 +1370,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         io.writeWord(0x0000, 0x8901);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1357,7 +1386,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9901);
         io.writeByte(0x1001, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1373,7 +1402,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA980);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1389,7 +1418,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1403,7 +1432,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         io.writeWord(0x0000, 0xC901);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1419,7 +1448,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD901);
         io.writeByte(0x1001, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1435,7 +1464,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE980);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1451,7 +1480,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1463,7 +1492,7 @@ public class ByteRegisterInstructionTest {
     public void testAddByteWorksCorrectly() {
         regs.a.set(0x11);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x11), null);
-        assertEquals(0x22, regs.a.getShort());
+        assertEquals(0x22, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1474,7 +1503,7 @@ public class ByteRegisterInstructionTest {
     public void testAddByteSetsHalfCarry() {
         regs.a.set(0x0F);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x01), null);
-        assertEquals(0x10, regs.a.getShort());
+        assertEquals(0x10, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1486,7 +1515,7 @@ public class ByteRegisterInstructionTest {
     public void testAddByteSetsCarryOverflow() {
         regs.a.set(0x7F);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x01), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -1498,7 +1527,7 @@ public class ByteRegisterInstructionTest {
     public void testAddByteSetsNegative() {
         regs.a.set(0x7E);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x02), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertTrue(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_V));
@@ -1510,7 +1539,7 @@ public class ByteRegisterInstructionTest {
     public void testAddByteRegression1() {
         regs.a.set(0xF9);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x08), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertFalse(regs.cc.isMasked(CC_V));
@@ -1523,7 +1552,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0xFF);
         io.writeWord(0x0000, 0x8B01);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1538,7 +1567,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9B01);
         io.writeByte(0x1001, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1553,7 +1582,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xAB80);
         io.writeByte(extendedAddress, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1568,7 +1597,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1581,7 +1610,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0xFE);
         io.writeWord(0x0000, 0xCB02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1596,7 +1625,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xDB01);
         io.writeByte(0x1001, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1611,7 +1640,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xEB80);
         io.writeByte(extendedAddress, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1626,7 +1655,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x02);
         cpu.executeInstruction();
-        assertEquals(0x00, regs.b.getShort());
+        assertEquals(0x00, regs.b.get());
         assertTrue(regs.cc.isMasked(CC_Z));
         assertFalse(regs.cc.isMasked(CC_N));
         assertTrue(regs.cc.isMasked(CC_H));
@@ -1638,7 +1667,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalAndWorksCorrectly() {
         regs.a.set(0x20);
         ByteRegisterInstruction.logicalAnd(io, regs.a, new UnsignedByte(0x21), null);
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1647,7 +1676,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalAndSetsZero() {
         regs.a.set(0x1);
         ByteRegisterInstruction.logicalAnd(io, regs.a, new UnsignedByte(0x20), null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1656,7 +1685,7 @@ public class ByteRegisterInstructionTest {
     public void testLogicalAndSetsNegative() {
         regs.a.set(0x81);
         ByteRegisterInstruction.logicalAnd(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0x81, regs.a.getShort());
+        assertEquals(0x81, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -1666,7 +1695,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x20);
         io.writeWord(0x0000, 0x8421);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1678,7 +1707,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9401);
         io.writeByte(0x1001, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1690,7 +1719,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA480);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1702,7 +1731,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1712,7 +1741,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x20);
         io.writeWord(0x0000, 0xC421);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1724,7 +1753,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD401);
         io.writeByte(0x1001, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1736,7 +1765,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE480);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1748,7 +1777,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1757,7 +1786,7 @@ public class ByteRegisterInstructionTest {
     public void testBitTestWorksCorrectly() {
         regs.a.set(0x20);
         ByteRegisterInstruction.bitTest(io, regs.a, new UnsignedByte(0x21), null);
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1766,7 +1795,7 @@ public class ByteRegisterInstructionTest {
     public void testBitTestSetsZero() {
         regs.a.set(0x1);
         ByteRegisterInstruction.bitTest(io, regs.a, new UnsignedByte(0x20), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1775,7 +1804,7 @@ public class ByteRegisterInstructionTest {
     public void testBitTestSetsNegative() {
         regs.a.set(0x81);
         ByteRegisterInstruction.bitTest(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0x81, regs.a.getShort());
+        assertEquals(0x81, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
     }
@@ -1785,7 +1814,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x20);
         io.writeWord(0x0000, 0x8521);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1797,7 +1826,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9501);
         io.writeByte(0x1001, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1809,7 +1838,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA580);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1821,7 +1850,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.a.getShort());
+        assertEquals(0x20, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1831,7 +1860,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x20);
         io.writeWord(0x0000, 0xC521);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1843,7 +1872,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD501);
         io.writeByte(0x1001, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1855,7 +1884,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE580);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1867,7 +1896,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x21);
         cpu.executeInstruction();
-        assertEquals(0x20, regs.b.getShort());
+        assertEquals(0x20, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -1886,7 +1915,7 @@ public class ByteRegisterInstructionTest {
     public void testCompareByteWorksSetsZero() {
         regs.a.set(0x1);
         ByteRegisterInstruction.compareByte(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -1897,7 +1926,7 @@ public class ByteRegisterInstructionTest {
     public void testCompareByteWorksSetsNegativeSetsCarry() {
         regs.a.set(0x80);
         ByteRegisterInstruction.compareByte(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -1908,7 +1937,7 @@ public class ByteRegisterInstructionTest {
     public void testCompareByteWorksSetsOverflow() {
         regs.a.set(0x80);
         ByteRegisterInstruction.compareByte(io, regs.a, new UnsignedByte(0x7E), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1919,7 +1948,7 @@ public class ByteRegisterInstructionTest {
     public void testCompareByteRegression1() {
         regs.a.set(0xFE);
         ByteRegisterInstruction.compareByte(io, regs.a, new UnsignedByte(0xF8), null);
-        assertEquals(0xFE, regs.a.getShort());
+        assertEquals(0xFE, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -1933,7 +1962,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9101);
         io.writeByte(0x1001, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1947,7 +1976,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA180);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1961,7 +1990,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1973,7 +2002,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x80);
         io.writeWord(0x0000, 0xC17F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.b.getShort());
+        assertEquals(0x80, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -1987,7 +2016,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD101);
         io.writeByte(0x1001, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.b.getShort());
+        assertEquals(0x80, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2001,7 +2030,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE180);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.b.getShort());
+        assertEquals(0x80, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2015,7 +2044,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.b.getShort());
+        assertEquals(0x80, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2027,7 +2056,7 @@ public class ByteRegisterInstructionTest {
     public void testCompareByteWorksSetsOverflow1() {
         regs.a.set(0x80);
         ByteRegisterInstruction.compareByte(io, regs.a, new UnsignedByte(0x7F), null);
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2039,7 +2068,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         io.writeWord(0x0000, 0x817F);
         cpu.executeInstruction();
-        assertEquals(0x80, regs.a.getShort());
+        assertEquals(0x80, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2050,7 +2079,7 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWorksSetsOverflow() {
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0x7F), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2061,27 +2090,29 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWorksSetsCarry() {
         regs.a.set(0x7F);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0x80), null);
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
+
     @Test
     public void testSubtractByteWorksCorrectly() {
         regs.a.set(0x6A);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0x27), null);
-        assertEquals(0x43, regs.a.getShort());
+        assertEquals(0x43, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_C));
     }
 
     @Test
     public void testSubtractByteWorksSetsZero() {
         regs.a.set(0x1);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -2092,7 +2123,7 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWorksSetsNegativeSetsCarry() {
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -2103,7 +2134,7 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteRegression1() {
         regs.a.set(0xFE);
         ByteRegisterInstruction.subtractByte(io, regs.a, new UnsignedByte(0xF8), null);
-        assertEquals(0x06, regs.a.getShort());
+        assertEquals(0x06, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
@@ -2115,7 +2146,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         io.writeWord(0x0000, 0x807F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2129,7 +2160,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0x9001);
         io.writeByte(0x1001, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2143,7 +2174,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xA080);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2157,7 +2188,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2169,7 +2200,7 @@ public class ByteRegisterInstructionTest {
         regs.b.set(0x80);
         io.writeWord(0x0000, 0xC07F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.b.getShort());
+        assertEquals(0x01, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2183,7 +2214,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xD001);
         io.writeByte(0x1001, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.b.getShort());
+        assertEquals(0x01, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2197,7 +2228,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0000, 0xE080);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.b.getShort());
+        assertEquals(0x01, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2211,7 +2242,7 @@ public class ByteRegisterInstructionTest {
         io.writeWord(0x0001, extendedAddress);
         io.writeByte(extendedAddress, 0x7F);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.b.getShort());
+        assertEquals(0x01, regs.b.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2222,10 +2253,10 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWithCarryWorksSetsOverflowNoCarry() {
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x7F), null);
-        assertEquals(0x01, regs.a.getShort());
+        assertEquals(0x01, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
-        assertTrue(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
     }
 
@@ -2233,17 +2264,17 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWithCarryWorksSetsCarryNoCarry() {
         regs.a.set(0x7F);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x80), null);
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
-        assertTrue(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
     @Test
     public void testSubtractByteWithCarryWorksCorrectlyNoCarry() {
         regs.a.set(0x6A);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x27), null);
-        assertEquals(0x43, regs.a.getShort());
+        assertEquals(0x43, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -2254,7 +2285,7 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWithcarryWorksSetsZeroNoCarry() {
         regs.a.set(0x1);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0, regs.a.getShort());
+        assertEquals(0, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -2265,7 +2296,7 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWithCarryWorksSetsNegativeSetsCarryNoCarry() {
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -2277,10 +2308,10 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x7F), null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
-        assertTrue(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
     }
 
@@ -2289,10 +2320,10 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x7F);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x80), null);
-        assertEquals(0xFE, regs.a.getShort());
+        assertEquals(0xFE, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
-        assertTrue(io.regs.cc.isMasked(CC_V));
+        assertFalse(io.regs.cc.isMasked(CC_V));
         assertTrue(io.regs.cc.isMasked(CC_C));
     }
     @Test
@@ -2300,7 +2331,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x6A);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x27), null);
-        assertEquals(0x42, regs.a.getShort());
+        assertEquals(0x42, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertFalse(io.regs.cc.isMasked(CC_N));
         assertFalse(io.regs.cc.isMasked(CC_V));
@@ -2312,7 +2343,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x1);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x1), null);
-        assertEquals(0xFF, regs.a.getShort());
+        assertEquals(0xFF, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_V));
@@ -2324,7 +2355,7 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0x80);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0x81), null);
-        assertEquals(0xFE, regs.a.getShort());
+        assertEquals(0xFE, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
         assertTrue(io.regs.cc.isMasked(CC_N));
         assertTrue(io.regs.cc.isMasked(CC_C));
@@ -2335,9 +2366,9 @@ public class ByteRegisterInstructionTest {
     public void testSubtractByteWithCarryNoCarryRegression1() {
         regs.a.set(0xFE);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0xF8), null);
-        assertEquals(0x06, regs.a.getShort());
+        assertEquals(0x06, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
-        assertFalse(io.regs.cc.isMasked(CC_V));
+        assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -2347,9 +2378,9 @@ public class ByteRegisterInstructionTest {
         regs.cc.set(CC_C);
         regs.a.set(0xFE);
         ByteRegisterInstruction.subtractByteWithCarry(io, regs.a, new UnsignedByte(0xF8), null);
-        assertEquals(0x05, regs.a.getShort());
+        assertEquals(0x05, regs.a.get());
         assertFalse(io.regs.cc.isMasked(CC_Z));
-        assertFalse(io.regs.cc.isMasked(CC_V));
+        assertTrue(io.regs.cc.isMasked(CC_V));
         assertFalse(io.regs.cc.isMasked(CC_C));
         assertFalse(io.regs.cc.isMasked(CC_N));
     }
@@ -2359,8 +2390,11 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x64);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x27), null);
         ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
-        assertEquals(0x91, regs.a.getShort());
+        assertEquals(0x91, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
+        assertTrue(regs.cc.isMasked(CC_N));
+        assertFalse(regs.cc.isMasked(CC_Z));
+        assertTrue(regs.cc.isMasked(CC_V));
     }
 
     @Test
@@ -2368,7 +2402,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x80);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x0A), null);
         ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
-        assertEquals(0x90, regs.a.getShort());
+        assertEquals(0x90, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertTrue(regs.cc.isMasked(CC_N));
     }
@@ -2378,7 +2412,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0xA0);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x00), null);
         ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
-        assertEquals(0x00, regs.a.getShort());
+        assertEquals(0x00, regs.a.get());
         assertTrue(regs.cc.isMasked(CC_C));
     }
 
@@ -2387,7 +2421,7 @@ public class ByteRegisterInstructionTest {
         regs.a.set(0x05);
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x06), null);
         ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
-        assertEquals(0x11, regs.a.getShort());
+        assertEquals(0x11, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_N));
     }
@@ -2398,7 +2432,7 @@ public class ByteRegisterInstructionTest {
         ByteRegisterInstruction.addByte(io, regs.a, new UnsignedByte(0x01), null);
         assertTrue(regs.cc.isMasked(CC_H));
         ByteRegisterInstruction.decimalAdditionAdjust(io, regs.a, null, null);
-        assertEquals(0x16, regs.a.getShort());
+        assertEquals(0x16, regs.a.get());
         assertFalse(regs.cc.isMasked(CC_C));
         assertFalse(regs.cc.isMasked(CC_N));
     }

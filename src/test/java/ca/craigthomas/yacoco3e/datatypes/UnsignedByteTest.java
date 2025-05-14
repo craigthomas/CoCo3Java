@@ -13,25 +13,25 @@ public class UnsignedByteTest
     @Test
     public void testShortValueOnlyContains8Bits() {
         UnsignedByte result = new UnsignedByte(0xFFFF);
-        assertEquals(0xFF, result.getShort());
+        assertEquals(0xFF, result.get());
     }
 
     @Test
     public void testTwosComplimentZero() {
         UnsignedByte result = new UnsignedByte(0);
-        assertEquals(0, result.twosCompliment().getShort());
+        assertEquals(0, result.twosCompliment().get());
     }
 
     @Test
     public void testTwosComplimentOne() {
         UnsignedByte result = new UnsignedByte(1);
-        assertEquals(0xFF, result.twosCompliment().getShort());
+        assertEquals(0xFF, result.twosCompliment().get());
     }
 
     @Test
     public void testTwosComplimentTwo() {
         UnsignedByte result = new UnsignedByte(2);
-        assertEquals(0xFE, result.twosCompliment().getShort());
+        assertEquals(0xFE, result.twosCompliment().get());
     }
 
     @Test
@@ -167,18 +167,18 @@ public class UnsignedByteTest
     }
 
     @Test
-    public void testGetSignedShortWorksCorrectly() {
+    public void testGetSignedWorksCorrectly() {
         UnsignedByte result = new UnsignedByte(0x40);
-        assertEquals(0x40, result.getSignedShort());
+        assertEquals(0x40, result.getSigned());
 
         result = new UnsignedByte(0xFF);
-        assertEquals(-1, result.getSignedShort());
+        assertEquals(-1, result.getSigned());
     }
 
     @Test
     public void testInverseWorksCorrectly() {
         UnsignedByte result = new UnsignedByte(0xFF);
-        assertEquals(0x0, result.inverse().getShort());
+        assertEquals(0x0, result.inverse().get());
     }
 
     @Test

@@ -51,28 +51,11 @@ public class ByteInstruction extends Instruction
      */
     public static void negate(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
         io.regs.cc.and(~(CC_N | CC_Z | CC_V | CC_C));
-
-        if (memoryByte.equalsInt(0x80)) {
-            io.regs.cc.or(CC_V);
-            io.regs.cc.or(CC_N);
-            io.regs.cc.or(CC_C);
-            memoryByte.set(0x80);
-            io.writeByte(address, memoryByte);
-            return;
-        }
-
-        if (memoryByte.equalsInt(0x00)) {
-            io.regs.cc.or(CC_Z);
-            memoryByte.set(0);
-            io.writeByte(address, memoryByte);
-            return;
-        }
-
-        memoryByte.compliment();
-        memoryByte.add(1);
-        io.regs.cc.or(memoryByte.isMasked(0x80) ? CC_V : 0);
+        io.regs.cc.or(memoryByte.get() == 0x80 ? CC_V : 0);
+        io.regs.cc.or(memoryByte.get() != 0x00 ? CC_C : 0);
+        memoryByte.set(0x100 - memoryByte.get());
         io.regs.cc.or(memoryByte.isNegative() ? CC_N : 0);
-        io.regs.cc.or(CC_C);
+        io.regs.cc.or(memoryByte.isZero() ? CC_Z : 0);
         io.writeByte(address, memoryByte);
     }
 

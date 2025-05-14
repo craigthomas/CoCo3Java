@@ -113,7 +113,7 @@ public class SG24ScreenMode extends ScreenMode
 
         /* Background colors */
         int back = BLACK;
-        int color = (value.getShort() & 0x70) >> 4;
+        int color = (value.get() & 0x70) >> 4;
 
         /* Subcell B */
         int mask = rowMod == 0 || rowMod == 1 || rowMod == 2 || rowMod == 3 || rowMod == 4 || rowMod == 5 || rowMod == 6 ? 0x8 : 0x2;
