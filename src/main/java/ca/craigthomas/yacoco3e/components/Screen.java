@@ -1,114 +1,102 @@
 /*
- * Copyright (C) 2017 Craig Thomas
+ * Copyright (C) 2017-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.screen.*;
+import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
 
 import java.awt.image.BufferedImage;
 
 public class Screen
 {
-    // The current screen mode
     private ScreenMode screenMode;
-    // The IO controller for the computer
     private IOController io;
-    // Whether the resolution changed
     private boolean resolutionChanged;
-    // The current memory offset for video
     private int memoryOffset;
-    // The current scale factor
     private int scale;
-    // The current mode
-    private ScreenMode.Mode currentMode;
-    // The saved color set
     private int colorSet;
+    private ScreenMode.Mode currentMode;
 
-    public Screen(int scale) {
-        this.scale = scale;
-        resolutionChanged = false;
-        currentMode = ScreenMode.Mode.SG6;
-        colorSet = 0;
-        setMode(ScreenMode.Mode.SG4, colorSet);
+    public Screen(int newScale) {
+        scale = newScale;
+        setMode(Mode.SG4, 0);
     }
 
     /**
      * Sets the current video mode.
      *
      * @param mode the video mode to set
+     * @param newColorSet the new color set to use
      */
-    public void setMode(ScreenMode.Mode mode, int colorSet) {
-        if (currentMode.equals(mode) && colorSet == this.colorSet) {
+    public void setMode(ScreenMode.Mode mode, int newColorSet) {
+        if (currentMode == mode && colorSet == newColorSet) {
             return;
         }
 
-//        System.out.println("Set screen mode " + mode);
+        colorSet = newColorSet;
+        currentMode = mode;
+
         switch (mode) {
             case SG4:
-                this.screenMode = new SG4ScreenMode(scale);
+                screenMode = new SG4ScreenMode(scale);
                 break;
 
             case SG6:
-                this.screenMode = new SG6ScreenMode(scale, colorSet);
+                screenMode = new SG6ScreenMode(scale, colorSet);
                 break;
 
             case SG8:
-                this.screenMode = new SG8ScreenMode(scale);
+                screenMode = new SG8ScreenMode(scale);
                 break;
 
             case SG12:
-                this.screenMode = new SG12ScreenMode(scale);
+                screenMode = new SG12ScreenMode(scale);
                 break;
 
             case SG24:
-                this.screenMode = new SG24ScreenMode(scale);
+                screenMode = new SG24ScreenMode(scale);
                 break;
 
             case G1C:
-                this.screenMode = new G1CScreenMode(scale, colorSet);
+                screenMode = new G1CScreenMode(scale, colorSet);
                 break;
 
             case G1R:
-                this.screenMode = new G1RScreenMode(scale, colorSet);
+                screenMode = new G1RScreenMode(scale, colorSet);
                 break;
 
             case G2C:
-                this.screenMode = new G2CScreenMode(scale, colorSet);
+                screenMode = new G2CScreenMode(scale, colorSet);
                 break;
 
             case G2R:
-                this.screenMode = new G2RScreenMode(scale, colorSet);
+                screenMode = new G2RScreenMode(scale, colorSet);
                 break;
 
             case G3C:
-                this.screenMode = new G3CScreenMode(scale, colorSet);
+                screenMode = new G3CScreenMode(scale, colorSet);
                 break;
 
             case G3R:
-                this.screenMode = new G3RScreenMode(scale, colorSet);
+                screenMode = new G3RScreenMode(scale, colorSet);
                 break;
 
             case G6C:
-                this.screenMode = new G6CScreenMode(scale, colorSet);
+                screenMode = new G6CScreenMode(scale, colorSet);
                 break;
 
             case G6R:
-                this.screenMode = new G6RScreenMode(scale, colorSet);
+                screenMode = new G6RScreenMode(scale, colorSet);
                 break;
 
             default:
                 break;
         }
-        this.screenMode.setMemoryOffset(memoryOffset);
-        this.screenMode.setIOController(io);
-        this.colorSet = colorSet;
+        screenMode.setMemoryOffset(memoryOffset);
+        screenMode.setIOController(io);
         resolutionChanged = true;
-        currentMode = mode;
-    }
-
-    public ScreenMode.Mode getMode() {
-        return currentMode;
     }
 
     /**
@@ -117,7 +105,7 @@ public class Screen
      * @param ioController the IO controller associated with the screen
      */
     public void setIOController(IOController ioController) {
-        this.io = ioController;
+        io = ioController;
         screenMode.setIOController(ioController);
     }
 

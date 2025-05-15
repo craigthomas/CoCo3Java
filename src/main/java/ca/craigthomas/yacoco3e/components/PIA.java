@@ -47,7 +47,7 @@ public abstract class PIA
      * @param newDataDirectionRegister the new contents fo the data direction register
      */
     public void setDataDirectionRegister(UnsignedByte newDataDirectionRegister) {
-        dataDirectionRegister = newDataDirectionRegister;
+        dataDirectionRegister = newDataDirectionRegister.copy();
     }
 
     /**

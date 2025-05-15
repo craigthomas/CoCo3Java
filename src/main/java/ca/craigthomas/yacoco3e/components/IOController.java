@@ -763,31 +763,37 @@ public class IOController
             /* SAM - Video Display - V0 - Clear */
             case 0xFFC0:
                 samControlBits.and(~0x1);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Video Display - V0 - Set */
             case 0xFFC1:
                 samControlBits.or(0x1);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Video Display - V1 - Clear */
             case 0xFFC2:
                 samControlBits.and(~0x2);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Video Display - V1 - Set */
             case 0xFFC3:
                 samControlBits.or(0x2);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Video Display - V2 - Clear */
             case 0xFFC4:
                 samControlBits.and(~0x4);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Video Display - V2 - Set */
             case 0xFFC5:
                 samControlBits.or(0x4);
+                updateVideoMode(pia2b.getVdgMode());
                 break;
 
             /* SAM - Display Offset Register - Bit 0 - Clear */
@@ -974,8 +980,6 @@ public class IOController
                     break;
 
                 default:
-                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.get() + samControlBits.get());
-                    System.out.println("Unknown screen mode: " + fullMode);
                     return;
             }
         } else {
@@ -997,8 +1001,6 @@ public class IOController
                     break;
 
                 default:
-                    UnsignedByte fullMode = new UnsignedByte(vdgOperatingMode.get() + samControlBits.get());
-                    System.out.println("Unknown screen mode: " + fullMode);
                     return;
             }
         }

@@ -37,19 +37,8 @@ public class Emulator extends Thread
     private Memory memory;
 
     // The audio playback rate
-    private static final int AUDIO_PLAYBACK_RATE = 48000;
-
-    /**
-     * The minimum number of audio samples we want to generate from the DC to
-     * analog converter. Only one voltage can be loaded into the DCA at a time,
-     * which means that all we need to do is load that value into a buffer and
-     * continuously play it. Successive writes into the DCA will replace the
-     * value with a new one, generating a waveform over time. To keep things
-     * fast, we will only generate an audio buffer that lasts 1/60th of a second,
-     * and loop it. Since the audio mixer will be initialized to require
-     * 48000 samples per second, a 1/60th of a second clip will require 800 samples.
-     */
-    public static final int MIN_AUDIO_SAMPLES = 80;
+    private static final int AUDIO_PLAYBACK_RATE = 44100;
+    public static final int MIN_AUDIO_SAMPLES = 1;
 
     protected SourceDataLine audioOutputLine;
     protected AudioFormat audioFormat;
@@ -65,7 +54,6 @@ public class Emulator extends Thread
     public boolean trace;
     private boolean verbose;
     private volatile EmulatorStatus status;
-    private volatile int remainingTicks;
     private Timer screenRefreshTimer;
     private TimerTask screenRefreshTimerTask;
 
@@ -451,14 +439,6 @@ public class Emulator extends Thread
     }
 
     /**
-     * Refreshes the number of ticks that can be consumed during the current
-     * 60th of a second time slice.
-     */
-    public void refreshTicks() {
-        remainingTicks = io.tickRefreshAmount;
-    }
-
-    /**
      * Starts the main emulator loop running. Fires at the rate of 60Hz,
      * will repaint the screen, listen for any debug key presses, and
      * refresh the number of ticks available to be consumed.
@@ -468,7 +448,6 @@ public class Emulator extends Thread
         screenRefreshTimer = new Timer();
         screenRefreshTimerTask = new TimerTask() {
             public void run() {
-//                refreshTicks();
                 screen.refreshScreen();
                 refreshScreen();
             }
@@ -481,30 +460,25 @@ public class Emulator extends Thread
      * Runs the main emulator loop until the emulator is killed.
      */
     public void run() {
-        int operationTicks = 0;
-        Instant lastInstant = Instant.now();
-        remainingTicks = IOController.TIMER_63_5_MICROS;
-
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
                 if (this.trace) {
                     System.out.print(io.regs.toString() + " | ");
                 }
 
-                lastInstant = Instant.now().truncatedTo(ChronoUnit.MICROS);
+                Instant lastInstant = Instant.now().truncatedTo(ChronoUnit.MICROS);
+                int operationTicks = 4;
 
-                try {
-                    if (remainingTicks > 0 && !io.waitForIRQ) {
+                if (!io.waitForIRQ) {
+                    try {
                         operationTicks = cpu.executeInstruction();
-//                        remainingTicks = remainingTicks - operationTicks;
-                    } else {
-                        System.out.println("System wait");
+                    } catch (MalformedInstructionException e) {
+                        System.out.println(e.getMessage());
+                        status = EmulatorStatus.PAUSED;
                     }
-                } catch (MalformedInstructionException e) {
-                    System.out.println(e.getMessage());
-                    status = EmulatorStatus.PAUSED;
                 }
 
+                // Check to see if we should wait on execution time
                 float totalInstructionTime = 1.117f * operationTicks;
                 Instant thisInstant = Instant.now();
                 Duration duration = Duration.between(lastInstant, thisInstant);
@@ -514,11 +488,6 @@ public class Emulator extends Thread
                     thisInstant = Instant.now();
                     duration = Duration.between(lastInstant, thisInstant);
                     microSeconds = duration.toNanos() / 1000;
-                }
-
-                /* Check to see if we had an instruction - if it's a SYNC, just add to the timers */
-                if (io.waitForIRQ) {
-                    operationTicks += 1;
                 }
 
                 /* Check to see if we should trace the output */

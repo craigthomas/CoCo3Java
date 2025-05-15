@@ -64,8 +64,8 @@ public class PIA2a extends PIA
         voltage += newDataRegister.isMasked(0x04) ? 0.070f : 0.0f;
 
 //        System.out.println("New voltage " + voltage);
-        byte audioByte = (byte)((voltage / 4.5) * 128);
-        System.out.println("New audio byte " + audioByte);
+        byte audioByte = (byte)((voltage / 4.5f) * 128.0f);
+//        System.out.println("New audio byte " + audioByte);
         Arrays.fill(audioBuffer, audioByte);
 
         if (audioOutputLine != null) {
