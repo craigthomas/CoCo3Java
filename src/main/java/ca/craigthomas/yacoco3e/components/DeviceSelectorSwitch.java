@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) 2025 Craig Thomas
+ * This project uses an MIT style license - see LICENSE for details.
+ */
 package ca.craigthomas.yacoco3e.components;
 
 public class DeviceSelectorSwitch
@@ -15,16 +19,10 @@ public class DeviceSelectorSwitch
     public void setCB2(boolean isSet) {
         CB2 = (isSet) ? 1 : 0;
         switchPosition = (CB2 << 1) + CA2;
-        System.out.println("New switch position = " + switchPosition);
     }
 
     public void setCA2(boolean isSet) {
         CA2 = (isSet) ? 1 : 0;
         switchPosition = (CB2 << 1) + CA2;
-        System.out.println("New switch position = " + switchPosition);
-    }
-
-    public int getSwitchPosition() {
-        return switchPosition;
     }
 }

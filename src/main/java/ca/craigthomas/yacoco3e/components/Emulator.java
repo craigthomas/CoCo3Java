@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -7,10 +7,6 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
-import javax.sound.sampled.SourceDataLine;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -35,13 +31,6 @@ public class Emulator extends Thread
     private IOController io;
     private Cassette cassette;
     private Memory memory;
-
-    // The audio playback rate
-    private static final int AUDIO_PLAYBACK_RATE = 44100;
-    public static final int MIN_AUDIO_SAMPLES = 1;
-
-    protected SourceDataLine audioOutputLine;
-    protected AudioFormat audioFormat;
 
     // The Canvas on which all the drawing will take place
     private Canvas canvas;
@@ -68,6 +57,7 @@ public class Emulator extends Thread
         private String configFile;
         private boolean trace;
         private boolean verbose;
+        private boolean useDAC;
 
         public Builder() {
             scale = 1;
@@ -108,6 +98,11 @@ public class Emulator extends Thread
             return this;
         }
 
+        public Builder setDAC(boolean enableDAC) {
+            useDAC = enableDAC;
+            return this;
+        }
+
         public Emulator build() {
             return new Emulator(this);
         }
@@ -119,20 +114,7 @@ public class Emulator extends Thread
         screen = new Screen(builder.scale);
         cassette = new Cassette();
 
-        audioFormat = new AudioFormat(AUDIO_PLAYBACK_RATE, 8, 1, false, false);
-        DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
-        if (!AudioSystem.isLineSupported(dataLineInfo)) {
-            System.out.println("SourceDataLine type not supported");
-        }
-        try {
-            audioOutputLine = AudioSystem.getSourceDataLine(audioFormat);
-            audioOutputLine.open(audioFormat, MIN_AUDIO_SAMPLES);
-            audioOutputLine.start();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette, audioOutputLine);
+        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette, builder.useDAC);
         cpu = new CPU(io);
         io.setCPU(cpu);
         trace = builder.trace;
@@ -459,6 +441,7 @@ public class Emulator extends Thread
     /**
      * Runs the main emulator loop until the emulator is killed.
      */
+    @Override
     public void run() {
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
@@ -518,11 +501,7 @@ public class Emulator extends Thread
         screenRefreshTimer.purge();
         screenRefreshTimerTask.cancel();
 
-        if (audioOutputLine != null) {
-            audioOutputLine.drain();
-            audioOutputLine.stop();
-            audioOutputLine.close();
-        }
+        io.shutdown();
 
         container.dispose();
     }

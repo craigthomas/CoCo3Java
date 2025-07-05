@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,9 +23,14 @@ public class PushPopInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, null);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
         io.regs.pc.set(0);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test

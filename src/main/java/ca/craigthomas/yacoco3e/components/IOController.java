@@ -102,7 +102,7 @@ public class IOController
     public volatile int tickRefreshAmount;
 
 
-    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette, SourceDataLine audioOutputLine) {
+    public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette, boolean useDAC) {
         ioMemory = new short[IO_ADDRESS_SIZE];
         this.memory = memory;
         this.regs = registerSet;
@@ -120,7 +120,7 @@ public class IOController
         /* PIAs */
         pia1a = new PIA1a(keyboard, deviceSelectorSwitch);
         pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
-        pia2a = new PIA2a(cassette, audioOutputLine);
+        pia2a = new PIA2a(cassette, useDAC);
         pia2b = new PIA2b(this);
 
         /* Display registers */
@@ -1247,5 +1247,11 @@ public class IOController
      */
     public void nonMaskableInterrupt() {
         cpu.scheduleNMI();
+    }
+
+    public void shutdown() {
+        if (pia2a != null) {
+            pia2a.shutdown();
+        }
     }
 }

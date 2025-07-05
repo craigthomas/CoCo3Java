@@ -30,7 +30,6 @@ public class PIA1a extends PIA
      */
     @Override
     public UnsignedByte getDataRegister() {
-        controlRegister.and(~0xC0);
         return keyboard.getHighByte();
     }
 

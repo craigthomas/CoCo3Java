@@ -6,6 +6,7 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -18,6 +19,7 @@ public class DiskDriveTest
 {
     private IOController ioSpy;
     private DiskDrive drive;
+    private IOController io;
 
     @Before
     public void setUp() {
@@ -26,11 +28,16 @@ public class DiskDriveTest
         Keyboard keyboard = new EmulatedKeyboard();
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
-        IOController io = new IOController(memory, regs, keyboard, screen, cassette, null);
+        io = new IOController(memory, regs, keyboard, screen, cassette, false);
         ioSpy = spy(io);
         CPU cpu = new CPU(io);
         ioSpy.setCPU(cpu);
         drive = new DiskDrive(ioSpy);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test

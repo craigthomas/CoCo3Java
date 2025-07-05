@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,9 +24,14 @@ public class ByteRegisterInstructionTest {
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
-        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, null);
+        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test(expected = MalformedInstructionException.class)

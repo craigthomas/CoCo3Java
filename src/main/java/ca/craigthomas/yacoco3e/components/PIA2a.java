@@ -6,29 +6,33 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
-import javax.sound.sampled.*;
-import java.util.Arrays;
-
 public class PIA2a extends PIA
 {
-    protected SourceDataLine audioOutputLine;
-    protected byte [] audioBuffer;
     protected Cassette cassette;
     protected float voltage;
+    protected DigitalAnalogConverter dac;
+    protected boolean useDAC;
 
-    public PIA2a(Cassette newCassette, SourceDataLine sourceDataLine) {
+    public PIA2a(Cassette newCassette, boolean useDAC) {
         super();
         cassette = newCassette;
         voltage = 0.0f;
-        audioOutputLine = sourceDataLine;
-        audioBuffer = new byte[Emulator.MIN_AUDIO_SAMPLES];
+        if (useDAC) {
+            dac = new DigitalAnalogConverter();
+            dac.start();
+        }
+        this.useDAC = useDAC;
+    }
+
+    public void shutdown() {
+        if (useDAC) {
+            dac.stopRunning();
+        }
     }
 
     /**
      * In PIA 2 side A, multiple sources are potentially connected to the various
      * address lines.
-     *
-     * @return the high byte of the keyboard matrix
      */
     @Override
     public UnsignedByte getDataRegister() {
@@ -62,15 +66,9 @@ public class PIA2a extends PIA
         voltage += newDataRegister.isMasked(0x10) ? 0.281f : 0.0f;
         voltage += newDataRegister.isMasked(0x08) ? 0.140f : 0.0f;
         voltage += newDataRegister.isMasked(0x04) ? 0.070f : 0.0f;
-
-//        System.out.println("New voltage " + voltage);
-        byte audioByte = (byte)((voltage / 4.5f) * 128.0f);
-//        System.out.println("New audio byte " + audioByte);
-        Arrays.fill(audioBuffer, audioByte);
-
-        if (audioOutputLine != null) {
-            audioOutputLine.flush();
-            audioOutputLine.write(audioBuffer, 0, Emulator.MIN_AUDIO_SAMPLES);
+        byte audioByte = (byte)(((voltage / 4.429f) * 128.0f));
+        if (useDAC) {
+            dac.writeByte(audioByte);
         }
     }
 

@@ -32,6 +32,7 @@ public class Runner
                 .setCassetteFile(arguments.cassetteFile)
                 .setCartridgeROM(arguments.cartridgeROM)
                 .setConfigFile(arguments.configFile)
+                .setDAC(arguments.useDAC)
                 .build();
         emulator.start();
     }

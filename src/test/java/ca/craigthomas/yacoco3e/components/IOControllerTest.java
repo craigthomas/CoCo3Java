@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,9 +27,14 @@ public class IOControllerTest
         regs = new RegisterSet();
         screen = new Screen(1);
         cassette = new Cassette();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, null);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
         io.setCPU(cpu);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test
