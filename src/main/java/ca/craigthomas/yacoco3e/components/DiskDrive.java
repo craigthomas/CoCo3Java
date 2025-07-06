@@ -119,7 +119,7 @@ public class DiskDrive
      * @param track the track to move to
      */
     public void setTrack(UnsignedByte track) {
-        currentTrack = track.getShort();
+        currentTrack = track.get();
     }
 
     /**
@@ -137,7 +137,7 @@ public class DiskDrive
      * @param sector the current sector we should move to
      */
     public void setSector(UnsignedByte sector) {
-        currentSector = sector.getShort();
+        currentSector = sector.get();
     }
 
     /**
@@ -314,7 +314,7 @@ public class DiskDrive
      * @param command the command to execute
      */
     public void executeCommand(UnsignedByte command) {
-        int intCommand = command.getShort() >> 4;
+        int intCommand = command.get() >> 4;
         boolean verify = command.isMasked(0x04);
 
         /* Set busy flag on the status register */
@@ -489,7 +489,7 @@ public class DiskDrive
      * @param verify whether verify should be run
      */
     public void seek(boolean verify) {
-        int trackToSeek = dataRegisterIn.getShort();
+        int trackToSeek = dataRegisterIn.get();
         if (currentTrack > trackToSeek) {
             direction = -1;
         }

@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,10 +23,15 @@ public class VoidInstructionTest {
         Screen screen = new Screen(1);
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
-        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(new Memory(), regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
         extendedAddress = 0xC0A0;
         io.regs.pc.set(0);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test
@@ -37,7 +43,7 @@ public class VoidInstructionTest {
     @Test
     public void testUnconditionalJumpCorrect() {
         VoidInstruction.unconditionalJump(io, null, new UnsignedWord(0xBEEF));
-        assertEquals(0xBEEF, regs.pc.getInt());
+        assertEquals(0xBEEF, regs.pc.get());
     }
 
     @Test
@@ -46,7 +52,7 @@ public class VoidInstructionTest {
         io.writeByte(0x0000, 0x0E);
         io.writeByte(0x0001, 0x0A);
         cpu.executeInstruction();
-        assertEquals(0x000A, regs.pc.getInt());
+        assertEquals(0x000A, regs.pc.get());
     }
 
     @Test
@@ -54,7 +60,7 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x6E80);
         regs.x.set(extendedAddress);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.pc.getInt());
+        assertEquals(extendedAddress, regs.pc.get());
     }
 
     @Test
@@ -62,7 +68,7 @@ public class VoidInstructionTest {
         io.writeByte(0x0000, 0x7E);
         io.writeWord(0x0001, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.pc.getInt());
+        assertEquals(extendedAddress, regs.pc.get());
     }
 
     @Test
@@ -70,9 +76,9 @@ public class VoidInstructionTest {
         regs.s.set(0x0200);
         regs.pc.set(0xBEEF);
         VoidInstruction.jumpToSubroutine(io, null, new UnsignedWord(0xCAFE));
-        assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).getShort());
-        assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).getShort());
-        assertEquals(0xCAFE, regs.pc.getInt());
+        assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).get());
+        assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).get());
+        assertEquals(0xCAFE, regs.pc.get());
     }
 
     @Test
@@ -80,7 +86,7 @@ public class VoidInstructionTest {
         regs.dp.set(0xCA);
         io.writeWord(0x0000, 0x9DFE);
         cpu.executeInstruction();
-        assertEquals(0xCAFE, regs.pc.getInt());
+        assertEquals(0xCAFE, regs.pc.get());
     }
 
     @Test
@@ -88,7 +94,7 @@ public class VoidInstructionTest {
         regs.y.set(extendedAddress);
         io.writeWord(0x0000, 0xADA0);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.pc.getInt());
+        assertEquals(extendedAddress, regs.pc.get());
     }
 
     @Test
@@ -96,14 +102,14 @@ public class VoidInstructionTest {
         io.writeByte(0x0000, 0xBD);
         io.writeWord(0x0001, extendedAddress);
         cpu.executeInstruction();
-        assertEquals(extendedAddress, regs.pc.getInt());
+        assertEquals(extendedAddress, regs.pc.get());
     }
 
     @Test
     public void testSWI2Correct() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x103F);
-        io.writeByte(Instruction.SWI2.getInt(), 0x56);
-        io.writeByte(Instruction.SWI2.next().getInt(), 0x78);
+        io.writeByte(Instruction.SWI2.get(), 0x56);
+        io.writeByte(Instruction.SWI2.next().get(), 0x78);
         regs.cc.or(CC_N);
         regs.cc.or(CC_V);
         regs.s.set(0xA000);
@@ -114,18 +120,18 @@ public class VoidInstructionTest {
         regs.b.set(0xCD);
         regs.a.set(0xEF);
         cpu.executeInstruction();
-        assertEquals(0x02, io.readByte(0x9FFF).getShort());
-        assertEquals(0x00, io.readByte(0x9FFE).getShort());
-        assertEquals(0xAD, io.readByte(0x9FFD).getShort());
-        assertEquals(0xDE, io.readByte(0x9FFC).getShort());
-        assertEquals(0xEF, io.readByte(0x9FFB).getShort());
-        assertEquals(0xBE, io.readByte(0x9FFA).getShort());
-        assertEquals(0xFE, io.readByte(0x9FF9).getShort());
-        assertEquals(0xCA, io.readByte(0x9FF8).getShort());
-        assertEquals(0xAB, io.readByte(0x9FF7).getShort());
-        assertEquals(0xCD, io.readByte(0x9FF6).getShort());
-        assertEquals(0xEF, io.readByte(0x9FF5).getShort());
-        assertEquals(0x8A, io.readByte(0x9FF4).getShort());
+        assertEquals(0x02, io.readByte(0x9FFF).get());
+        assertEquals(0x00, io.readByte(0x9FFE).get());
+        assertEquals(0xAD, io.readByte(0x9FFD).get());
+        assertEquals(0xDE, io.readByte(0x9FFC).get());
+        assertEquals(0xEF, io.readByte(0x9FFB).get());
+        assertEquals(0xBE, io.readByte(0x9FFA).get());
+        assertEquals(0xFE, io.readByte(0x9FF9).get());
+        assertEquals(0xCA, io.readByte(0x9FF8).get());
+        assertEquals(0xAB, io.readByte(0x9FF7).get());
+        assertEquals(0xCD, io.readByte(0x9FF6).get());
+        assertEquals(0xEF, io.readByte(0x9FF5).get());
+        assertEquals(0x8A, io.readByte(0x9FF4).get());
 //        assertEquals(0x5678, regs.pc.getInt());
     }
 
@@ -143,18 +149,18 @@ public class VoidInstructionTest {
         regs.b.set(0xCD);
         regs.a.set(0xEF);
         cpu.executeInstruction();
-        assertEquals(0x02, io.readByte(0x9FFF).getShort());
-        assertEquals(0x00, io.readByte(0x9FFE).getShort());
-        assertEquals(0xAD, io.readByte(0x9FFD).getShort());
-        assertEquals(0xDE, io.readByte(0x9FFC).getShort());
-        assertEquals(0xEF, io.readByte(0x9FFB).getShort());
-        assertEquals(0xBE, io.readByte(0x9FFA).getShort());
-        assertEquals(0xFE, io.readByte(0x9FF9).getShort());
-        assertEquals(0xCA, io.readByte(0x9FF8).getShort());
-        assertEquals(0xAB, io.readByte(0x9FF7).getShort());
-        assertEquals(0xCD, io.readByte(0x9FF6).getShort());
-        assertEquals(0xEF, io.readByte(0x9FF5).getShort());
-        assertEquals(0x8A, io.readByte(0x9FF4).getShort());
+        assertEquals(0x02, io.readByte(0x9FFF).get());
+        assertEquals(0x00, io.readByte(0x9FFE).get());
+        assertEquals(0xAD, io.readByte(0x9FFD).get());
+        assertEquals(0xDE, io.readByte(0x9FFC).get());
+        assertEquals(0xEF, io.readByte(0x9FFB).get());
+        assertEquals(0xBE, io.readByte(0x9FFA).get());
+        assertEquals(0xFE, io.readByte(0x9FF9).get());
+        assertEquals(0xCA, io.readByte(0x9FF8).get());
+        assertEquals(0xAB, io.readByte(0x9FF7).get());
+        assertEquals(0xCD, io.readByte(0x9FF6).get());
+        assertEquals(0xEF, io.readByte(0x9FF5).get());
+        assertEquals(0x8A, io.readByte(0x9FF4).get());
 //        assertEquals(0x5678, regs.pc.getInt());
     }
 
@@ -172,18 +178,18 @@ public class VoidInstructionTest {
         regs.b.set(0xCD);
         regs.a.set(0xEF);
         cpu.executeInstruction();
-        assertEquals(0x01, io.readByte(0x9FFF).getShort());
-        assertEquals(0x00, io.readByte(0x9FFE).getShort());
-        assertEquals(0xAD, io.readByte(0x9FFD).getShort());
-        assertEquals(0xDE, io.readByte(0x9FFC).getShort());
-        assertEquals(0xEF, io.readByte(0x9FFB).getShort());
-        assertEquals(0xBE, io.readByte(0x9FFA).getShort());
-        assertEquals(0xFE, io.readByte(0x9FF9).getShort());
-        assertEquals(0xCA, io.readByte(0x9FF8).getShort());
-        assertEquals(0xAB, io.readByte(0x9FF7).getShort());
-        assertEquals(0xCD, io.readByte(0x9FF6).getShort());
-        assertEquals(0xEF, io.readByte(0x9FF5).getShort());
-        assertEquals(0x8A, io.readByte(0x9FF4).getShort());
+        assertEquals(0x01, io.readByte(0x9FFF).get());
+        assertEquals(0x00, io.readByte(0x9FFE).get());
+        assertEquals(0xAD, io.readByte(0x9FFD).get());
+        assertEquals(0xDE, io.readByte(0x9FFC).get());
+        assertEquals(0xEF, io.readByte(0x9FFB).get());
+        assertEquals(0xBE, io.readByte(0x9FFA).get());
+        assertEquals(0xFE, io.readByte(0x9FF9).get());
+        assertEquals(0xCA, io.readByte(0x9FF8).get());
+        assertEquals(0xAB, io.readByte(0x9FF7).get());
+        assertEquals(0xCD, io.readByte(0x9FF6).get());
+        assertEquals(0xEF, io.readByte(0x9FF5).get());
+        assertEquals(0x8A, io.readByte(0x9FF4).get());
 //        assertEquals(0x5678, regs.pc.getInt());
     }
 
@@ -193,7 +199,7 @@ public class VoidInstructionTest {
         io.writeByte(0x0000, 0x39);
         io.writeWord(0x0020, 0xBEEF);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.pc.getInt());
+        assertEquals(0xBEEF, regs.pc.get());
     }
 
     @Test
@@ -214,14 +220,14 @@ public class VoidInstructionTest {
         io.writeByte(0x9FF4, CC_E);
         io.writeByte(0x00, 0x3B);
         cpu.executeInstruction();
-        assertEquals(0x01, regs.a.getShort());
-        assertEquals(0x02, regs.b.getShort());
-        assertEquals(0x03, regs.dp.getShort());
-        assertEquals(CC_E, regs.cc.getShort());
-        assertEquals(0x5566, regs.x.getInt());
-        assertEquals(0x7788, regs.y.getInt());
-        assertEquals(0x99AA, regs.u.getInt());
-        assertEquals(0xBBCC, regs.pc.getInt());
+        assertEquals(0x01, regs.a.get());
+        assertEquals(0x02, regs.b.get());
+        assertEquals(0x03, regs.dp.get());
+        assertEquals(CC_E, regs.cc.get());
+        assertEquals(0x5566, regs.x.get());
+        assertEquals(0x7788, regs.y.get());
+        assertEquals(0x99AA, regs.u.get());
+        assertEquals(0xBBCC, regs.pc.get());
     }
 
     @Test
@@ -232,7 +238,7 @@ public class VoidInstructionTest {
         io.writeByte(0x9FF3, 0x00);
         io.writeByte(0x0000, 0x3B);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.pc.getInt());
+        assertEquals(0xBEEF, regs.pc.get());
     }
 
     @Test
@@ -241,8 +247,8 @@ public class VoidInstructionTest {
         regs.x.set(0xBEEF);
         io.writeWord(0x0000, 0x1F01);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.getD().get());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -251,8 +257,8 @@ public class VoidInstructionTest {
         regs.setD(0xBEEF);
         io.writeWord(0x0000, 0x1F10);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.x.get());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -261,8 +267,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1F02);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.getD().get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -271,8 +277,8 @@ public class VoidInstructionTest {
         regs.setD(0xBEEF);
         io.writeWord(0x0000, 0x1F20);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.y.get());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -281,8 +287,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1F03);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.getD().get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -291,8 +297,8 @@ public class VoidInstructionTest {
         regs.setD(0xBEEF);
         io.writeWord(0x0000, 0x1F30);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.u.get());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -301,8 +307,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1F04);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.getD().get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -311,8 +317,8 @@ public class VoidInstructionTest {
         regs.setD(0xBEEF);
         io.writeWord(0x0000, 0x1F40);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.s.get());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -320,8 +326,8 @@ public class VoidInstructionTest {
         regs.setD(0xDEAD);
         io.writeWord(0x0000, 0x1F05);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0xDEAD, regs.getD().get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -330,8 +336,8 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x1F50);
         cpu.executeInstruction();
         /* PC will have advanced */
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0x0002, regs.getD().getInt());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0x0002, regs.getD().get());
     }
 
     @Test
@@ -340,8 +346,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1F12);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.x.get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -350,8 +356,8 @@ public class VoidInstructionTest {
         regs.x.set(0xBEEF);
         io.writeWord(0x0000, 0x1F21);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.y.get());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -360,8 +366,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1F13);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.x.get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -370,8 +376,8 @@ public class VoidInstructionTest {
         regs.x.set(0xBEEF);
         io.writeWord(0x0000, 0x1F31);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.u.get());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -380,8 +386,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1F14);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.x.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -390,8 +396,8 @@ public class VoidInstructionTest {
         regs.x.set(0xBEEF);
         io.writeWord(0x0000, 0x1F41);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.s.get());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -399,8 +405,8 @@ public class VoidInstructionTest {
         regs.x.set(0xDEAD);
         io.writeWord(0x0000, 0x1F15);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0xDEAD, regs.x.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -409,8 +415,8 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x1F51);
         cpu.executeInstruction();
         /* PC will have advanced */
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0x0002, regs.x.getInt());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0x0002, regs.x.get());
     }
 
     @Test
@@ -419,8 +425,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1F23);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.y.get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -429,8 +435,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1F32);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.u.get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -439,8 +445,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1F24);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.y.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -449,8 +455,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1F42);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.s.get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -458,8 +464,8 @@ public class VoidInstructionTest {
         regs.y.set(0xDEAD);
         io.writeWord(0x0000, 0x1F25);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0xDEAD, regs.y.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -468,8 +474,8 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x1F52);
         cpu.executeInstruction();
         /* PC will have advanced */
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0x0002, regs.y.getInt());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0x0002, regs.y.get());
     }
 
     @Test
@@ -478,8 +484,8 @@ public class VoidInstructionTest {
         io.regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1F34);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.u.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -488,8 +494,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1F43);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.s.get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -497,8 +503,8 @@ public class VoidInstructionTest {
         regs.u.set(0xDEAD);
         io.writeWord(0x0000, 0x1F35);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0xDEAD, regs.u.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -507,8 +513,8 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x1F53);
         cpu.executeInstruction();
         /* PC will have advanced */
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0x0002, regs.u.getInt());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0x0002, regs.u.get());
     }
 
     @Test
@@ -516,8 +522,8 @@ public class VoidInstructionTest {
         regs.s.set(0xDEAD);
         io.writeWord(0x0000, 0x1F45);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0xDEAD, regs.s.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -526,8 +532,8 @@ public class VoidInstructionTest {
         io.writeWord(0x0000, 0x1F54);
         cpu.executeInstruction();
         /* PC will have advanced */
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0x0002, regs.s.getInt());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0x0002, regs.s.get());
     }
 
     @Test
@@ -536,8 +542,8 @@ public class VoidInstructionTest {
         regs.b.set(0xBE);
         io.writeWord(0x0000, 0x1F89);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.a.get());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -546,8 +552,8 @@ public class VoidInstructionTest {
         regs.a.set(0xBE);
         io.writeWord(0x0000, 0x1F98);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.a.get());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -556,8 +562,8 @@ public class VoidInstructionTest {
         regs.cc.set(0xBE);
         io.writeWord(0x0000, 0x1F8A);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xDE, regs.a.get());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -566,8 +572,8 @@ public class VoidInstructionTest {
         regs.a.set(0xBE);
         io.writeWord(0x0000, 0x1FA8);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.cc.getShort());
-        assertEquals(0xDE, regs.a.getShort());
+        assertEquals(0xDE, regs.cc.get());
+        assertEquals(0xDE, regs.a.get());
     }
 
     @Test
@@ -576,8 +582,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xBE);
         io.writeWord(0x0000, 0x1F8B);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xDE, regs.a.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -586,8 +592,8 @@ public class VoidInstructionTest {
         regs.a.set(0xBE);
         io.writeWord(0x0000, 0x1FB8);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.dp.getShort());
-        assertEquals(0xDE, regs.a.getShort());
+        assertEquals(0xDE, regs.dp.get());
+        assertEquals(0xDE, regs.a.get());
     }
 
     @Test
@@ -596,8 +602,8 @@ public class VoidInstructionTest {
         regs.cc.set(0xBE);
         io.writeWord(0x0000, 0x1F9A);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.b.getShort());
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xDE, regs.b.get());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -606,8 +612,8 @@ public class VoidInstructionTest {
         regs.b.set(0xBE);
         io.writeWord(0x0000, 0x1FA9);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.cc.getShort());
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.cc.get());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -616,8 +622,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xBE);
         io.writeWord(0x0000, 0x1F9B);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.b.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xDE, regs.b.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -626,8 +632,8 @@ public class VoidInstructionTest {
         regs.a.set(0xBE);
         io.writeWord(0x0000, 0x1FB9);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.dp.getShort());
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.dp.get());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -636,8 +642,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xBE);
         io.writeWord(0x0000, 0x1FAB);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.cc.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xDE, regs.cc.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -646,8 +652,8 @@ public class VoidInstructionTest {
         regs.cc.set(0xBE);
         io.writeWord(0x0000, 0x1FBA);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.dp.getShort());
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xDE, regs.dp.get());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -655,7 +661,7 @@ public class VoidInstructionTest {
         regs.a.set(0xDE);
         io.writeWord(0x0000, 0x1F88);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
+        assertEquals(0xDE, regs.a.get());
     }
 
     @Test
@@ -663,7 +669,7 @@ public class VoidInstructionTest {
         regs.setD(0xDEAD);
         io.writeWord(0x0000, 0x1F00);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -671,7 +677,7 @@ public class VoidInstructionTest {
         regs.x.set(0xDEAD);
         io.writeWord(0x0000, 0x1F11);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -679,7 +685,7 @@ public class VoidInstructionTest {
         regs.y.set(0xDEAD);
         io.writeWord(0x0000, 0x1F22);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -687,7 +693,7 @@ public class VoidInstructionTest {
         regs.u.set(0xDEAD);
         io.writeWord(0x0000, 0x1F33);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -695,14 +701,14 @@ public class VoidInstructionTest {
         regs.s.set(0xDEAD);
         io.writeWord(0x0000, 0x1F44);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
     public void testTransferPCtoPC() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x1F55);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -710,7 +716,7 @@ public class VoidInstructionTest {
         regs.b.set(0xDE);
         io.writeWord(0x0000, 0x1F99);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -718,7 +724,7 @@ public class VoidInstructionTest {
         regs.cc.set(0xDE);
         io.writeWord(0x0000, 0x1FAA);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -726,7 +732,7 @@ public class VoidInstructionTest {
         regs.dp.set(0xDE);
         io.writeWord(0x0000, 0x1FBB);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test(expected = RuntimeException.class)
@@ -741,8 +747,8 @@ public class VoidInstructionTest {
         regs.x.set(0xBEEF);
         io.writeWord(0x0000, 0x1E01);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xBEEF, regs.getD().get());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -751,8 +757,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1E02);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xBEEF, regs.getD().get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -761,8 +767,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1E03);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xBEEF, regs.getD().get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -771,8 +777,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1E04);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.getD().getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xBEEF, regs.getD().get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -780,8 +786,8 @@ public class VoidInstructionTest {
         regs.setD(0xDEAD);
         io.writeWord(0x0000, 0x1E05);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.pc.getInt());
-        assertEquals(0x0002, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.pc.get());
+        assertEquals(0x0002, regs.getD().get());
     }
 
     @Test
@@ -790,8 +796,8 @@ public class VoidInstructionTest {
         regs.y.set(0xBEEF);
         io.writeWord(0x0000, 0x1E12);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.x.getInt());
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xBEEF, regs.x.get());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -800,8 +806,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1E13);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.x.getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xBEEF, regs.x.get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -810,8 +816,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1E14);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.x.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xBEEF, regs.x.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -819,8 +825,8 @@ public class VoidInstructionTest {
         regs.x.set(0xDEAD);
         io.writeWord(0x0000, 0x1E15);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.x.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0x0002, regs.x.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -829,8 +835,8 @@ public class VoidInstructionTest {
         regs.u.set(0xBEEF);
         io.writeWord(0x0000, 0x1E23);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.y.getInt());
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xBEEF, regs.y.get());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -839,8 +845,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1E24);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.y.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xBEEF, regs.y.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -848,8 +854,8 @@ public class VoidInstructionTest {
         regs.y.set(0xDEAD);
         io.writeWord(0x0000, 0x1E25);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.y.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0x0002, regs.y.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -858,8 +864,8 @@ public class VoidInstructionTest {
         regs.s.set(0xBEEF);
         io.writeWord(0x0000, 0x1E34);
         cpu.executeInstruction();
-        assertEquals(0xBEEF, regs.u.getInt());
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xBEEF, regs.u.get());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
@@ -867,8 +873,8 @@ public class VoidInstructionTest {
         regs.u.set(0xDEAD);
         io.writeWord(0x0000, 0x1E35);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.u.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0x0002, regs.u.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -876,8 +882,8 @@ public class VoidInstructionTest {
         regs.s.set(0xDEAD);
         io.writeWord(0x0000, 0x1E45);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.s.getInt());
-        assertEquals(0xDEAD, regs.pc.getInt());
+        assertEquals(0x0002, regs.s.get());
+        assertEquals(0xDEAD, regs.pc.get());
     }
 
     @Test
@@ -886,8 +892,8 @@ public class VoidInstructionTest {
         regs.b.set(0xAD);
         io.writeWord(0x0000, 0x1E89);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.a.getShort());
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xAD, regs.a.get());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -896,8 +902,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xAD);
         io.writeWord(0x0000, 0x1E8B);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.a.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xAD, regs.a.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -906,8 +912,8 @@ public class VoidInstructionTest {
         regs.cc.set(0xAD);
         io.writeWord(0x0000, 0x1E8A);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.a.getShort());
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xAD, regs.a.get());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -916,8 +922,8 @@ public class VoidInstructionTest {
         regs.cc.set(0xAD);
         io.writeWord(0x0000, 0x1E9A);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.b.getShort());
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xAD, regs.b.get());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -926,8 +932,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xAD);
         io.writeWord(0x0000, 0x1E9B);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.b.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xAD, regs.b.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -936,8 +942,8 @@ public class VoidInstructionTest {
         regs.dp.set(0xAD);
         io.writeWord(0x0000, 0x1EAB);
         cpu.executeInstruction();
-        assertEquals(0xAD, regs.cc.getShort());
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xAD, regs.cc.get());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test
@@ -945,7 +951,7 @@ public class VoidInstructionTest {
         regs.a.set(0xDE);
         io.writeWord(0x0000, 0x1E88);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.a.getShort());
+        assertEquals(0xDE, regs.a.get());
     }
 
     @Test
@@ -953,7 +959,7 @@ public class VoidInstructionTest {
         regs.setD(0xDEAD);
         io.writeWord(0x0000, 0x1E00);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.getD().getInt());
+        assertEquals(0xDEAD, regs.getD().get());
     }
 
     @Test
@@ -961,7 +967,7 @@ public class VoidInstructionTest {
         regs.x.set(0xDEAD);
         io.writeWord(0x0000, 0x1E11);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.x.getInt());
+        assertEquals(0xDEAD, regs.x.get());
     }
 
     @Test
@@ -969,7 +975,7 @@ public class VoidInstructionTest {
         regs.y.set(0xDEAD);
         io.writeWord(0x0000, 0x1E22);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.y.getInt());
+        assertEquals(0xDEAD, regs.y.get());
     }
 
     @Test
@@ -977,7 +983,7 @@ public class VoidInstructionTest {
         regs.u.set(0xDEAD);
         io.writeWord(0x0000, 0x1E33);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.u.getInt());
+        assertEquals(0xDEAD, regs.u.get());
     }
 
     @Test
@@ -985,14 +991,14 @@ public class VoidInstructionTest {
         regs.s.set(0xDEAD);
         io.writeWord(0x0000, 0x1E44);
         cpu.executeInstruction();
-        assertEquals(0xDEAD, regs.s.getInt());
+        assertEquals(0xDEAD, regs.s.get());
     }
 
     @Test
     public void testExchangePCtoPC() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x1E55);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -1000,7 +1006,7 @@ public class VoidInstructionTest {
         regs.b.set(0xDE);
         io.writeWord(0x0000, 0x1E99);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.b.getShort());
+        assertEquals(0xDE, regs.b.get());
     }
 
     @Test
@@ -1008,7 +1014,7 @@ public class VoidInstructionTest {
         regs.cc.set(0xDE);
         io.writeWord(0x0000, 0x1EAA);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.cc.getShort());
+        assertEquals(0xDE, regs.cc.get());
     }
 
     @Test
@@ -1016,7 +1022,7 @@ public class VoidInstructionTest {
         regs.dp.set(0xDE);
         io.writeWord(0x0000, 0x1EBB);
         cpu.executeInstruction();
-        assertEquals(0xDE, regs.dp.getShort());
+        assertEquals(0xDE, regs.dp.get());
     }
 
     @Test(expected = RuntimeException.class)
@@ -1029,6 +1035,6 @@ public class VoidInstructionTest {
     public void testNopIncrementsPC() throws MalformedInstructionException {
         io.writeByte(0x0000, 0x12);
         cpu.executeInstruction();
-        assertEquals(0x0001, regs.pc.getInt());
+        assertEquals(0x0001, regs.pc.get());
     }
 }

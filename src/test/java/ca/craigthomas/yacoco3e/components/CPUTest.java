@@ -7,6 +7,7 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,14 +18,20 @@ public class CPUTest
     private Memory memory;
     private RegisterSet regs;
     private CPU cpu;
+    private IOController io;
 
     @Before
     public void setup() throws MalformedInstructionException {
         memory = new Memory();
         regs = new RegisterSet();
-        IOController io = new IOController(memory, regs, new EmulatedKeyboard(), new Screen(1), new Cassette());
+        io = new IOController(memory, regs, new EmulatedKeyboard(), new Screen(1), new Cassette(), false);
         cpu = new CPU(io);
         io.setCPU(cpu);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test

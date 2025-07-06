@@ -31,4 +31,7 @@ public class Arguments
 
     @Parameter(names="--config", description="path to config file")
     public String configFile;
+
+    @Parameter(names="--enabledac", description="enable digital analog converter")
+    public Boolean useDAC = false;
 }

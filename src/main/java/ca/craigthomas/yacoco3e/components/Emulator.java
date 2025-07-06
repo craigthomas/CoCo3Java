@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Craig Thomas
+ * Copyright (C) 2022-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.components;
@@ -10,6 +10,9 @@ import ca.craigthomas.yacoco3e.listeners.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
@@ -40,9 +43,8 @@ public class Emulator extends Thread
     public boolean trace;
     private boolean verbose;
     private volatile EmulatorStatus status;
-    private volatile int remainingTicks;
-    private Timer timer;
-    private TimerTask timerTask;
+    private Timer screenRefreshTimer;
+    private TimerTask screenRefreshTimerTask;
 
     /* A logger for the emulator */
     private final static Logger LOGGER = Logger.getLogger(Emulator.class.getName());
@@ -55,6 +57,7 @@ public class Emulator extends Thread
         private String configFile;
         private boolean trace;
         private boolean verbose;
+        private boolean useDAC;
 
         public Builder() {
             scale = 1;
@@ -95,6 +98,11 @@ public class Emulator extends Thread
             return this;
         }
 
+        public Builder setDAC(boolean enableDAC) {
+            useDAC = enableDAC;
+            return this;
+        }
+
         public Emulator build() {
             return new Emulator(this);
         }
@@ -105,7 +113,8 @@ public class Emulator extends Thread
         keyboard = new EmulatedKeyboard();
         screen = new Screen(builder.scale);
         cassette = new Cassette();
-        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette);
+
+        io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette, builder.useDAC);
         cpu = new CPU(io);
         io.setCPU(cpu);
         trace = builder.trace;
@@ -412,57 +421,56 @@ public class Emulator extends Thread
     }
 
     /**
-     * Refreshes the number of ticks that can be consumed during the current
-     * 60th of a second time slice.
-     */
-    public void refreshTicks() {
-        remainingTicks = io.tickRefreshAmount;
-    }
-
-    /**
      * Starts the main emulator loop running. Fires at the rate of 60Hz,
      * will repaint the screen, listen for any debug key presses, and
      * refresh the number of ticks available to be consumed.
      */
     public void start() {
         this.reset();
-        timer = new Timer();
-        timerTask = new TimerTask() {
+        screenRefreshTimer = new Timer();
+        screenRefreshTimerTask = new TimerTask() {
             public void run() {
-                refreshTicks();
                 screen.refreshScreen();
                 refreshScreen();
             }
         };
-        timer.scheduleAtFixedRate(timerTask, 0L, SCREEN_REFRESH_RATE);
+        screenRefreshTimer.scheduleAtFixedRate(screenRefreshTimerTask, 0L, SCREEN_REFRESH_RATE);
         run();
     }
 
     /**
      * Runs the main emulator loop until the emulator is killed.
      */
+    @Override
     public void run() {
-        int operationTicks = 0;
-
         while (status != EmulatorStatus.KILLED) {
             while (status == EmulatorStatus.RUNNING) {
                 if (this.trace) {
                     System.out.print(io.regs.toString() + " | ");
                 }
 
-                try {
-                    if (remainingTicks > 0 && !io.waitForIRQ) {
+                Instant lastInstant = Instant.now().truncatedTo(ChronoUnit.MICROS);
+                int operationTicks = 4;
+
+                if (!io.waitForIRQ) {
+                    try {
                         operationTicks = cpu.executeInstruction();
-                        remainingTicks = remainingTicks - operationTicks;
+                    } catch (MalformedInstructionException e) {
+                        System.out.println(e.getMessage());
+                        status = EmulatorStatus.PAUSED;
                     }
-                } catch (MalformedInstructionException e) {
-                    System.out.println(e.getMessage());
-                    status = EmulatorStatus.PAUSED;
                 }
 
-                /* Check to see if we had an instruction - if it's a SYNC, just add to the timers */
-                if (io.waitForIRQ) {
-                    operationTicks += 1;
+                // Check to see if we should wait on execution time
+                float totalInstructionTime = 1.117f * operationTicks;
+                Instant thisInstant = Instant.now();
+                Duration duration = Duration.between(lastInstant, thisInstant);
+                long microSeconds = duration.toNanos() / 1000;
+
+                while (microSeconds <= totalInstructionTime) {
+                    thisInstant = Instant.now();
+                    duration = Duration.between(lastInstant, thisInstant);
+                    microSeconds = duration.toNanos() / 1000;
                 }
 
                 /* Check to see if we should trace the output */
@@ -489,9 +497,12 @@ public class Emulator extends Thread
      * main container.
      */
     public void shutdown() {
-        timer.cancel();
-        timer.purge();
-        timerTask.cancel();
+        screenRefreshTimer.cancel();
+        screenRefreshTimer.purge();
+        screenRefreshTimerTask.cancel();
+
+        io.shutdown();
+
         container.dispose();
     }
 

@@ -16,7 +16,7 @@ group = 'ca.craigthomas'
 version = '1.0'
 
 java {
-    sourceCompatibility = 1.8
+    sourceCompatibility = JavaVersion.VERSION_17
 }
 
 application {

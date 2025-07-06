@@ -176,7 +176,7 @@ public class VoidInstruction extends Instruction
     public static void exchangeRegister(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
         UnsignedWord temp = new UnsignedWord();
         UnsignedByte tempByte = new UnsignedByte();
-        switch (memoryByte.getShort()) {
+        switch (memoryByte.get()) {
             /* A:B <-> X */
             case 0x01:
             case 0x10:
@@ -368,7 +368,7 @@ public class VoidInstruction extends Instruction
      * to and from is encoded by the post byte read.
      */
     public static void transferRegister(IOController io, UnsignedByte memoryByte, UnsignedWord address) {
-        switch (memoryByte.getShort()) {
+        switch (memoryByte.get()) {
             /* A:B -> X */
             case 0x01:
                 io.regs.x.set(io.regs.getD());

@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,9 +14,14 @@ public class NotImplementedInstructionTest {
 
     @Before
     public void setup() throws MalformedInstructionException {
-        io = new IOController(new Memory(), new RegisterSet(), new EmulatedKeyboard(), new Screen(1), new Cassette());
+        io = new IOController(new Memory(), new RegisterSet(), new EmulatedKeyboard(), new Screen(1), new Cassette(), false);
         CPU cpu = new CPU(io);
         io.setCPU(cpu);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test(expected = MalformedInstructionException.class)

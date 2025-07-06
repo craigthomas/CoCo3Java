@@ -76,35 +76,35 @@ public class G3RScreenMode extends ScreenMode
         int y = 24 + (row * BLOCK_HEIGHT);
 
         /* Pixel 1 */
-        int color = (value.getShort() & 0x80) >> 7;
+        int color = (value.get() & 0x80) >> 7;
         drawBlock(x, y, color);
 
         /* Pixel 2 */
-        color = (value.getShort() & 0x40) >> 6;
+        color = (value.get() & 0x40) >> 6;
         drawBlock(x + BLOCK_WIDTH, y, color);
 
         /* Pixel 3 */
-        color = (value.getShort() & 0x20) >> 5;
+        color = (value.get() & 0x20) >> 5;
         drawBlock(x + (2 * BLOCK_WIDTH), y, color);
 
         /* Pixel 4 */
-        color = (value.getShort() & 0x10) >> 4;
+        color = (value.get() & 0x10) >> 4;
         drawBlock(x + (3 * BLOCK_WIDTH), y, color);
 
         /* Pixel 5 */
-        color = (value.getShort() & 0x8) >> 3;
+        color = (value.get() & 0x8) >> 3;
         drawBlock(x + (4 * BLOCK_WIDTH), y, color);
 
         /* Pixel 6 */
-        color = (value.getShort() & 0x4) >> 2;
+        color = (value.get() & 0x4) >> 2;
         drawBlock(x + (5 * BLOCK_WIDTH), y, color);
 
         /* Pixel 7 */
-        color = (value.getShort() & 0x2) >> 1;
+        color = (value.get() & 0x2) >> 1;
         drawBlock(x + (6 * BLOCK_WIDTH), y, color);
 
         /* Pixel 8 */
-        color = (value.getShort() & 0x1);
+        color = (value.get() & 0x1);
         drawBlock(x + (7 * BLOCK_WIDTH), y, color);
     }
 }

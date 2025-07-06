@@ -4,14 +4,11 @@
  */
 package ca.craigthomas.yacoco3e.components;
 
-import ca.craigthomas.yacoco3e.common.IO;
 import ca.craigthomas.yacoco3e.datatypes.ConfigFile;
-import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.InputStream;
 
 import static org.junit.Assert.*;
 
@@ -132,7 +129,7 @@ public class ConfigFileTest
     }
 
     @Test
-    public void testParseConfigFileCorrectFormat() {
+    public void testParseConfigFileCorrectFormat() throws NullPointerException {
         File resourceFile = new File(getClass().getClassLoader().getResource("test_config.yml").getFile());
         configFile = ConfigFile.parseConfigFile(resourceFile.getPath());
         assertEquals("system", configFile.getSystemROM());

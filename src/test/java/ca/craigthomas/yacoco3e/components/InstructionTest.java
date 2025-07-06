@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,8 +22,13 @@ public class InstructionTest {
         Cassette cassette = new Cassette();
         regs = new RegisterSet();
         Memory memory = new Memory();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, false);
         io.regs.pc.set(0);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test
@@ -32,10 +38,10 @@ public class InstructionTest {
         regs.pc.set(0x1234);
         instruction.getImmediate(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xAA, instruction.byteRead.getShort());
-        assertEquals(0xAABB, instruction.wordRead.getInt());
-        assertEquals(0x1235, regs.pc.getInt());
-        assertEquals(0x1234, instruction.addressRead.getInt());
+        assertEquals(0xAA, instruction.byteRead.get());
+        assertEquals(0xAABB, instruction.wordRead.get());
+        assertEquals(0x1235, regs.pc.get());
+        assertEquals(0x1234, instruction.addressRead.get());
     }
 
     @Test
@@ -45,10 +51,10 @@ public class InstructionTest {
         regs.pc.set(0x1234);
         instruction.getImmediate(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xAA, instruction.byteRead.getShort());
-        assertEquals(0xAABB, instruction.wordRead.getInt());
-        assertEquals(0x1236, regs.pc.getInt());
-        assertEquals(0x1234, instruction.addressRead.getInt());
+        assertEquals(0xAA, instruction.byteRead.get());
+        assertEquals(0xAABB, instruction.wordRead.get());
+        assertEquals(0x1236, regs.pc.get());
+        assertEquals(0x1234, instruction.addressRead.get());
     }
 
     @Test
@@ -61,10 +67,10 @@ public class InstructionTest {
         regs.dp.set(0xAB);
         instruction.getDirect(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xFF, instruction.byteRead.getShort());
-        assertEquals(0xFFEE, instruction.wordRead.getInt());
-        assertEquals(0x00BF, regs.pc.getInt());
-        assertEquals(0xABCD, instruction.addressRead.getInt());
+        assertEquals(0xFF, instruction.byteRead.get());
+        assertEquals(0xFFEE, instruction.wordRead.get());
+        assertEquals(0x00BF, regs.pc.get());
+        assertEquals(0xABCD, instruction.addressRead.get());
     }
 
     @Test
@@ -76,10 +82,10 @@ public class InstructionTest {
         regs.pc.set(0x1234);
         instruction.getExtended(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x1236, regs.pc.getInt());
-        assertEquals(0xABCD, instruction.addressRead.getInt());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x1236, regs.pc.get());
+        assertEquals(0xABCD, instruction.addressRead.get());
     }
 
     @Test
@@ -89,10 +95,10 @@ public class InstructionTest {
         io.writeWord(0xB000, 0xAABB);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xAA, instruction.byteRead.getShort());
-        assertEquals(0xAABB, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, instruction.addressRead.getInt());
+        assertEquals(0xAA, instruction.byteRead.get());
+        assertEquals(0xAABB, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, instruction.addressRead.get());
     }
 
     @Test
@@ -104,10 +110,10 @@ public class InstructionTest {
         io.writeByte(0x0000, 0x94);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
     }
 
     @Test
@@ -118,10 +124,10 @@ public class InstructionTest {
         io.writeByte(0x0000, 0x01);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB001, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
+        assertEquals(0xB001, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
     }
 
     @Test
@@ -132,10 +138,10 @@ public class InstructionTest {
         io.writeWord(0xAFFF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xAFFF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
+        assertEquals(0xAFFF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
     }
 
     @Test
@@ -146,11 +152,11 @@ public class InstructionTest {
         io.writeWord(0xB000, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB000, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB001, regs.x.getInt());
+        assertEquals(0xB000, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB001, regs.x.get());
     }
 
     @Test
@@ -161,11 +167,11 @@ public class InstructionTest {
         io.writeWord(0xB000, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB000, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB002, regs.x.getInt());
+        assertEquals(0xB000, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB002, regs.x.get());
     }
 
     @Test
@@ -177,11 +183,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB002, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB002, regs.x.get());
     }
 
     @Test
@@ -192,11 +198,11 @@ public class InstructionTest {
         io.writeWord(0xAFFF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xAFFF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xAFFF, regs.x.getInt());
+        assertEquals(0xAFFF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xAFFF, regs.x.get());
     }
 
     @Test
@@ -207,11 +213,11 @@ public class InstructionTest {
         io.writeWord(0xAFFE, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xAFFE, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xAFFE, regs.x.getInt());
+        assertEquals(0xAFFE, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xAFFE, regs.x.get());
     }
 
     @Test
@@ -223,11 +229,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xAFFE, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xAFFE, regs.x.get());
     }
 
     @Test
@@ -238,11 +244,11 @@ public class InstructionTest {
         io.writeWord(0xB000, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB000, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB000, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -254,11 +260,11 @@ public class InstructionTest {
         io.writeWord(0xB00B, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB00B, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB00B, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -271,11 +277,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -287,11 +293,11 @@ public class InstructionTest {
         io.writeWord(0xB00A, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB00A, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB00A, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -304,11 +310,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -319,11 +325,11 @@ public class InstructionTest {
         io.writeWord(0xB002, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xB002, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB002, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -334,11 +340,11 @@ public class InstructionTest {
         io.writeWord(0xAFFE, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xAFFE, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xAFFE, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -350,11 +356,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -366,11 +372,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -382,11 +388,11 @@ public class InstructionTest {
         io.writeWord(0xB200, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xB200, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB200, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -398,11 +404,11 @@ public class InstructionTest {
         io.writeWord(0xAE00, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xAE00, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xAE00, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -415,11 +421,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -432,11 +438,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -448,11 +454,11 @@ public class InstructionTest {
         io.writeWord(0xB200, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xB200, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xB200, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -465,11 +471,11 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(1, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0001, regs.pc.getInt());
-        assertEquals(0xB000, regs.x.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0001, regs.pc.get());
+        assertEquals(0xB000, regs.x.get());
     }
 
     @Test
@@ -479,10 +485,10 @@ public class InstructionTest {
         io.writeWord(0x000C, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0x000C, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x000C, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -493,10 +499,10 @@ public class InstructionTest {
         io.writeWord(0x0008, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0x0008, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x000C, regs.pc.getInt());
+        assertEquals(0x0008, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x000C, regs.pc.get());
     }
 
     @Test
@@ -507,10 +513,10 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -522,10 +528,10 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(2, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x000C, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x000C, regs.pc.get());
     }
 
     @Test
@@ -536,10 +542,10 @@ public class InstructionTest {
         io.writeWord(0x0203, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0x0203, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
+        assertEquals(0x0203, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
     }
 
     @Test
@@ -551,10 +557,10 @@ public class InstructionTest {
         io.writeWord(0x9E03, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0x9E03, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0xA003, regs.pc.getInt());
+        assertEquals(0x9E03, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0xA003, regs.pc.get());
     }
 
     @Test
@@ -566,10 +572,10 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
     }
 
     @Test
@@ -582,10 +588,10 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0xA003, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0xA003, regs.pc.get());
     }
 
     @Test
@@ -597,10 +603,10 @@ public class InstructionTest {
         io.writeWord(0xBEEF, 0xDEAD);
         instruction.getIndexed(io);
         assertEquals(3, instruction.numBytesRead);
-        assertEquals(0xBEEF, instruction.addressRead.getInt());
-        assertEquals(0xDE, instruction.byteRead.getShort());
-        assertEquals(0xDEAD, instruction.wordRead.getInt());
-        assertEquals(0x0003, regs.pc.getInt());
+        assertEquals(0xBEEF, instruction.addressRead.get());
+        assertEquals(0xDE, instruction.byteRead.get());
+        assertEquals(0xDEAD, instruction.wordRead.get());
+        assertEquals(0x0003, regs.pc.get());
     }
 
     @Test(expected = MalformedInstructionException.class)

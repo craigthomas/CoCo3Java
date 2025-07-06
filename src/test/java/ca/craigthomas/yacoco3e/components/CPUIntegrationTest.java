@@ -9,11 +9,11 @@ import static org.junit.Assert.*;
 import ca.craigthomas.yacoco3e.datatypes.RegisterSet;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 import ca.craigthomas.yacoco3e.datatypes.UnsignedWord;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 
 public class CPUIntegrationTest
 {
@@ -22,14 +22,10 @@ public class CPUIntegrationTest
     private Memory memorySpy;
 
     private IOController ioSpy;
+    private IOController io;
 
     private RegisterSet registerSet;
     private RegisterSet registerSpy;
-
-    private UnsignedByte expectedDirectByte;
-
-    private UnsignedByte expectedExtendedByte;
-    private int expectedExtendedWord;
 
     @Before
     public void setUp() {
@@ -44,22 +40,22 @@ public class CPUIntegrationTest
 
         Screen screen = new Screen(1);
 
-        IOController io = new IOController(memorySpy, registerSpy, new EmulatedKeyboard(), screen, cassetteSpy);
+        io = new IOController(memorySpy, registerSpy, new EmulatedKeyboard(), screen, cassetteSpy, false);
         ioSpy = spy(io);
 
         CPU cpu = new CPU(ioSpy);
         cpuSpy = spy(cpu);
 
         ioSpy.regs.dp.set(new UnsignedByte(0xA0));
-        expectedDirectByte = new UnsignedByte(0xBA);
         ioSpy.writeByte(new UnsignedWord(0xA000), new UnsignedByte(0xBA));
-
-        expectedExtendedByte = new UnsignedByte(0xCF);
-        expectedExtendedWord = 0xCFDA;
-//        ioSpy.writeWord(extendedAddress, expectedExtendedWord);
 
         ioSpy.regs.x.set(new UnsignedWord(0xB000));
         memorySpy.enableAllRAMMode();
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
 //    @Test

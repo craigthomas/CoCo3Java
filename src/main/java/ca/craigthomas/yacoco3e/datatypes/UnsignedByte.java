@@ -37,7 +37,7 @@ public class UnsignedByte
      *
      * @return the short value of the byte
      */
-    public short getShort() {
+    public short get() {
         return (short) (value & 0xFF);
     }
 
@@ -48,8 +48,8 @@ public class UnsignedByte
      *
      * @return the signed short value of the byte
      */
-    public short getSignedShort() {
-        return (isMasked(0x80)) ? (short) -(twosCompliment().getShort()) : getShort();
+    public short getSigned() {
+        return (value & 0x80) > 0 ? (short) -((~value + 1) & 0xFF) : value;
     }
 
     /**
@@ -91,16 +91,22 @@ public class UnsignedByte
         value = (short) ((value + (x & 0xFF)) & 0xFF);
     }
 
+    /**
+     * Shifts the bits right by one place.
+     */
     public void shiftRight() {
         value = (short) ((value >> 1) & 0xFF);
     }
 
+    /**
+     * Shits the bits left by one place.
+     */
     public void shiftLeft() {
         value = (short) ((value << 1) & 0xFF);
     }
 
     public void compliment() {
-        value = (short) (~value & 0xFF);
+        value = (short) (value ^ 0xFF);
     }
 
     /**
@@ -113,7 +119,7 @@ public class UnsignedByte
     }
 
     public void and(UnsignedByte mask) {
-        and(mask.getShort());
+        and(mask.get());
     }
 
     /**
@@ -126,7 +132,7 @@ public class UnsignedByte
     }
 
     public void or(UnsignedByte mask) {
-        or(mask.getShort());
+        or(mask.get());
     }
 
     /**
@@ -172,7 +178,7 @@ public class UnsignedByte
      * @param x the new byte value to set
      */
     public void set(UnsignedByte x) {
-        value = x.getShort();
+        value = x.get();
     }
 
     public boolean equalsInt(int value) {
@@ -190,7 +196,7 @@ public class UnsignedByte
 
         UnsignedByte that = (UnsignedByte) o;
 
-        return this.getShort() == that.getShort();
+        return this.get() == that.get();
     }
 
     @Override

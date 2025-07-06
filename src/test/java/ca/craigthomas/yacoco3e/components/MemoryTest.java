@@ -41,7 +41,7 @@ public class MemoryTest
     public void testGetPhysicalAddressWorksCorrectly() {
         UnsignedWord address = new UnsignedWord(0x0412);
         int par = memory.getPAR(address);
-        assertEquals(0x70412, memory.getPhysicalAddress(par, address.getInt()));
+        assertEquals(0x70412, memory.getPhysicalAddress(par, address.get()));
     }
     
     @Test

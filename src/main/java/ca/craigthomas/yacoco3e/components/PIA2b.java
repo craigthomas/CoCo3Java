@@ -8,12 +8,12 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 public class PIA2b extends PIA
 {
-    protected UnsignedByte vdgOperatingMode;
+    protected UnsignedByte vdgMode;
     protected IOController io;
 
     public PIA2b(IOController newIO) {
         super();
-        vdgOperatingMode = new UnsignedByte();
+        vdgMode = new UnsignedByte();
         io = newIO;
     }
 
@@ -29,16 +29,19 @@ public class PIA2b extends PIA
     }
 
     /**
-     * In the Color Computer line of computers, PIA 1 side A is always configured for
-     * input, not for output. Writing to the data register does nothing.
+     * In the Color Computer line of computers, the PIA 2 side B is connected to
+     * the Video Display Generator. Writing to the data register will set the
+     * video mode. Bits 3-7 are connected to the VDG. The bits must be set for
+     * output based on the data direction register.
      *
      * @param newDataRegister the new value for the data register
      */
     @Override
     public void setDataRegister(UnsignedByte newDataRegister) {
-        vdgOperatingMode = newDataRegister.copy();
-//        vdgOperatingMode.and(~dataDirectionRegister.getShort());
-        io.updateVideoMode(vdgOperatingMode);
+        vdgMode = newDataRegister.copy();
+        vdgMode.and(dataDirectionRegister);
+        vdgMode.and(~0x7);
+        io.updateVideoMode(vdgMode);
         dataRegister = newDataRegister.copy();
     }
 
@@ -50,7 +53,7 @@ public class PIA2b extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        controlRegister = new UnsignedByte(newControlRegister.getShort() +
+        controlRegister = new UnsignedByte(newControlRegister.get() +
                         (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                         (controlRegister.isMasked(0x40) ? 0x40 : 0));
         /* Bit 2 = Control whether Data Register or Data Direction Register active */
@@ -58,7 +61,7 @@ public class PIA2b extends PIA
         /* Bit 0 = FIRQ from cartridge ROM */
     }
 
-    public UnsignedByte getVDGOperatingMode() {
-        return vdgOperatingMode;
+    public UnsignedByte getVdgMode() {
+        return vdgMode;
     }
 }

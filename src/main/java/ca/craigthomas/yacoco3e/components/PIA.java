@@ -26,7 +26,7 @@ public abstract class PIA
     public abstract UnsignedByte getDataRegister();
 
     /**
-     * Sets the data regiister for this portion of the PIA.
+     * Sets the data register for this portion of the PIA.
      *
      * @param newDataRegister the new value for the data register
      */
@@ -38,7 +38,7 @@ public abstract class PIA
      * @return the data direction register contents
      */
     public UnsignedByte getDataDirectionRegister() {
-        return dataDirectionRegister;
+        return dataDirectionRegister.copy();
     }
 
     /**
@@ -47,7 +47,7 @@ public abstract class PIA
      * @param newDataDirectionRegister the new contents fo the data direction register
      */
     public void setDataDirectionRegister(UnsignedByte newDataDirectionRegister) {
-        dataDirectionRegister = newDataDirectionRegister;
+        dataDirectionRegister = newDataDirectionRegister.copy();
     }
 
     /**
@@ -78,6 +78,7 @@ public abstract class PIA
      * @return the data register or the data direction register
      */
     public UnsignedByte getRegister() {
+        controlRegister.and(controlRegister.isMasked(0x04) ? ~0xC0 : ~0x00);
         return (controlRegister.isMasked(0x04)) ? getDataRegister() : getDataDirectionRegister();
     }
 

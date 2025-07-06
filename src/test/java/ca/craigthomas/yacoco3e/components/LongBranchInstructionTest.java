@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,22 +24,27 @@ public class LongBranchInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test
     public void testLongBranchNeverDoesNothing() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x1021);
         cpu.executeInstruction();
-        assertEquals(0x4, regs.pc.getInt());
+        assertEquals(0x4, regs.pc.get());
     }
     @Test
     public void testLongBranchAlways() throws MalformedInstructionException {
         io.writeByte(0x0000, 0x16);
         io.writeWord(0x0001, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0022, regs.pc.getInt());
+        assertEquals(0x0022, regs.pc.get());
     }
 
     @Test
@@ -46,7 +52,7 @@ public class LongBranchInstructionTest {
         io.writeByte(0x0000, 0x16);
         io.writeWord(0x0001, 0xFFFD);
         cpu.executeInstruction();
-        assertEquals(0x0000, regs.pc.getInt());
+        assertEquals(0x0000, regs.pc.get());
     }
 
     @Test
@@ -54,7 +60,7 @@ public class LongBranchInstructionTest {
         io.writeByte(0x0000, 0x16);
         io.writeWord(0x0001, 0xFFFC);
         cpu.executeInstruction();
-        assertEquals(0xFFFF, regs.pc.getInt());
+        assertEquals(0xFFFF, regs.pc.get());
     }
 
     @Test
@@ -63,7 +69,7 @@ public class LongBranchInstructionTest {
         io.writeByte(0x0009, 0x16);
         io.writeWord(0x000A, 0x007F);
         cpu.executeInstruction();
-        assertEquals(0x008B, regs.pc.getInt());
+        assertEquals(0x008B, regs.pc.get());
     }
 
     @Test
@@ -72,7 +78,7 @@ public class LongBranchInstructionTest {
         io.writeByte(0x0056, 0x16);
         io.writeWord(0x0057, 0xFFAA);
         cpu.executeInstruction();
-        assertEquals(0x0003, regs.pc.getInt());
+        assertEquals(0x0003, regs.pc.get());
     }
 
     @Test
@@ -80,7 +86,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1021);
         io.writeWord(0x0002, 0x00FF);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -90,9 +96,9 @@ public class LongBranchInstructionTest {
         io.writeByte(0x1000, 0x17);
         io.writeWord(0x1001, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x1022, regs.pc.getInt());
-        assertEquals(0x03, memory.readByte(0x2FFF).getShort());
-        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
+        assertEquals(0x1022, regs.pc.get());
+        assertEquals(0x03, memory.readByte(0x2FFF).get());
+        assertEquals(0x10, memory.readByte(0x2FFE).get());
     }
 
     @Test
@@ -102,9 +108,9 @@ public class LongBranchInstructionTest {
         io.writeByte(0x1021, 0x17);
         io.writeWord(0x1022, 0xFFDC);
         cpu.executeInstruction();
-        assertEquals(0x1000, regs.pc.getInt());
-        assertEquals(0x24, memory.readByte(0x2FFF).getShort());
-        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
+        assertEquals(0x1000, regs.pc.get());
+        assertEquals(0x24, memory.readByte(0x2FFF).get());
+        assertEquals(0x10, memory.readByte(0x2FFE).get());
     }
 
     @Test
@@ -112,7 +118,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1022);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -121,7 +127,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1022);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -130,7 +136,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1022);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -138,7 +144,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1023);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -148,7 +154,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1023);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -158,7 +164,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1023);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -167,7 +173,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1023);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -176,7 +182,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1023);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -184,7 +190,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1024);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -193,7 +199,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1024);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -202,7 +208,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1025);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -210,7 +216,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1025);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -218,7 +224,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1026);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -227,7 +233,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1026);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -236,7 +242,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1027);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -244,7 +250,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1027);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -252,7 +258,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1028);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -261,7 +267,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1028);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -270,7 +276,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1029);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -278,7 +284,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x1029);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -286,7 +292,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102A);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -295,7 +301,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102A);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -304,7 +310,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102B);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -312,7 +318,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102B);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -320,7 +326,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102C);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -330,7 +336,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102C);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -339,7 +345,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102C);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -348,7 +354,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102C);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -356,7 +362,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102D);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -366,7 +372,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102D);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -375,7 +381,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102D);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -384,7 +390,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102D);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -393,7 +399,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -404,7 +410,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -414,7 +420,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -424,7 +430,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -433,7 +439,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -442,7 +448,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -450,7 +456,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -460,7 +466,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102E);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -469,7 +475,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -480,7 +486,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -490,7 +496,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -500,7 +506,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -509,7 +515,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -518,7 +524,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0023, regs.pc.getInt());
+        assertEquals(0x0023, regs.pc.get());
     }
 
     @Test
@@ -526,7 +532,7 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 
     @Test
@@ -536,6 +542,6 @@ public class LongBranchInstructionTest {
         io.writeWord(0x0000, 0x102F);
         io.writeWord(0x0002, 0x001F);
         cpu.executeInstruction();
-        assertEquals(0x0004, regs.pc.getInt());
+        assertEquals(0x0004, regs.pc.get());
     }
 }

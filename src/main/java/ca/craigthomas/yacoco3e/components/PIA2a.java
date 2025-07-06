@@ -9,17 +9,30 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 public class PIA2a extends PIA
 {
     protected Cassette cassette;
+    protected float voltage;
+    protected DigitalAnalogConverter dac;
+    protected boolean useDAC;
 
-    public PIA2a(Cassette newCassette) {
+    public PIA2a(Cassette newCassette, boolean useDAC) {
         super();
         cassette = newCassette;
+        voltage = 0.0f;
+        if (useDAC) {
+            dac = new DigitalAnalogConverter();
+            dac.start();
+        }
+        this.useDAC = useDAC;
+    }
+
+    public void shutdown() {
+        if (useDAC) {
+            dac.stopRunning();
+        }
     }
 
     /**
      * In PIA 2 side A, multiple sources are potentially connected to the various
      * address lines.
-     *
-     * @return the high byte of the keyboard matrix
      */
     @Override
     public UnsignedByte getDataRegister() {
@@ -29,13 +42,34 @@ public class PIA2a extends PIA
     }
 
     /**
-     * In the Color Computer line of computers, PIA 1 side A is always configured for
-     * input, not for output. Writing to the data register does nothing.
+     * In the Color Computer line of computers, PIA 2 side A is always configured for
+     * output, not for input. Writing to the data register writes a value to the
+     * digital-to-analog converter. A corresponding voltage is generated from the
+     * values written from bits 2 through 7 of the data register. The resulting
+     * voltage ranges from 0 to +4.5V. Each bit has an additive contribution to
+     * the overall voltage as follows:
+     *   bit 7 set = 2.250V
+     *   bit 6 set = 1.125V
+     *   bit 5 set = 0.563V
+     *   bit 4 set = 0.281V
+     *   bit 3 set = 0.140V
+     *   bit 2 set = 0.070V
      *
      * @param newDataRegister the new value for the data register
      */
     @Override
     public void setDataRegister(UnsignedByte newDataRegister) {
+        voltage = 0.0f;
+        voltage += newDataRegister.isMasked(0x80) ? 2.250f : 0.0f;
+        voltage += newDataRegister.isMasked(0x40) ? 1.125f : 0.0f;
+        voltage += newDataRegister.isMasked(0x20) ? 0.563f : 0.0f;
+        voltage += newDataRegister.isMasked(0x10) ? 0.281f : 0.0f;
+        voltage += newDataRegister.isMasked(0x08) ? 0.140f : 0.0f;
+        voltage += newDataRegister.isMasked(0x04) ? 0.070f : 0.0f;
+        byte audioByte = (byte)(((voltage / 4.429f) * 128.0f));
+        if (useDAC) {
+            dac.writeByte(audioByte);
+        }
     }
 
     /**
@@ -46,7 +80,7 @@ public class PIA2a extends PIA
      */
     @Override
     public void setControlRegister(UnsignedByte newControlRegister) {
-        controlRegister = new UnsignedByte(newControlRegister.getShort() +
+        controlRegister = new UnsignedByte(newControlRegister.get() +
                         (controlRegister.isMasked(0x80) ? 0x80 : 0) +
                         (controlRegister.isMasked(0x40) ? 0x40 : 0));
 

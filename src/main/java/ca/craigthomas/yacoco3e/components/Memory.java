@@ -108,7 +108,7 @@ public class Memory
      */
 
     public int getPAR(UnsignedWord address) {
-        return address.getInt() >> 13;
+        return address.get() >> 13;
     }
 
     /**
@@ -118,7 +118,7 @@ public class Memory
      * @return the short value of the byte read
      */
     public short readPhysicalByte(UnsignedWord address) {
-        int intAddress = address.getInt();
+        int intAddress = address.get();
         int par = getPAR(address);
 
         /* Grab the PAR to read from (if MMU enabled) */
@@ -219,12 +219,12 @@ public class Memory
      * @param value the UnsignedByte to write
      */
     public void writeByte(UnsignedWord address, UnsignedByte value) {
-        int intAddress = address.getInt();
+        int intAddress = address.get();
         int par = getPAR(address);
 
         /* RAM only */
         if (allRAMMode) {
-            memory[getPhysicalAddress(par, intAddress)] = value.getShort();
+            memory[getPhysicalAddress(par, intAddress)] = value.get();
             return;
         }
 
@@ -237,7 +237,7 @@ public class Memory
                 return;
 
             default:
-                memory[getPhysicalAddress(par, intAddress)] = value.getShort();
+                memory[getPhysicalAddress(par, intAddress)] = value.get();
         }
     }
 
@@ -326,7 +326,7 @@ public class Memory
      * @param value the value to set it to
      */
     public void setExecutivePAR(int par, UnsignedByte value) {
-        switch (value.getShort()) {
+        switch (value.get()) {
             case 0x3C:
             case 0x3D:
             case 0x3E:
@@ -338,7 +338,7 @@ public class Memory
             default:
                 break;
         }
-        executivePAR[par] = value.getShort();
+        executivePAR[par] = value.get();
     }
 
     /**
@@ -351,7 +351,7 @@ public class Memory
      * @param value the value to set it to
      */
     public void setTaskPAR(int par, UnsignedByte value) {
-        switch (value.getShort()) {
+        switch (value.get()) {
             case 0x3C:
             case 0x3D:
             case 0x3E:
@@ -363,7 +363,7 @@ public class Memory
             default:
                 break;
         }
-        taskPAR[par] = value.getShort();
+        taskPAR[par] = value.get();
     }
 
     /**

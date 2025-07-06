@@ -13,45 +13,45 @@ public class UnsignedWordTest
     @Test
     public void testValuePreserved() {
         UnsignedWord result = new UnsignedWord(0xFFFF);
-        assertEquals(0xFFFF, result.getInt());
+        assertEquals(0xFFFF, result.get());
     }
 
     @Test
     public void testNextLowValue() {
         UnsignedWord result = new UnsignedWord(0x0001);
-        assertEquals(0x0002, result.next().getInt());
+        assertEquals(0x0002, result.next().get());
     }
 
     @Test
     public void testNextRollsOver() {
         UnsignedWord result = new UnsignedWord(0xFFFF);
-        assertEquals(0x0000, result.next().getInt());
+        assertEquals(0x0000, result.next().get());
     }
 
     @Test
     public void testDefaultConstructorSetsZero() {
         UnsignedWord result = new UnsignedWord();
-        assertEquals(0, result.getInt());
+        assertEquals(0, result.get());
     }
 
     @Test
     public void testAlternateConstructor() {
         UnsignedWord result = new UnsignedWord(0xC0, new UnsignedByte(0x11));
-        assertEquals(0xC011, result.getInt());
+        assertEquals(0xC011, result.get());
     }
 
     @Test
     public void testHighSetsHighByteOnly() {
         UnsignedWord result = new UnsignedWord();
         result.setHigh(new UnsignedByte(0xFF));
-        assertEquals(0xFF00, result.getInt());
+        assertEquals(0xFF00, result.get());
     }
 
     @Test
     public void testLowSetsLowByteOnly() {
         UnsignedWord result = new UnsignedWord();
         result.setLow(new UnsignedByte(0xFF));
-        assertEquals(0x00FF, result.getInt());
+        assertEquals(0x00FF, result.get());
     }
 
     @Test
@@ -108,12 +108,12 @@ public class UnsignedWordTest
     public void testORMaskWorksCorrectly() {
         UnsignedWord word1 = new UnsignedWord(0x2);
         word1.or(0x1);
-        assertEquals(0x3, word1.getInt());
+        assertEquals(0x3, word1.get());
     }
 
     @Test
     public void testInverseWorksCorrectly() {
         UnsignedWord word1 = new UnsignedWord(0xFFFF);
-        assertEquals(0x0, word1.inverse().getInt());
+        assertEquals(0x0, word1.inverse().get());
     }
 }

@@ -5,6 +5,7 @@
 package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,8 +24,13 @@ public class BranchInstructionTest {
         Cassette cassette = new Cassette();
         memory = new Memory();
         regs = new RegisterSet();
-        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette);
+        io = new IOController(memory, regs, new EmulatedKeyboard(), screen, cassette, false);
         cpu = new CPU(io);
+    }
+
+    @After
+    public void tearDown() {
+        io.shutdown();
     }
 
     @Test
@@ -36,21 +42,21 @@ public class BranchInstructionTest {
     public void testBranchAlways() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x201F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchAlwaysNegativeOffset() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x20FE);
         cpu.executeInstruction();
-        assertEquals(0x0000, regs.pc.getInt());
+        assertEquals(0x0000, regs.pc.get());
     }
 
     @Test
     public void testBranchAlwaysNegativeOffsetLoopsAround() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x20FD);
         cpu.executeInstruction();
-        assertEquals(0xFFFF, regs.pc.getInt());
+        assertEquals(0xFFFF, regs.pc.get());
     }
 
     @Test
@@ -58,7 +64,7 @@ public class BranchInstructionTest {
         regs.pc.set(0x0009);
         io.writeWord(0x0009, 0x207F);
         cpu.executeInstruction();
-        assertEquals(0x008A, regs.pc.getInt());
+        assertEquals(0x008A, regs.pc.get());
     }
 
     @Test
@@ -66,7 +72,7 @@ public class BranchInstructionTest {
         regs.pc.set(0x0056);
         io.writeWord(0x0056, 0x20AA);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -78,7 +84,7 @@ public class BranchInstructionTest {
     public void testBranchNever() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x21FF);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -86,8 +92,8 @@ public class BranchInstructionTest {
         regs.s.set(0x0200);
         regs.pc.set(0xBEEF);
         assertTrue(BranchInstruction.branchToSubroutine(io));
-        assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).getShort());
-        assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).getShort());
+        assertEquals(0xEF, io.readByte(new UnsignedWord(0x01FF)).get());
+        assertEquals(0xBE, io.readByte(new UnsignedWord(0x01FE)).get());
     }
 
     @Test
@@ -96,9 +102,9 @@ public class BranchInstructionTest {
         regs.pc.set(0x1021);
         io.writeWord(0x1021, 0x8D1F);
         cpu.executeInstruction();
-        assertEquals(0x1042, regs.pc.getInt());
-        assertEquals(0x23, memory.readByte(0x2FFF).getShort());
-        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
+        assertEquals(0x1042, regs.pc.get());
+        assertEquals(0x23, memory.readByte(0x2FFF).get());
+        assertEquals(0x10, memory.readByte(0x2FFE).get());
     }
 
     @Test
@@ -107,9 +113,9 @@ public class BranchInstructionTest {
         regs.pc.set(0x1021);
         io.writeWord(0x1021, 0x8DDD);
         cpu.executeInstruction();
-        assertEquals(0x1000, regs.pc.getInt());
-        assertEquals(0x23, memory.readByte(0x2FFF).getShort());
-        assertEquals(0x10, memory.readByte(0x2FFE).getShort());
+        assertEquals(0x1000, regs.pc.get());
+        assertEquals(0x23, memory.readByte(0x2FFF).get());
+        assertEquals(0x10, memory.readByte(0x2FFE).get());
     }
 
     @Test
@@ -133,7 +139,7 @@ public class BranchInstructionTest {
     public void testBranchOnHighCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x221F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -141,7 +147,7 @@ public class BranchInstructionTest {
         io.regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x221F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -149,7 +155,7 @@ public class BranchInstructionTest {
         io.regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x221F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -180,7 +186,7 @@ public class BranchInstructionTest {
     public void testBranchOnLowerNotCalledWhenZeroCarryClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x231F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -189,7 +195,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x231F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -198,7 +204,7 @@ public class BranchInstructionTest {
         io.regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x231F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -206,7 +212,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x231F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -214,7 +220,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x231F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -232,7 +238,7 @@ public class BranchInstructionTest {
     public void testBranchOnCarryClearCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x241F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -240,7 +246,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x241F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -259,14 +265,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_C);
         io.writeWord(0x0000, 0x251F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchOnCarrySetDoesNotBranchIfCarryClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x251F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -284,7 +290,7 @@ public class BranchInstructionTest {
     public void testBranchOnNotEqualCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x261F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -292,7 +298,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x261F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -311,14 +317,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x271F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchOnEqualDoesNotBranchIfZeroClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x271F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -336,7 +342,7 @@ public class BranchInstructionTest {
     public void testBranchOnOverflowClearCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x281F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -344,7 +350,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x281F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -363,14 +369,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x291F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchOnOverflowSetDoesNotBranchIfOverflowClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x291F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -388,7 +394,7 @@ public class BranchInstructionTest {
     public void testBranchOnPlusCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2A1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -396,7 +402,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2A1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -415,14 +421,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2B1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchOnMinusDoesNotBranchIfNegativeClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2B1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -453,7 +459,7 @@ public class BranchInstructionTest {
     public void testBranchOnGreaterThanEqualZeroCalledCorrect() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2C1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -462,7 +468,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2C1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -470,7 +476,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2C1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -478,7 +484,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2C1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -509,7 +515,7 @@ public class BranchInstructionTest {
     public void testBranchOnLessThanZeroNotCalledIfNegativeClearOverflowClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2D1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -518,7 +524,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2D1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -526,7 +532,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2D1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -534,7 +540,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2D1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -594,7 +600,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -604,7 +610,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -613,7 +619,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -622,7 +628,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -630,7 +636,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -638,14 +644,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
     public void testBranchOnGreaterThanZeroCalledIfZeroOverflowNegativeClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -654,7 +660,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2E1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -714,7 +720,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_Z);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -724,7 +730,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -733,7 +739,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -743,7 +749,7 @@ public class BranchInstructionTest {
         io.writeWord(0x0000, 0x2F1F);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -751,7 +757,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
@@ -759,14 +765,14 @@ public class BranchInstructionTest {
         regs.cc.or(CC_N);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0021, regs.pc.getInt());
+        assertEquals(0x0021, regs.pc.get());
     }
 
     @Test
     public void testBranchOnLessThanZeroNotCalledIfZeroNegativeOverflowClear() throws MalformedInstructionException {
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
     @Test
@@ -775,7 +781,7 @@ public class BranchInstructionTest {
         regs.cc.or(CC_V);
         io.writeWord(0x0000, 0x2F1F);
         cpu.executeInstruction();
-        assertEquals(0x0002, regs.pc.getInt());
+        assertEquals(0x0002, regs.pc.get());
     }
 
 }

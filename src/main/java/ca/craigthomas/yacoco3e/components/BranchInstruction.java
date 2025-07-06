@@ -37,7 +37,7 @@ public class BranchInstruction extends Instruction
 
     public int call(IOController io) {
         if (operation.apply(io).equals(true)) {
-            io.regs.pc.add(byteRead.isNegative() ? byteRead.getSignedShort() : byteRead.getShort());
+            io.regs.pc.add(byteRead.isNegative() ? byteRead.getSigned() : byteRead.get());
         }
         return ticks;
     }
