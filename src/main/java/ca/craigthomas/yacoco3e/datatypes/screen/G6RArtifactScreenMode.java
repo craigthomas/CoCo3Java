@@ -8,7 +8,7 @@ import ca.craigthomas.yacoco3e.datatypes.UnsignedByte;
 
 import java.awt.*;
 
-public class G6RScreenMode extends ScreenMode
+public class G6RArtifactScreenMode extends ScreenMode
 {
     /* Screen size for the mode */
     private static final int SCREEN_WIDTH = 320;
@@ -41,7 +41,7 @@ public class G6RScreenMode extends ScreenMode
     // The color mode to apply
     private int colorMode;
 
-    public G6RScreenMode(int scale, int colorMode) {
+    public G6RArtifactScreenMode(int scale, int colorMode) {
         this.scale = scale;
         this.width = SCREEN_WIDTH;
         this.height = SCREEN_HEIGHT;
@@ -67,6 +67,18 @@ public class G6RScreenMode extends ScreenMode
 
         graphics.dispose();
     }
+
+    /**
+     * For proper artifact colors, we need to collect an entire line of pixels
+     * in an array. There are 256 pixels across a horizontal scan line. In this
+     * mode, pixels are either off (0% intensity) or on (100% intensity). The
+     * quirk for this mode has to do with transitioning between pixel intensities.
+     * The pixel 
+     *
+     * @param col
+     * @param row
+     * @param color
+     */
 
     private void drawBlock(int col, int row, int color) {
         for (int x = col; x < col + BLOCK_WIDTH; x++) {
