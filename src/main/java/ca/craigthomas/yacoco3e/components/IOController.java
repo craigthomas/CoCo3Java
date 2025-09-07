@@ -7,8 +7,6 @@ package ca.craigthomas.yacoco3e.components;
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
 
-import javax.sound.sampled.SourceDataLine;
-
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
 public class IOController
@@ -33,14 +31,24 @@ public class IOController
 
     public static final int NUM_DISK_DRIVES = 4;
 
-    /* CoCo Compatible Mode */
-    protected boolean cocoCompatibleMode;
+    /* The display resolution - 1 = old CoCo resolutions active, 0 = CoCo3 high resolutions active */
+    protected boolean lowResolutionDisplayActive;
 
-    /* Vertical Offset Register */
-    protected UnsignedWord verticalOffsetRegister;
+    /* Vertical Offset Registers */
+    protected UnsignedByte verticalOffsetRegister0;
+    protected UnsignedByte verticalOffsetRegister1;
 
     /* SAM Display Offset Register */
     protected UnsignedByte samDisplayOffsetRegister;
+
+    /* Video Mode Register */
+    protected UnsignedByte videoModeRegister;
+
+    /* Video Resolution Register */
+    protected UnsignedByte videoResolutionRegister;
+
+    /* Border Color Register */
+    protected UnsignedByte borderRegister;
 
     /* PIA1 */
     protected PIA1a pia1a;
@@ -107,7 +115,7 @@ public class IOController
         this.memory = memory;
         this.regs = registerSet;
         this.keyboard = keyboard;
-        this.cocoCompatibleMode = false;
+        this.lowResolutionDisplayActive = false;
         this.screen = screen;
         this.cassette = cassette;
 
@@ -124,8 +132,14 @@ public class IOController
         pia2b = new PIA2b(this);
 
         /* Display registers */
-        verticalOffsetRegister = new UnsignedWord(0x0400);
-        samDisplayOffsetRegister = new UnsignedByte(0x0);
+        verticalOffsetRegister1 = new UnsignedByte(0x04);
+        verticalOffsetRegister0 = new UnsignedByte(0x00);
+        samDisplayOffsetRegister = new UnsignedByte(0x00);
+
+        /* CoCo3 specific video registers */
+        videoModeRegister = new UnsignedByte(0x00);
+        videoResolutionRegister = new UnsignedByte(0x00);
+        borderRegister = new UnsignedByte(0x00);
 
         /* Interrupts */
         irqStatus = new UnsignedByte();
@@ -367,13 +381,25 @@ public class IOController
             case 0xFF95:
                 return timerResetValue.getLow();
 
+            /* Video Mode Register */
+            case 0xFF98:
+                return videoModeRegister.copy();
+
+            /* Video Resolution */
+            case 0xFF99:
+                return videoResolutionRegister.copy();
+
+            /* Border Color Register */
+            case 0xFF9A:
+                return borderRegister.copy();
+
             /* Vertical Offset Register 1 */
             case 0xFF9D:
-                return verticalOffsetRegister.getHigh();
+                return verticalOffsetRegister1.copy();
 
             /* Vertical Offset Register 0 */
             case 0xFF9E:
-                return verticalOffsetRegister.getLow();
+                return verticalOffsetRegister0.copy();
 
             /* SAM Clock Speed R1 */
             case 0xFFD8:
@@ -625,8 +651,8 @@ public class IOController
                     memory.disableMMU();
                 }
 
-                /* Bit 7 = CoCo Compatible Mode - enable or disable */
-                cocoCompatibleMode = (value.isMasked(0x80));
+                /* Bit 7 = set - low resolution display active, clear - high resolution display active */
+                lowResolutionDisplayActive = (value.isMasked(0x80));
                 updateVerticalOffset();
                 break;
 
@@ -668,15 +694,30 @@ public class IOController
                 timerValue.set(timerResetValue);
                 break;
 
+            /* Video Mode Register */
+            case 0xFF98:
+                videoModeRegister.set(value);
+                break;
+
+            /* Video Resolution Register */
+            case 0xFF99:
+                videoResolutionRegister.set(value);
+                break;
+
+            /* Border Color Register */
+            case 0xFF9A:
+                borderRegister.set(value);
+                break;
+
             /* Vertical Offset Register 1 */
             case 0xFF9D:
-                verticalOffsetRegister.setHigh(value);
+                verticalOffsetRegister1.set(value);
                 updateVerticalOffset();
                 break;
 
             /* Vertical Offset Register 0 */
             case 0xFF9E:
-                verticalOffsetRegister.setLow(value);
+                verticalOffsetRegister0.set(value);
                 updateVerticalOffset();
                 break;
 
@@ -908,28 +949,38 @@ public class IOController
     }
 
     /**
-     * Updates where in physical memory the screen should be read from. When
-     * CoCo compatible mode is turned off, uses the verticalOffsetRegister to
-     * set the physical address (shifted by 3 bits). When in CoCo compatible mode,
-     * uses a combination of the vertical offset register plus the samDisplayRegister
-     * to determine where in physical memory to read from. The SAM calculation is:
+     * Updates where in physical memory the screen should be read from. When the low resolution
+     * modes are active, the screen information is read from a combination of the vertical
+     * offset registers (V1, V0), and the SAM display offset register (SAM). The offset is a
+     * 19-bit offset value into physical memory. The low resolution offset is calculated as
+     * follows:
      *
-     *   Vertical Offset = VO
-     *   Sam Display Register = SAM
+     * Offset = x x x  x x x x x x x  x x x x x x 0 0 0
+     *          -----  -------------  -----------
+     *     V1   7 6 5
+     *    SAM          6 5 4 3 2 1 0
+     *     V0                         5 4 3 2 1 0
      *
-     * Offset = (VO15 VO14 VO13) * 64K + SAM * 512 + (VO5 VO4 VO3 VO2 VO1 VO0) * 8
+     *  When the high resolution displays are selected, the offset is still a 19-bit offset
+     *  value into physical memory, but only the vertical offset registers (v1, v0) are used
+     *  to calculate the offset. The high resolution offset is calculated as follows:
+     *
+     *  Offset = x x x x x x x x  x x x x x x x x 0 0 0
+     *           ---------------  ---------------
+     *      V1   7 6 5 4 3 2 1 0
+     *      V0                    7 6 5 4 3 2 1 0
      */
     public void updateVerticalOffset() {
-        if (cocoCompatibleMode) {
-            int newOffset = (verticalOffsetRegister.getHigh().get() & 0xE0);
-            newOffset = newOffset >> 5;
-            newOffset *= 65536;
-            newOffset += (samDisplayOffsetRegister.get() * 0x200);
-            newOffset += ((verticalOffsetRegister.getLow().get() & 0x3F) * 0x04);
-            screen.setMemoryOffset(newOffset);
+        int newOffset = 0;
+        if (lowResolutionDisplayActive) {
+            newOffset = ((verticalOffsetRegister1.get() & 0xE0) >> 1) << 16;
+            newOffset += (samDisplayOffsetRegister.get() & 0x7F) << 10;
+            newOffset += (verticalOffsetRegister0.get() & 0x1F) << 3;
         } else {
-            screen.setMemoryOffset(verticalOffsetRegister.get() << 3);
+            newOffset = verticalOffsetRegister1.get() << 11;
+            newOffset += verticalOffsetRegister0.get() << 3;
         }
+        screen.setMemoryOffset(newOffset);
     }
 
     /**

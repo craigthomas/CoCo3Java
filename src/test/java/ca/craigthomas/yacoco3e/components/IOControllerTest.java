@@ -232,7 +232,7 @@ public class IOControllerTest
 
     @Test
     public void testUpdateVerticalOffsetCoCoCompatibleWorksCorrectly() {
-        io.cocoCompatibleMode = true;
+        io.lowResolutionDisplayActive = true;
         io.verticalOffsetRegister = new UnsignedWord(0x0402);
         io.samDisplayOffsetRegister = new UnsignedByte(0x20);
         io.updateVerticalOffset();
