@@ -973,9 +973,9 @@ public class IOController
     public void updateVerticalOffset() {
         int newOffset = 0;
         if (lowResolutionDisplayActive) {
-            newOffset = ((verticalOffsetRegister1.get() & 0xE0) >> 1) << 16;
-            newOffset += (samDisplayOffsetRegister.get() & 0x7F) << 10;
-            newOffset += (verticalOffsetRegister0.get() & 0x1F) << 3;
+            newOffset = ((verticalOffsetRegister1.get() & 0xE0) >> 5) << 16;
+            newOffset += (samDisplayOffsetRegister.get() & 0x7F) << 9;
+            newOffset += (verticalOffsetRegister0.get() & 0x3F) << 3;
         } else {
             newOffset = verticalOffsetRegister1.get() << 11;
             newOffset += verticalOffsetRegister0.get() << 3;
@@ -1149,27 +1149,15 @@ public class IOController
      * @return the register
      */
     public UnsignedWord getWordRegister(Register register) {
-        switch (register) {
-            case Y:
-                return regs.y;
-
-            case X:
-                return regs.x;
-
-            case S:
-                return regs.s;
-
-            case U:
-                return regs.u;
-
-            case D:
-                return regs.getD();
-
-            case PC:
-                return regs.pc;
-        }
-
-        return null;
+        return switch (register) {
+            case Y -> regs.y;
+            case X -> regs.x;
+            case S -> regs.s;
+            case U -> regs.u;
+            case D -> regs.getD();
+            case PC -> regs.pc;
+            default -> null;
+        };
     }
 
     /**
@@ -1183,22 +1171,13 @@ public class IOController
         value &= 0x60;
         value = value >> 5;
 
-        switch (value) {
-            case 0x0:
-                return Register.X;
-
-            case 0x1:
-                return Register.Y;
-
-            case 0x2:
-                return Register.U;
-
-            case 0x3:
-                return Register.S;
-
-            default:
-                return Register.UNKNOWN;
-        }
+        return switch (value) {
+            case 0x0 -> Register.X;
+            case 0x1 -> Register.Y;
+            case 0x2 -> Register.U;
+            case 0x3 -> Register.S;
+            default -> Register.UNKNOWN;
+        };
     }
 
     /**
