@@ -121,15 +121,15 @@ public class IOControllerTest
     public void testVerticalOffsetRegister1SetCorrectly() {
         io.writeByte(new UnsignedWord(0xFF9D), new UnsignedByte(0xFA));
         assertEquals(new UnsignedByte(0xFA), io.readByte(new UnsignedWord(0xFF9D)));
-        assertEquals(new UnsignedWord(0xFA00), io.verticalOffsetRegister);
+        assertEquals(new UnsignedByte(0xFA), io.verticalOffsetRegister1);
     }
 
     @Test
     public void testVerticalOffsetRegister0SetCorrectly() {
-        io.verticalOffsetRegister = new UnsignedWord(0);
+        io.verticalOffsetRegister0 = new UnsignedByte(0);
         io.writeByte(new UnsignedWord(0xFF9E), new UnsignedByte(0xFA));
         assertEquals(new UnsignedByte(0xFA), io.readByte(new UnsignedWord(0xFF9E)));
-        assertEquals(new UnsignedWord(0x00FA), io.verticalOffsetRegister);
+        assertEquals(new UnsignedByte(0xFA), io.verticalOffsetRegister0);
     }
 
     @Test
@@ -232,11 +232,32 @@ public class IOControllerTest
 
     @Test
     public void testUpdateVerticalOffsetCoCoCompatibleWorksCorrectly() {
-        io.cocoCompatibleMode = true;
-        io.verticalOffsetRegister = new UnsignedWord(0x0402);
-        io.samDisplayOffsetRegister = new UnsignedByte(0x20);
+        io.lowResolutionDisplayActive = true;
+        io.verticalOffsetRegister1 = new UnsignedByte(0xA0);
+        io.verticalOffsetRegister0 = new UnsignedByte(0x2A);
+        io.samDisplayOffsetRegister = new UnsignedByte(0x55);
         io.updateVerticalOffset();
-        assertEquals(16392, screen.getMemoryOffset());
+        assertEquals(371536, screen.getMemoryOffset());
+    }
+
+    @Test
+    public void testUpdateVerticalOffsetCoCoCompatibleWorksCorrectly1() {
+        io.lowResolutionDisplayActive = true;
+        io.verticalOffsetRegister1 = new UnsignedByte(0xff);
+        io.verticalOffsetRegister0 = new UnsignedByte(0xff);
+        io.samDisplayOffsetRegister = new UnsignedByte(0xff);
+        io.updateVerticalOffset();
+        assertEquals(524280, screen.getMemoryOffset());
+    }
+
+    @Test
+    public void testUpdateVerticalOffsetCoCoCompatibleWorksCorrectly2() {
+        io.lowResolutionDisplayActive = true;
+        io.verticalOffsetRegister1 = new UnsignedByte(0xE0);
+        io.verticalOffsetRegister0 = new UnsignedByte(0x3F);
+        io.samDisplayOffsetRegister = new UnsignedByte(0x7F);
+        io.updateVerticalOffset();
+        assertEquals(524280, screen.getMemoryOffset());
     }
 
     @Test
