@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Craig Thomas
+ * Copyright (C) 2023-2025 Craig Thomas
  * This project uses an MIT style license - see LICENSE for details.
  */
 package ca.craigthomas.yacoco3e.datatypes;
@@ -20,11 +20,13 @@ public class ConfigFile
     private String drive2Image;
     private String drive3Image;
     private String cassetteROM;
+    private String rightJoystick;
+    private String leftJoystick;
 
     public ConfigFile() { }
 
     public ConfigFile(String system, String cartridge, String drive0, String drive1, String drive2,
-                      String drive3, String cassette) {
+                      String drive3, String cassette, String leftJoy, String rightJoy) {
         systemROM = system;
         cartridgeROM = cartridge;
         drive0Image = drive0;
@@ -32,6 +34,8 @@ public class ConfigFile
         drive2Image = drive2;
         drive3Image = drive3;
         cassetteROM = cassette;
+        leftJoystick = leftJoy;
+        rightJoystick = rightJoy;
     }
 
     public ConfigFile(String system, String cartridge, String cassette) {
@@ -54,7 +58,8 @@ public class ConfigFile
 
     public boolean isEmpty() {
         return (systemROM == null) && (cartridgeROM == null) && (cassetteROM == null) && (drive0Image == null) &&
-                (drive1Image == null) && (drive2Image == null) && (drive3Image == null);
+                (drive1Image == null) && (drive2Image == null) && (drive3Image == null) && (leftJoystick == null) &&
+                (rightJoystick == null);
     }
 
     public String getSystemROM() {
@@ -111,6 +116,22 @@ public class ConfigFile
 
     public void setCassetteROM(String cassetteROM) {
         this.cassetteROM = cassetteROM;
+    }
+
+    public String getRightJoystick() {
+        return rightJoystick;
+    }
+
+    public void setRightJoystick(String rightJoystick) {
+        this.rightJoystick = rightJoystick;
+    }
+
+    public String getLeftJoystick() {
+        return leftJoystick;
+    }
+
+    public void setLeftJoystick(String leftJoystick) {
+        this.leftJoystick = leftJoystick;
     }
 
     /**
