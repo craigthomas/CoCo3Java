@@ -6,6 +6,8 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.listeners.*;
+import net.java.games.input.Controller;
+import net.java.games.input.ControllerEnvironment;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,6 +15,7 @@ import java.awt.event.KeyEvent;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.TimerTask;
 import java.util.Timer;
 import java.util.logging.Logger;
@@ -38,6 +41,8 @@ public class Emulator extends Thread
     // The main Emulator container
     private JFrame container;
     private JMenuBar menuBar;
+
+    Controller [] controllers;
 
     /* State variables */
     public boolean trace;
@@ -117,6 +122,7 @@ public class Emulator extends Thread
         io = new IOController(memory, new RegisterSet(), keyboard, screen, cassette, builder.useDAC);
         cpu = new CPU(io);
         io.setCPU(cpu);
+
         trace = builder.trace;
         verbose = builder.verbose;
         status = EmulatorStatus.STOPPED;
@@ -129,8 +135,22 @@ public class Emulator extends Thread
                 }
             }
         } catch (Exception e) {
-            System.out.println("Nimbus LAF not available");
+            LOGGER.warning("Nimbus LAF not available");
         }
+
+        controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+        LOGGER.info("Joystick #0, Name: 'No Joystick', Type: None");
+        int index = 1;
+        for (Controller controller : controllers) {
+            Controller.Type controllerType = controller.getType();
+            if (controllerType != Controller.Type.MOUSE && controllerType != Controller.Type.KEYBOARD) {
+                LOGGER.info("Joystick #" + index  + ", Name: '" + controller.getName() + "', Type: " + controller.getType());
+                index++;
+            }
+        }
+        io.setJoystickControllers(controllers);
+        io.setLeftJoystickNumber(0);
+        io.setRightJoystickNumber(0);
 
         initEmulatorJFrame();
 
@@ -344,6 +364,68 @@ public class Emulator extends Thread
 
         menuBar.add(keyboardMenu);
 
+        // Joystick menu
+        JMenu joystickMenu = new JMenu("Joystick");
+        joystickMenu.setMnemonic(KeyEvent.VK_J);
+
+        JMenu leftJoystickMenuItem = new JMenu("Left Joystick");
+        leftJoystickMenuItem.setMnemonic(KeyEvent.VK_L);
+
+        JRadioButtonMenuItem leftJoystickNoneMenuItem = new JRadioButtonMenuItem("No Joystick");
+        leftJoystickNoneMenuItem.setSelected(true);
+        leftJoystickMenuItem.add(leftJoystickNoneMenuItem);
+
+        // Enumerate all joystick devices and add menu items for each
+        ArrayList<JRadioButtonMenuItem> options = new ArrayList<>();
+        options.add(leftJoystickNoneMenuItem);
+
+        for (Controller controller : controllers) {
+            Controller.Type controllerType = controller.getType();
+            if (controllerType != Controller.Type.MOUSE && controllerType != Controller.Type.KEYBOARD) {
+                JRadioButtonMenuItem leftJoystickControllerMenuItem = new JRadioButtonMenuItem(controller.getName());
+                leftJoystickControllerMenuItem.setSelected(false);
+                leftJoystickMenuItem.add(leftJoystickControllerMenuItem);
+                options.add(leftJoystickControllerMenuItem);
+            }
+        }
+
+        int index = 0;
+        for (JRadioButtonMenuItem button : options) {
+            button.addActionListener(new SetLeftJoystickMenuItemActionListener(this, options.toArray(new JRadioButtonMenuItem[0]), index));
+            index++;
+        }
+
+        joystickMenu.add(leftJoystickMenuItem);
+
+        JMenu rightJoystickMenuItem = new JMenu("Right Joystick");
+        rightJoystickMenuItem.setMnemonic(KeyEvent.VK_R);
+
+        JRadioButtonMenuItem rightJoystickNoneMenuItem = new JRadioButtonMenuItem("No Joystick");
+        rightJoystickNoneMenuItem.setSelected(true);
+        rightJoystickMenuItem.add(rightJoystickNoneMenuItem);
+
+        options = new ArrayList<>();
+        options.add(rightJoystickNoneMenuItem);
+
+        for (Controller controller : controllers) {
+            Controller.Type controllerType = controller.getType();
+            if (controllerType != Controller.Type.MOUSE && controllerType != Controller.Type.KEYBOARD) {
+                JRadioButtonMenuItem rightJoystickControllerMenuItem = new JRadioButtonMenuItem(controller.getName());
+                rightJoystickControllerMenuItem.setSelected(false);
+                rightJoystickMenuItem.add(rightJoystickControllerMenuItem);
+                options.add(rightJoystickControllerMenuItem);
+            }
+        }
+
+        index = 0;
+        for (JRadioButtonMenuItem button : options) {
+            button.addActionListener(new SetRightJoystickMenuItemActionListener(this, options.toArray(new JRadioButtonMenuItem[0]), index));
+            index++;
+        }
+
+        joystickMenu.add(rightJoystickMenuItem);
+        menuBar.add(joystickMenu);
+
         // Debug menu
         JMenu debugMenu = new JMenu("Debugging");
         debugMenu.setMnemonic(KeyEvent.VK_U);
@@ -404,6 +486,24 @@ public class Emulator extends Thread
     }
 
     /**
+     * Switches out the existing left joystick for a new one.
+     *
+     * @param newJoystickNumber the new joystick device number to use (0 for none)
+     */
+    public void switchLeftJoystick(int newJoystickNumber) {
+        io.setLeftJoystickNumber(newJoystickNumber);
+    }
+
+    /**
+     * Switches out the existing right joystick for a new one.
+     *
+     * @param newJoystickNumber the new joystick device number to use (0 for none)
+     */
+    public void switchRightJoystick(int newJoystickNumber) {
+        io.setRightJoystickNumber(newJoystickNumber);
+    }
+
+    /**
      * Will redraw the contents of the screen to the emulator window. Optionally, if
      * isInTraceMode is True, will also draw the contents of the overlayScreen to the screen.
      */
@@ -430,6 +530,7 @@ public class Emulator extends Thread
         screenRefreshTimer = new Timer();
         screenRefreshTimerTask = new TimerTask() {
             public void run() {
+                io.pollJoysticks();
                 screen.refreshScreen();
                 refreshScreen();
             }
