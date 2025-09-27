@@ -143,10 +143,10 @@ public class IOController
         deviceSelectorSwitch = new DeviceSelectorSwitch();
 
         /* PIAs */
-        pia1a = new PIA1a(keyboard, deviceSelectorSwitch);
-        pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
-        pia2a = new PIA2a(cassette, useDAC);
         pia2b = new PIA2b(this);
+        pia2a = new PIA2a(cassette, useDAC);
+        pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
+        pia1a = new PIA1a(keyboard, deviceSelectorSwitch, pia2a);
 
         /* Display registers */
         verticalOffsetRegister1 = new UnsignedByte(0x04);
@@ -1389,7 +1389,41 @@ public class IOController
             if (y < 0.01 && y > -0.01) {
                 y = 0.0f;
             }
-            System.out.println("x = " + x + ", y = " + y + ", fire = " + fire);
+            x = ((x + 1.0f) / 2.0f) * 4.5f;
+            y *= -1.0f;
+            y = ((y + 1.0f) / 2.0f) * 4.5f;
+            pia1a.setLeftJoystickState(x, y, fire);
+            System.out.println("Left Joystick x = " + x + ", y = " + y + ", fire = " + fire);
+        }
+
+        if (rightJoystick != null) {
+            rightJoystick.poll();
+            Component [] components = rightJoystick.getComponents();
+            float x = 0.0f;
+            float y = 0.0f;
+            boolean fire = false;
+            for (int i = 0; i < components.length; i++) {
+                if (components[i].getName().equals("x") && components[i].isAnalog()) {
+                    x = components[i].getPollData();
+                }
+                if (components[i].getName().equals("y") && components[i].isAnalog()) {
+                    y = components[i].getPollData();
+                }
+                if (!components[i].isAnalog()) {
+                    fire |= components[i].getPollData() == 1.0f;
+                }
+            }
+            if (x < 0.01 && x > -0.01) {
+                x = 0.0f;
+            }
+            if (y < 0.01 && y > -0.01) {
+                y = 0.0f;
+            }
+            x = ((x + 1.0f) / 2.0f) * 4.5f;
+            y *= -1.0f;
+            y = ((y + 1.0f) / 2.0f) * 4.5f;
+            pia1a.setRightJoystickState(x, y, fire);
+            System.out.println("Right Joystick x = " + x + ", y = " + y + ", fire = " + fire);
         }
     }
 }
