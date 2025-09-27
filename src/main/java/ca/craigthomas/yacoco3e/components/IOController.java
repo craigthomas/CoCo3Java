@@ -6,6 +6,10 @@ package ca.craigthomas.yacoco3e.components;
 
 import ca.craigthomas.yacoco3e.datatypes.*;
 import ca.craigthomas.yacoco3e.datatypes.screen.ScreenMode.Mode;
+import net.java.games.input.Component;
+import net.java.games.input.Controller;
+
+import java.util.logging.Logger;
 
 import static ca.craigthomas.yacoco3e.datatypes.RegisterSet.*;
 
@@ -109,6 +113,15 @@ public class IOController
 
     public volatile int tickRefreshAmount;
 
+    // Joystick controllers
+    public int leftJoystickNumber;
+    public int rightJoystickNumber;
+    public Controller [] controllers;
+    public Controller leftJoystick;
+    public Controller rightJoystick;
+
+    /* A logger for the IO controller */
+    private final static Logger LOGGER = Logger.getLogger(IOController.class.getName());
 
     public IOController(Memory memory, RegisterSet registerSet, Keyboard keyboard, Screen screen, Cassette cassette, boolean useDAC) {
         ioMemory = new short[IO_ADDRESS_SIZE];
@@ -118,6 +131,10 @@ public class IOController
         this.lowResolutionDisplayActive = false;
         this.screen = screen;
         this.cassette = cassette;
+        this.leftJoystick = null;
+        this.leftJoystickNumber = 0;
+        this.rightJoystick = null;
+        this.rightJoystickNumber = 0;
 
         /* Screen controls */
         samControlBits = new UnsignedByte();
@@ -126,10 +143,10 @@ public class IOController
         deviceSelectorSwitch = new DeviceSelectorSwitch();
 
         /* PIAs */
-        pia1a = new PIA1a(keyboard, deviceSelectorSwitch);
-        pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
-        pia2a = new PIA2a(cassette, useDAC);
         pia2b = new PIA2b(this);
+        pia2a = new PIA2a(cassette, useDAC);
+        pia1b = new PIA1b(keyboard, deviceSelectorSwitch);
+        pia1a = new PIA1a(keyboard, deviceSelectorSwitch, pia2a);
 
         /* Display registers */
         verticalOffsetRegister1 = new UnsignedByte(0x04);
@@ -204,6 +221,51 @@ public class IOController
      */
     public void setKeyboard(Keyboard keyboard) {
         this.keyboard = keyboard;
+    }
+
+    /**
+     * Creates a back-reference to the list of joystick controllers.
+     *
+     * @param controllers the list of controllers on the system
+     */
+    public void setJoystickControllers(Controller [] controllers) {
+        this.controllers = controllers;
+    }
+
+    /**
+     * Sets the left joystick device based on the controller number (0 = none).
+     *
+     * @param controllerNumber the device controller number to use
+     */
+    public void setLeftJoystickNumber(int controllerNumber) {
+        this.leftJoystickNumber = controllerNumber;
+        if (controllerNumber == 0) {
+            this.leftJoystick = null;
+            LOGGER.info("Set left joystick to 'No Joystick'");
+        } else {
+            if (controllerNumber <= controllers.length) {
+                this.leftJoystick = controllers[controllerNumber - 1];
+                LOGGER.info("Set left joystick to '" + this.leftJoystick.getName() + "'");
+            }
+        }
+    }
+
+    /**
+     * Sets the right joystick device based on the controller number (0 = none).
+     *
+     * @param controllerNumber the device controller number to use
+     */
+    public void setRightJoystickNumber(int controllerNumber) {
+        this.rightJoystickNumber = controllerNumber;
+        if (controllerNumber == 0) {
+            this.rightJoystick = null;
+            LOGGER.info("Set right joystick to 'No Joystick'");
+        } else {
+            if (controllerNumber <= controllers.length) {
+                this.rightJoystick = controllers[controllerNumber - 1];
+                LOGGER.info("Set right joystick to '" + this.rightJoystick.getName() + "'");
+            }
+        }
     }
 
     /**
@@ -1279,9 +1341,78 @@ public class IOController
         cpu.scheduleNMI();
     }
 
+    /**
+     * Sends a shutdown signal to the PIA2.
+     */
     public void shutdown() {
         if (pia2a != null) {
             pia2a.shutdown();
+        }
+    }
+
+    /**
+     * Polls the available joysticks for state data. There are only 2 things we are
+     * concerned with:
+     *
+     * Analog data:
+     *   x-axis - is usually named 'x' and will range from -1.0 to 1.0
+     *   y-axis - is usually named 'y' and will range from -1.0 to 1.0
+     *
+     * Non-analog data:
+     *   any button - when depressed will read as true, when released is false
+     *
+     * Essentially, the polling routine will read the x-axis and y-axis data
+     * and return them as floats. Any other non-analog input, if it is pressed,
+     * will trigger a fire button.
+     */
+    public void pollJoysticks() {
+        if (leftJoystick != null) {
+            leftJoystick.poll();
+            Component [] components = leftJoystick.getComponents();
+            float x = 0.0f;
+            float y = 0.0f;
+            boolean fire = false;
+            for (Component component : components) {
+                if (component.getName().equals("x") && component.isAnalog()) {
+                    x = component.getPollData();
+                }
+                if (component.getName().equals("y") && component.isAnalog()) {
+                    y = component.getPollData();
+                }
+                if (!component.isAnalog()) {
+                    fire |= component.getPollData() == 1.0f;
+                }
+            }
+
+            // Scale output to 4.5 volts and set the current state
+            x = ((x + 1.0f) / 2.0f) * 4.5f;
+            y = ((y + 1.0f) / 2.0f) * 4.5f;
+
+            pia1a.setLeftJoystickState(x, y, fire);
+        }
+
+        if (rightJoystick != null) {
+            rightJoystick.poll();
+            Component [] components = rightJoystick.getComponents();
+            float x = 0.0f;
+            float y = 0.0f;
+            boolean fire = false;
+            for (Component component : components) {
+                if (component.getName().equals("x") && component.isAnalog()) {
+                    x = component.getPollData();
+                }
+                if (component.getName().equals("y") && component.isAnalog()) {
+                    y = component.getPollData();
+                }
+                if (!component.isAnalog()) {
+                    fire |= component.getPollData() == 1.0f;
+                }
+            }
+
+            // Scale output to 4.5 volts and set the current state
+            x = ((x + 1.0f) / 2.0f) * 4.5f;
+            y = ((y + 1.0f) / 2.0f) * 4.5f;
+            pia1a.setRightJoystickState(x, y, fire);
         }
     }
 }

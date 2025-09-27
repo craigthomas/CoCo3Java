@@ -63,6 +63,8 @@ public class ConfigFileTest
         configFile.setDrive1Image("1");
         configFile.setDrive2Image("2");
         configFile.setDrive3Image("3");
+        configFile.setLeftJoystick("left joystick");
+        configFile.setRightJoystick("right joystick");
         assertEquals("system", configFile.getSystemROM());
         assertEquals("cartridge", configFile.getCartridgeROM());
         assertEquals("cassette", configFile.getCassetteROM());
@@ -70,6 +72,8 @@ public class ConfigFileTest
         assertEquals("1", configFile.getDrive1Image());
         assertEquals("2", configFile.getDrive2Image());
         assertEquals("3", configFile.getDrive3Image());
+        assertEquals("left joystick", configFile.getLeftJoystick());
+        assertEquals("right joystick", configFile.getRightJoystick());
     }
 
     @Test
@@ -106,6 +110,14 @@ public class ConfigFileTest
         configFile.setDrive3Image("not empty");
         assertFalse(configFile.isEmpty());
         configFile = new ConfigFile();
+
+        configFile.setLeftJoystick("not empty");
+        assertFalse(configFile.isEmpty());
+        configFile = new ConfigFile();
+
+        configFile.setRightJoystick("not empty");
+        assertFalse(configFile.isEmpty());
+        configFile = new ConfigFile();
     }
 
     @Test
@@ -118,7 +130,7 @@ public class ConfigFileTest
 
     @Test
     public void testConstructor2() {
-        configFile = new ConfigFile("system", "cartridge", "0", "1", "2", "3", "cassette");
+        configFile = new ConfigFile("system", "cartridge", "0", "1", "2", "3", "cassette", "left joystick", "right joystick");
         configFile.setSystemROM("system");
         configFile.setCartridgeROM("cartridge");
         configFile.setCassetteROM("cassette");
@@ -126,6 +138,8 @@ public class ConfigFileTest
         assertEquals("1", configFile.getDrive1Image());
         assertEquals("2", configFile.getDrive2Image());
         assertEquals("3", configFile.getDrive3Image());
+        assertEquals("left joystick", configFile.getLeftJoystick());
+        assertEquals("right joystick", configFile.getRightJoystick());
     }
 
     @Test
@@ -139,6 +153,8 @@ public class ConfigFileTest
         assertEquals("1", configFile.getDrive1Image());
         assertEquals("2", configFile.getDrive2Image());
         assertEquals("3", configFile.getDrive3Image());
+        assertEquals("left joystick", configFile.getLeftJoystick());
+        assertEquals("right joystick", configFile.getRightJoystick());
     }
 
     @Test
