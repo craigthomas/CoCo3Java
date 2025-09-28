@@ -1390,10 +1390,10 @@ public class IOController
                 y = 0.0f;
             }
             x = ((x + 1.0f) / 2.0f) * 4.5f;
-            y *= -1.0f;
+//            y *= -1.0f;
             y = ((y + 1.0f) / 2.0f) * 4.5f;
             pia1a.setLeftJoystickState(x, y, fire);
-            System.out.println("Left Joystick x = " + x + ", y = " + y + ", fire = " + fire);
+//            System.out.println("Left Joystick x = " + x + ", y = " + y + ", fire = " + fire);
         }
 
         if (rightJoystick != null) {
@@ -1420,10 +1420,10 @@ public class IOController
                 y = 0.0f;
             }
             x = ((x + 1.0f) / 2.0f) * 4.5f;
-            y *= -1.0f;
+//            y *= -1.0f;
             y = ((y + 1.0f) / 2.0f) * 4.5f;
             pia1a.setRightJoystickState(x, y, fire);
-            System.out.println("Right Joystick x = " + x + ", y = " + y + ", fire = " + fire);
+//            System.out.println("Right Joystick x = " + x + ", y = " + y + ", fire = " + fire);
         }
     }
 }

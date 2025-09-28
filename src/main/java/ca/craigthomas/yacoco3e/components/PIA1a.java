@@ -57,29 +57,43 @@ public class PIA1a extends PIA
      */
     @Override
     public UnsignedByte getDataRegister() {
+        // Check to see if we should output CA2 low on read
+        if (!controlRegister.isMasked(0x8)) {
+            deviceSelectorSwitch.setCA2(false);
+        }
+
+        // Check to see if our joystick values are higher than PIA2 voltage
         boolean fireComparator = false;
         switch (deviceSelectorSwitch.switchPosition) {
             case 0:
-                fireComparator = rightJoystickY > pia2a.getVoltage();
-                break;
-
-            case 1:
                 fireComparator = rightJoystickX > pia2a.getVoltage();
                 break;
 
+            case 1:
+                fireComparator = rightJoystickY > pia2a.getVoltage();
+                break;
+
             case 2:
-                fireComparator = leftJoystickY > pia2a.getVoltage();
+                fireComparator = leftJoystickX > pia2a.getVoltage();
                 break;
 
             case 3:
-                fireComparator = leftJoystickX > pia2a.getVoltage();
+                fireComparator = leftJoystickY > pia2a.getVoltage();
                 break;
         }
+
         UnsignedByte result = keyboard.getHighByte();
         result.and(leftJoystickFire ? ~0x2 : ~0x0);
         result.and(rightJoystickFire ? ~0x1 : ~0x0);
         result.and(~0x80);
         result.or(fireComparator ? 0x80 : 0x0);
+
+        // Check to see if we should transition CA2 high again
+        if (!controlRegister.isMasked(0x8)) {
+            if (controlRegister.isMasked(0x4)) {
+                deviceSelectorSwitch.setCA2(true);
+            }
+        }
         return result;
     }
 
