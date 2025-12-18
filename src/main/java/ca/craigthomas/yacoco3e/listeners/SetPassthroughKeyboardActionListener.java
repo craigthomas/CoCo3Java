@@ -12,7 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * An ActionListener that will quit the emulator.
+ * An ActionListener that will set which keyboard type is active.
  */
 public class SetPassthroughKeyboardActionListener extends AbstractFileChooserListener implements ActionListener
 {

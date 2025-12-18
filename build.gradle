@@ -32,6 +32,9 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.20.0'
     implementation 'com.beust:jcommander:1.82'
     implementation 'org.yaml:snakeyaml:2.5'
+    implementation 'net.java.jinput:jinput:2.0.10'
+    runtimeOnly 'net.java.jinput:jinput-platform:2.0.7:natives-linux'
+    implementation 'net.java.jutils:jutils:1.0.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:5.21.0'
 }

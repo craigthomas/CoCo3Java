@@ -90,4 +90,8 @@ public class PIA2a extends PIA
 
         cassette.setMotorOn(controlRegister.isMasked(0x08));
     }
+
+    public float getVoltage() {
+        return voltage;
+    }
 }
