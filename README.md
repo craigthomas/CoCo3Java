@@ -22,11 +22,12 @@
 7. [Disk Drives](#disk-drives)
     1. [Loading a Disk Image](#loading-a-disk-image)
     2. [Saving a Disk Image](#saving-a-disk-image)
-8. [Configuration File](#configuration-file)
-9. [Keyboard](#keyboard)
+8. [Joysticks](#joysticks)
+9. [Configuration File](#configuration-file)
+10. [Keyboard](#keyboard)
     1. [Emulated Keyboard](#emulated-keyboard)
     2. [Pass-through Keyboard](#pass-through-keyboard)
-10. [Current Status](#current-status)
+11. [Current Status](#current-status)
 
 ## What Is It?
 
@@ -113,38 +114,59 @@ library API on the system with:
     You will need to end your current session and restart in order for the group information
     to be updated. In some cases, you may need to reboot for the group change to take effect.
 
+To run the emulator, see the section called [Running](#running) below.
+
 ### Windows
 
-_Under construction._
+At a minimum, you will need to install the Java Runtime Environment (JRE) 17 or
+higher. 
+
+1. *Required* - a Java Runtime Environment (JRE) version 17 or higher. I recommend using 
+   Eclipse Temurin JRE (formerly AdoptJDK) as the software
+   is licensed under the GNU license version 2 with classpath exception. The latest
+   JRE builds are available at [https://adoptium.net/en-GB/temurin/releases](https://adoptium.net/en-GB/temurin/releases)
+   (make sure you select _JRE_ as the type you wish to download). Run the installer
+   and follow the directions as required to install the runtime. 
+
+To run the emulator, see the section called [Running](#running) below.
 
 ## Compiling From Source
 
 _Note this section is optional - this is only if you want to compile the project
-yourself from source code._
+yourself from source code._ If you want to build the emulator from source code, 
+you will need a copy of the Java Development Kit (JDK) version 17 or greater 
+installed in to compile the JAR file. 
 
-If you want to build the emulator from source code, you will need a copy of the 
-Java Development Kit (JDK) version 17 or greater 
-installed in to compile the JAR file. For most Linux distributions
-there is likely an `openjdk-17-jdk` package that will do this for you automatically.
-On Ubuntu and Debian based systems, this is typically:
+### Linux
+
+For most Linux distributions there is likely an `openjdk-17-jdk` package that will do 
+this for you automatically. On Ubuntu and Debian based systems, this is typically:
 
 ```bash
 sudo apt update
 sudo apt install openjdk-17-jdk
 ```
 
-For Windows, I recommend using Eclipse Temurin (formerly AdoptJDK) as the software
-is licensed under the GNU license version 2 with classpath exception. The latest
-JDK builds are available at [https://adoptium.net/en-GB/temurin/releases](https://adoptium.net/en-GB/temurin/releases)
-(make sure you select _JDK_ as the type you wish to download).
+Next, to build the project, switch to the root of the source directory, and type:
 
-To build the project, switch to the root of the source directory, and type:
- 
 ```bash
 ./gradlew build
 ```
 
-On Windows, switch to the root of the source directory, and type:
+The compiled Jar file will be placed in the `build/libs` directory. Note that
+for some components such as joystick detection and control to work correctly,
+operating-specific steps may be required. See the _Requirements_ section above
+to install necessary sub-systems.
+
+
+### Windows 
+
+For Windows, I recommend using Eclipse Temurin JDK (formerly AdoptJDK) as the software
+is licensed under the GNU license version 2 with classpath exception. The latest
+JDK builds are available at [https://adoptium.net/en-GB/temurin/releases](https://adoptium.net/en-GB/temurin/releases)
+(make sure you select _JDK_ as the type you wish to download).
+
+Next, switch to the root of the source directory, and type:
 
 ```bash
 gradlew.bat build
@@ -267,6 +289,22 @@ select a location on your computer where the disk file will be saved to.
 Once entered, the contents of the drive will be saved to the virtual disk
 file, and can be loaded from the host computer in a future session.
 
+## Joysticks
+
+Joystick control is still experimental and only currently available under
+Linux. When running the emulator, to set the joystick to be used,
+click on *Joystick* and then *Left Joystick* or *Right Joystick* to select
+which device should be used as the left or right joystick. If no USB
+joystick devices are found, then *No joystick* will be the only option
+available. 
+
+To troubleshoot joystick configuration, when the emulator starts, a 
+list of detected joysticks will be printed to the console. The 
+`Joystick #0` device will always be `No Joystick`. Other enumerated
+joysticks will be printed after this one. The name of the detected joystick
+can be used in the configuration file below to automatically associate
+the left or right joystick device during emulator startup.
+
 
 ## Configuration File
 
@@ -280,19 +318,22 @@ Super Extended Color Basic ROM file).
 Megabug).
 * `cassetteROM` - the full path to the ROM file used in the cassette recorder.
 * `drive0Image` - the `DSK` image to be used in drive 0.
-* `drive1Image` - the `DSK` image to be used in drive 0.
-* `drive2Image` - the `DSK` image to be used in drive 0.
-* `drive3Image` - the `DSK` image to be used in drive 0.
+* `drive1Image` - the `DSK` image to be used in drive 1.
+* `drive2Image` - the `DSK` image to be used in drive 2.
+* `drive3Image` - the `DSK` image to be used in drive 3.
+* `leftJoystick` - the name of the detected joystick to use as the left joystick.
+* `rightJoystick` - the name of the detected joystick to use as the right joystick.
 
 Leaving any one of the keys out will result in the emulator ignoring that particular
-ROM image. An example YAML configuration file that specifies ROMs to use for the
-system, cartridge slot, cassette, and drive 0 is as follows:
+configuration option. An example YAML configuration file that specifies ROMs to use for the
+system, cartridge slot, cassette, joystick, and drive 0 is as follows:
 
 ```
 systemROM: "C:\Users\basic3.rom"
 cartridgeROM: "C:\disk11.rom"
 cassetteROM: "C:\Users\zaxxon.cas"
 drive0Image: "C:\megabug.dsk"
+leftJoystick: "usb gamepad"
 ```
 
 If you start the emulator without command-line arguments, it will look for a configuration file named
